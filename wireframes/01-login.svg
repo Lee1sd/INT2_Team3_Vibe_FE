@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="800" viewBox="0 0 1440 800" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">
+<rect x="0" y="0" width="1440" height="800" fill="#eef0f2"/>
+<rect x="0" y="0" width="1440" height="72" rx="0" fill="#ffffff"/>
+<line x1="0" y1="72" x2="1440" y2="72" stroke="#d6dae0" stroke-width="1"/>
+<rect x="24" y="16" width="40" height="40" rx="12" fill="#565b63"/>
+<text x="44" y="41" font-size="13" fill="#ffffff" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">CD</text>
+<text x="76" y="46" font-size="22" fill="#2f333a" font-weight="700" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">커리어 던전</text>
+<circle cx="1402" cy="36" r="15" fill="none" stroke="#6c7278" stroke-width="1.5"/><circle cx="1402" cy="32" r="4.5" fill="none" stroke="#6c7278" stroke-width="1.5"/><path d="M1394 46 a8 8 0 0 1 16 0" fill="none" stroke="#6c7278" stroke-width="1.5"/>
+<rect x="496" y="168" width="448" height="336" rx="20" fill="#ffffff" stroke="#d6dae0"/>
+<rect x="680" y="196" width="80" height="80" rx="18" fill="#eef0f2" stroke="#d6dae0"/>
+<text x="720" y="250" font-size="34" text-anchor="middle" font-family="'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif">🐣</text>
+<text x="720" y="318" font-size="28" fill="#2f333a" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">커리어 던전 입장</text>
+<text x="720" y="354" font-size="15" fill="#2f333a" font-weight="400" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">당신의 이력서로 구성된 맞춤형 면접관을</text>
+<text x="720" y="376" font-size="15" fill="#2f333a" font-weight="400" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">격파하고 신뢰를 얻어내세요!</text>
+<rect x="520" y="418" width="400" height="50" rx="16" fill="#ffffff" stroke="#d6dae0"/>
+<rect x="614" y="436" width="20" height="14" rx="2" fill="none" stroke="#6c7278" stroke-width="1.3"/><path d="M614 436 L624 443 L634 436" fill="none" stroke="#6c7278" stroke-width="1.3"/>
+<text x="732" y="448" font-size="15" fill="#2f333a" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">Google 계정으로 시작하기</text>
+<rect x="613" y="528" width="214" height="34" rx="12" fill="#e7e9ec" stroke="#d6dae0"/>
+<text x="720" y="550" font-size="12.5" fill="#2f333a" font-weight="400" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">INFO   Mock 모드입니다.</text>
+</svg>

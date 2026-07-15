@@ -1,0 +1,71 @@
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css");
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Pretendard", ui-sans-serif, system-ui, sans-serif;
+  --color-blue-grey-10: #FBFBFD;
+  --color-blue-grey-25: #F4F4F8;
+  --color-blue-grey-50: #E9ECF3;
+  --color-blue-grey-75: #D7E2EB;
+  --color-blue-grey-100: #CDD7E0;
+  --color-blue-grey-200: #B2C0CC;
+  --color-blue-grey-300: #98A8B9;
+  --color-blue-grey-400: #7890A0;
+  --color-blue-grey-500: #5F7F90;
+  --color-blue-grey-600: #4F6B81;
+  --color-blue-grey-700: #44576C;
+  --color-blue-grey-800: #37485D;
+  --color-blue-grey-880: #2D4053;
+  --color-blue-grey-900: #263747;
+  --color-blue-grey-920: #202B3D;
+  --color-blue-grey-940: #172334;
+  --color-blue-grey-990: #142029;
+  --color-blue-grey-999: #0C151C;
+  --color-info: #673AB7;
+  --color-warning: #FF9800;
+  --color-success: #4CAF50;
+  --color-danger: #F44336;
+  --color-primary: #0078ff;
+  
+      
+  --animate-shimmer: shimmer 2s linear infinite;
+  --animate-bounceIn: bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  --animate-float: float 3s ease-in-out infinite;
+  --animate-pulse-glow: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  
+      }
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes bounceIn {
+  0% { transform: scale(0.8); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+  100% { transform: translateY(0px); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 1; filter: drop-shadow(0 0 10px var(--color-primary)); }
+  50% { opacity: 0.7; filter: drop-shadow(0 0 20px var(--color-primary)); }
+}
+
+@keyframes badge-3d-spin {
+  0% { transform: perspective(600px) rotateY(0deg) scale(0.5); opacity: 0; }
+  100% { transform: perspective(600px) rotateY(360deg) scale(1); opacity: 1; }
+}
+
+.animate-badge-3d {
+  animation: badge-3d-spin 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}

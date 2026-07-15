@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">
+<rect x="0" y="0" width="1440" height="900" fill="#eef0f2"/>
+<rect x="0" y="0" width="1440" height="900" rx="0" fill="#1e2126"/>
+<rect x="24" y="24" width="156" height="40" rx="10" fill="#34383f" stroke="#484d55"/>
+<path d="M51 39 L42 44 L51 49 M42 44 L52 44" fill="none" stroke="#a7adb5" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="64" y="49" font-size="14" fill="#a7adb5" font-weight="700" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">면접 포기하기</text>
+<text x="720" y="300" font-size="150" text-anchor="middle" font-family="'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif">🐣</text>
+<rect x="272" y="500" width="48" height="26" rx="6" fill="#3f444b"/>
+<text x="296" y="517" font-size="13" fill="#f3f4f6" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">Lv.1</text>
+<text x="332" y="519" font-size="15" fill="#f3f4f6" font-weight="700" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">널널한 대리</text>
+<rect x="272" y="540" width="896" height="160" rx="20" fill="#34383f" stroke="#484d55"/>
+<text x="304" y="588" font-size="16" fill="#a7adb5" font-weight="700" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">[질문 1]</text>
+<text x="304" y="620" font-size="18" fill="#f3f4f6" font-weight="700" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">이력서에 작성하신 캐싱 전략에서 정합성 문제는</text>
+<text x="304" y="648" font-size="18" fill="#f3f4f6" font-weight="700" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">어떻게 해결하셨나요?</text>
+<text x="1136" y="676" font-size="14" fill="#a7adb5" font-weight="700" text-anchor="end" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">■</text>
+<rect x="272" y="720" width="760" height="140" rx="16" fill="#2a2d33" stroke="#484d55"/>
+<text x="292" y="756" font-size="15" fill="#a7adb5" font-weight="400" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">답변을 입력하세요...</text>
+<rect x="1048" y="720" width="120" height="140" rx="16" fill="#565b63"/>
+<path d="M1100 764 L1117 772 L1100 780 L1103 772 Z" fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linejoin="round"/>
+<text x="1108" y="810" font-size="14" fill="#ffffff" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">다음 질문</text>
+</svg>

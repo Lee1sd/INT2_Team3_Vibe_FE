@@ -1,0 +1,123 @@
+<svg width="1200" height="1100" viewBox="0 0 1200 1100" xmlns="http://www.w3.org/2000/svg">
+  <rect width="100%" height="100%" fill="#FBFBFD" />
+  <text x="600" y="60" font-family="sans-serif" font-size="32" font-weight="bold" fill="#202B3D" text-anchor="middle">커리어 던전 - 화면 흐름도 (Screen Flow)</text>
+
+    <g transform="translate(270, 110)">
+      <rect width="260" height="80" rx="12" fill="#FFFFFF" stroke="#CDD7E0" stroke-width="2" />
+      <text x="130" y="46" font-family="sans-serif" font-size="20" font-weight="bold" fill="#202B3D" text-anchor="middle">[1] 랜딩 / 로그인 화면</text>
+      
+    </g>
+  
+
+    <g transform="translate(270, 310)">
+      <rect width="260" height="80" rx="12" fill="#E6F2FF" stroke="#0078FF" stroke-width="2" />
+      <text x="130" y="36" font-family="sans-serif" font-size="20" font-weight="bold" fill="#202B3D" text-anchor="middle">[2] 메인 로비</text>
+      <text x="130" y="60" font-family="sans-serif" font-size="14" fill="#7890A0" text-anchor="middle">(이력서 미등록 / 등록완료)</text>
+    </g>
+  
+
+    <g transform="translate(770, 310)">
+      <rect width="260" height="80" rx="12" fill="#FFFFFF" stroke="#CDD7E0" stroke-width="2" />
+      <text x="130" y="36" font-family="sans-serif" font-size="20" font-weight="bold" fill="#202B3D" text-anchor="middle">[3] 마이페이지</text>
+      <text x="130" y="60" font-family="sans-serif" font-size="14" fill="#7890A0" text-anchor="middle">(이력서 업로드 관리)</text>
+    </g>
+  
+
+    <g transform="translate(270, 510)">
+      <rect width="260" height="80" rx="12" fill="#FFFFFF" stroke="#CDD7E0" stroke-width="2" />
+      <text x="130" y="36" font-family="sans-serif" font-size="20" font-weight="bold" fill="#202B3D" text-anchor="middle">[4] AI 면접 진행 화면</text>
+      <text x="130" y="60" font-family="sans-serif" font-size="14" fill="#7890A0" text-anchor="middle">(질문 3 + 꼬리질문 1)</text>
+    </g>
+  
+
+    <g transform="translate(260, 690)">
+      <polygon points="140,0 280,60 140,120 0,60" fill="#F0E6FF" stroke="#673AB7" stroke-width="2" />
+      <text x="140" y="66" font-family="sans-serif" font-size="18" font-weight="bold" fill="#673AB7" text-anchor="middle">[5] 신뢰도 80% 달성 여부</text>
+    </g>
+  
+
+    <g transform="translate(730, 710)">
+      <rect width="260" height="80" rx="12" fill="#FFFFFF" stroke="#CDD7E0" stroke-width="2" />
+      <text x="130" y="36" font-family="sans-serif" font-size="20" font-weight="bold" fill="#202B3D" text-anchor="middle">[6] 뱃지 획득 축하 모달</text>
+      <text x="130" y="60" font-family="sans-serif" font-size="14" fill="#7890A0" text-anchor="middle">(80% 이상시 팝업)</text>
+    </g>
+  
+
+    <g transform="translate(270, 910)">
+      <rect width="260" height="80" rx="12" fill="#FFFFFF" stroke="#CDD7E0" stroke-width="2" />
+      <text x="130" y="36" font-family="sans-serif" font-size="20" font-weight="bold" fill="#202B3D" text-anchor="middle">[7] 종합 면접 피드백 화면</text>
+      <text x="130" y="60" font-family="sans-serif" font-size="14" fill="#7890A0" text-anchor="middle">(결과 보고서)</text>
+    </g>
+  
+
+    <path d="M 400 190 L 400 302" fill="none" stroke="#98A8B9" stroke-width="2" />
+    <path d="M 0 -5 L 10 0 L 0 5 Z" fill="#98A8B9" transform="translate(400, 310) rotate(90)" />
+    
+      <rect x="246" y="236" width="308" height="28" rx="14" fill="#F4F4F8" stroke="#CDD7E0" stroke-width="1" />
+      <text x="400" y="254" font-family="sans-serif" font-size="13" font-weight="bold" fill="#0078FF" text-anchor="middle">'Google 계정으로 시작하기' 버튼 클릭</text>
+    
+  
+
+    <path d="M 530 330 L 762 330" fill="none" stroke="#98A8B9" stroke-width="2" />
+    <path d="M 0 -5 L 10 0 L 0 5 Z" fill="#98A8B9" transform="translate(770, 330) rotate(0)" />
+    
+      <rect x="536" y="316" width="228" height="28" rx="14" fill="#F4F4F8" stroke="#CDD7E0" stroke-width="1" />
+      <text x="650" y="334" font-family="sans-serif" font-size="13" font-weight="bold" fill="#0078FF" text-anchor="middle">'이력서 업로드하러 가기' 클릭</text>
+    
+  
+
+    <path d="M 770 370 L 538 370" fill="none" stroke="#98A8B9" stroke-width="2" />
+    <path d="M 0 -5 L 10 0 L 0 5 Z" fill="#98A8B9" transform="translate(530, 370) rotate(180)" />
+    
+      <rect x="524" y="356" width="252" height="28" rx="14" fill="#F4F4F8" stroke="#CDD7E0" stroke-width="1" />
+      <text x="650" y="374" font-family="sans-serif" font-size="13" font-weight="bold" fill="#0078FF" text-anchor="middle">'< 면접 던전으로 돌아가기' 클릭</text>
+    
+  
+
+    <path d="M 400 390 L 400 502" fill="none" stroke="#98A8B9" stroke-width="2" />
+    <path d="M 0 -5 L 10 0 L 0 5 Z" fill="#98A8B9" transform="translate(400, 510) rotate(90)" />
+    
+      <rect x="252" y="436" width="296" height="28" rx="14" fill="#F4F4F8" stroke="#CDD7E0" stroke-width="1" />
+      <text x="400" y="454" font-family="sans-serif" font-size="13" font-weight="bold" fill="#0078FF" text-anchor="middle">키워드 선택 후 '▶ 면접 시작하기' 클릭</text>
+    
+  
+
+    <path d="M 400 590 L 400 682" fill="none" stroke="#98A8B9" stroke-width="2" />
+    <path d="M 0 -5 L 10 0 L 0 5 Z" fill="#98A8B9" transform="translate(400, 690) rotate(90)" />
+    
+      <rect x="342" y="626" width="116" height="28" rx="14" fill="#F4F4F8" stroke="#CDD7E0" stroke-width="1" />
+      <text x="400" y="644" font-family="sans-serif" font-size="13" font-weight="bold" fill="#0078FF" text-anchor="middle">모든 답변 완료</text>
+    
+  
+
+    <path d="M 540 750 L 722 750" fill="none" stroke="#98A8B9" stroke-width="2" />
+    <path d="M 0 -5 L 10 0 L 0 5 Z" fill="#98A8B9" transform="translate(730, 750) rotate(0)" />
+    
+      <rect x="509" y="736" width="252" height="28" rx="14" fill="#F4F4F8" stroke="#CDD7E0" stroke-width="1" />
+      <text x="635" y="754" font-family="sans-serif" font-size="13" font-weight="bold" fill="#0078FF" text-anchor="middle">조건 A (Yes / 80% 이상)</text>
+    
+  
+
+    <path d="M 860 790 L 860 950 L 548 950" fill="none" stroke="#98A8B9" stroke-width="2" />
+    <path d="M 0 -5 L 10 0 L 0 5 Z" fill="#98A8B9" transform="translate(540, 950) rotate(180)" />
+    
+      <rect x="610" y="936" width="180" height="28" rx="14" fill="#F4F4F8" stroke="#CDD7E0" stroke-width="1" />
+      <text x="700" y="954" font-family="sans-serif" font-size="13" font-weight="bold" fill="#0078FF" text-anchor="middle">'피드백 확인하기' 클릭</text>
+    
+  
+
+    <path d="M 400 810 L 400 902" fill="none" stroke="#98A8B9" stroke-width="2" />
+    <path d="M 0 -5 L 10 0 L 0 5 Z" fill="#98A8B9" transform="translate(400, 910) rotate(90)" />
+    
+      <rect x="234" y="846" width="332" height="28" rx="14" fill="#F4F4F8" stroke="#CDD7E0" stroke-width="1" />
+      <text x="400" y="864" font-family="sans-serif" font-size="13" font-weight="bold" fill="#0078FF" text-anchor="middle">조건 B (No / 80% 미만) - 모달 없음</text>
+    
+  
+
+    <path d="M 270 950 L 100 950 L 100 350 L 252 350" fill="none" stroke="#98A8B9" stroke-width="2" />
+    <path d="M 0 -5 L 10 0 L 0 5 Z" fill="#98A8B9" transform="translate(260, 350) rotate(0)" />
+    
+      <rect x="-20" y="636" width="240" height="28" rx="14" fill="#F4F4F8" stroke="#CDD7E0" stroke-width="1" />
+      <text x="100" y="654" font-family="sans-serif" font-size="13" font-weight="bold" fill="#0078FF" text-anchor="middle">'던전 맵으로 돌아가기 >' 클릭</text>
+    
+  </svg>

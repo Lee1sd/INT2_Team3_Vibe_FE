@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="2500" viewBox="0 0 1440 2500" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">
+<rect x="0" y="0" width="1440" height="2500" fill="#eef0f2"/>
+<rect x="0" y="0" width="1440" height="72" rx="0" fill="#ffffff"/>
+<line x1="0" y1="72" x2="1440" y2="72" stroke="#d6dae0" stroke-width="1"/>
+<rect x="24" y="16" width="40" height="40" rx="12" fill="#565b63"/>
+<text x="44" y="41" font-size="13" fill="#ffffff" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">CD</text>
+<text x="76" y="46" font-size="22" fill="#2f333a" font-weight="700" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">커리어 던전</text>
+<circle cx="1402" cy="36" r="15" fill="none" stroke="#6c7278" stroke-width="1.5"/><circle cx="1402" cy="32" r="4.5" fill="none" stroke="#6c7278" stroke-width="1.5"/><path d="M1394 46 a8 8 0 0 1 16 0" fill="none" stroke="#6c7278" stroke-width="1.5"/>
+<text x="720" y="180" font-size="38" fill="#2f333a" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">주니어 머쓱이님,</text>
+<text x="720" y="228" font-size="38" fill="#2f333a" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">다음 면접관이 기다립니다.</text>
+<rect x="656" y="280" width="128" height="128" rx="20" fill="#ffffff" stroke="#d6dae0"/>
+<text x="720" y="364" font-size="56" text-anchor="middle" font-family="'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif">🐣</text>
+<rect x="808" y="280" width="320" height="78" rx="16" fill="#ffffff" stroke="#d6dae0"/>
+<path d="M808 314 l-10 8 l10 8 Z" fill="#ffffff" stroke="#d6dae0"/>
+<text x="830" y="312" font-size="13.5" fill="#2f333a" font-weight="400" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">앗! 아직 이력서가 없어요.</text>
+<text x="830" y="334" font-size="13.5" fill="#2f333a" font-weight="400" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">던전에 입장하려면 이력서부터</text>
+<text x="830" y="352" font-size="13.5" fill="#2f333a" font-weight="400" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">업로드해 주세요!</text>
+<text x="720" y="448" font-size="20" fill="#2f333a" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">초보 머쓱이 뱃지</text>
+<rect x="630" y="468" width="180" height="32" rx="16" fill="#ffffff" stroke="#d6dae0"/>
+<polygon points="658.0,478.0 659.5,481.9 663.7,482.1 660.5,484.8 661.5,488.9 658.0,486.6 654.5,488.9 655.5,484.8 652.3,482.1 656.5,481.9" fill="#6c7278"/>
+<text x="726" y="489" font-size="13" fill="#6c7278" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">현재 레벨: Lv.1</text>
+<rect x="464" y="528" width="512" height="148" rx="20" fill="#ffffff" stroke="#d6dae0"/>
+<text x="488" y="562" font-size="14" fill="#2f333a" font-weight="700" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">🔥 신뢰도 게이지</text>
+<circle cx="612" cy="556" r="8" fill="none" stroke="#9aa0a8" stroke-width="1.5"/><path d="M609.5 553.5 a2.5 2.5 0 1 1 2.5 2.5 v1.5" fill="none" stroke="#9aa0a8" stroke-width="1.4" stroke-linecap="round"/><circle cx="612" cy="560.5" r="1" fill="#9aa0a8"/>
+<text x="952" y="562" font-size="14" fill="#6c7278" font-weight="700" text-anchor="end" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">30 / 100</text>
+<rect x="488" y="580" width="464" height="16" rx="8" fill="#eef0f2" stroke="#d6dae0"/>
+<rect x="488" y="580" width="139.2" height="16" rx="8" fill="#565b63"/>
+<text x="720" y="624" font-size="14" fill="#2f333a" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">다음 레벨 해금까지 남은 신뢰도: 30</text>
+<text x="720" y="652" font-size="14" fill="#9aa0a8" font-weight="400" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">아래로 스크롤하여 던전에 입장하세요 ↓</text>
+<line x1="0" y1="860" x2="1440" y2="860" stroke="#d6dae0" stroke-width="1"/>
+<rect x="0" y="860" width="1440" height="1640" rx="0" fill="#2a2d33"/>
+<text x="720" y="950" font-size="32" fill="#f3f4f6" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif" letter-spacing="2">면접관 던전</text>
+<text x="720" y="988" font-size="16" fill="#a7adb5" font-weight="400" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">신뢰도를 쌓아 상위 레벨의 면접관을 해금하세요.</text>
+<rect x="260" y="1040" width="420" height="420" rx="20" fill="#34383f" stroke="#484d55"/>
+<rect x="288" y="1068" width="64" height="64" rx="16" fill="#3f444b" stroke="#484d55"/>
+<text x="320" y="1112" font-size="30" text-anchor="middle" font-family="'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif">🐣</text>
+<rect x="372" y="1070" width="48" height="24" rx="6" fill="#3f444b"/>
+<text x="396" y="1086" font-size="12" fill="#f3f4f6" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">Lv.1</text>
+<text x="372" y="1120" font-size="19" fill="#f3f4f6" font-weight="700" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">널널한 대리</text>
+<text x="288" y="1158" font-size="13" fill="#a7adb5" font-weight="400" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">코드 가독성과 기본기를 중요하게 생각합니다.</text>
+<rect x="288" y="1180" width="364" height="78" rx="4" fill="#3a3f46"/>
+<rect x="288" y="1180" width="4" height="78" rx="0" fill="#a7adb5"/>
+<text x="304" y="1204" font-size="12" fill="#f3f4f6" font-weight="700" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">💡 [이력서 팩트체크 및 기본 CS 방어 수준]</text>
+<text x="304" y="1226" font-size="11" fill="#a7adb5" font-weight="400" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">내가 사용한 기술의 기본 개념과 프로젝트 기여도를 </text>
+<text x="304" y="1244" font-size="11" fill="#a7adb5" font-weight="400" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">명확하게 설명할 수 있습니다.</text>
+<text x="288" y="1276" font-size="13" fill="#a7adb5" font-weight="700" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">면접 집중 키워드 (1개 선택)</text>
+<rect x="288" y="1292" width="86" height="28" rx="8" fill="#3f444b" stroke="#484d55"/>
+<text x="331" y="1311" font-size="13" fill="#f3f4f6" font-weight="400" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">데이터전처리</text>
+<rect x="382" y="1292" width="42" height="28" rx="8" fill="#3f444b" stroke="#484d55"/>
+<text x="403" y="1311" font-size="13" fill="#f3f4f6" font-weight="400" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">DB</text>
+<rect x="432" y="1292" width="42" height="28" rx="8" fill="#3f444b" stroke="#484d55"/>
+<text x="453" y="1311" font-size="13" fill="#f3f4f6" font-weight="400" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">부하</text>
+<rect x="482" y="1292" width="42" height="28" rx="8" fill="#3f444b" stroke="#484d55"/>
+<text x="503" y="1311" font-size="13" fill="#f3f4f6" font-weight="400" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">보안</text>
+<rect x="532" y="1292" width="75" height="28" rx="8" fill="#3f444b" stroke="#484d55"/>
+<text x="569.5" y="1311" font-size="13" fill="#f3f4f6" font-weight="400" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">시스템설계</text>
+<rect x="288" y="1328" width="64" height="28" rx="8" fill="#3f444b" stroke="#484d55"/>
+<text x="320" y="1347" font-size="13" fill="#f3f4f6" font-weight="400" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">클라우드</text>
+<rect x="288" y="1388" width="364" height="48" rx="16" fill="#565b63"/>
+<path d="M399 1405 L411 1412 L399 1419 Z" fill="#ffffff"/>
+<text x="476" y="1418" font-size="16" fill="#ffffff" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">면접 시작하기</text>
+<rect x="760" y="1516" width="420" height="280" rx="20" fill="#34383f" stroke="#484d55"/>
+<rect x="788" y="1544" width="64" height="64" rx="16" fill="#3f444b" stroke="#484d55"/>
+<text x="820" y="1588" font-size="30" text-anchor="middle" font-family="'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif">🦅</text>
+<rect x="872" y="1546" width="48" height="24" rx="6" fill="#3f444b"/>
+<text x="896" y="1562" font-size="12" fill="#f3f4f6" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">Lv.2</text>
+<text x="872" y="1596" font-size="19" fill="#f3f4f6" font-weight="700" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">깐깐한 과장</text>
+<rect x="1120" y="1542" width="34" height="34" rx="10" fill="#3f444b" stroke="#484d55"/>
+<rect x="1131" y="1551.5" width="12" height="9" rx="2" fill="none" stroke="#a7adb5" stroke-width="1.5"/><path d="M1133 1551.5 v-3.5 a4 4 0 0 1 8 0 v3.5" fill="none" stroke="#a7adb5" stroke-width="1.5" stroke-linecap="round"/>
+<text x="788" y="1634" font-size="13" fill="#a7adb5" font-weight="400" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">아키텍처와 예외 처리를 날카롭게 파고듭니다.</text>
+<rect x="788" y="1656" width="364" height="78" rx="4" fill="#3a3f46"/>
+<rect x="788" y="1656" width="4" height="78" rx="0" fill="#a7adb5"/>
+<text x="804" y="1680" font-size="12" fill="#f3f4f6" font-weight="700" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">💡 [실무 트러블슈팅 및 의사결정 심층 방어 수준]</text>
+<text x="804" y="1702" font-size="11" fill="#a7adb5" font-weight="400" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">특정 기술을 도입한 논리적 근거(Trade-off)</text>
+<text x="804" y="1720" font-size="11" fill="#a7adb5" font-weight="400" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">와 한계점, 장애 대처 경험을 설득력 있게 방어할 …</text>
+<rect x="788" y="1724" width="364" height="48" rx="16" fill="#3f444b" stroke="#484d55"/>
+<path d="M910 1739 L918 1742 V1748 a8 10 0 0 1 -8 9 a8 10 0 0 1 -8 -9 V1742 Z" fill="none" stroke="#a7adb5" stroke-width="1.4"/><path d="M904 1747 L909 1752 L917 1741" fill="none" stroke="#a7adb5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="978" y="1754" font-size="15" fill="#a7adb5" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">신뢰도 30 필요</text>
+<rect x="260" y="1852" width="420" height="280" rx="20" fill="#34383f" stroke="#484d55"/>
+<rect x="288" y="1880" width="64" height="64" rx="16" fill="#3f444b" stroke="#484d55"/>
+<text x="320" y="1924" font-size="30" text-anchor="middle" font-family="'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif">🦖</text>
+<rect x="372" y="1882" width="48" height="24" rx="6" fill="#3f444b"/>
+<text x="396" y="1898" font-size="12" fill="#f3f4f6" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">Lv.3</text>
+<text x="372" y="1932" font-size="19" fill="#f3f4f6" font-weight="700" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">압박 부장</text>
+<rect x="620" y="1878" width="34" height="34" rx="10" fill="#3f444b" stroke="#484d55"/>
+<rect x="631" y="1887.5" width="12" height="9" rx="2" fill="none" stroke="#a7adb5" stroke-width="1.5"/><path d="M633 1887.5 v-3.5 a4 4 0 0 1 8 0 v3.5" fill="none" stroke="#a7adb5" stroke-width="1.5" stroke-linecap="round"/>
+<text x="288" y="1970" font-size="13" fill="#a7adb5" font-weight="400" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">극한의 상황에서 멘탈과 문제 해결 능력을 봅니다.</text>
+<rect x="288" y="1992" width="364" height="78" rx="4" fill="#3a3f46"/>
+<rect x="288" y="1992" width="4" height="78" rx="0" fill="#a7adb5"/>
+<text x="304" y="2016" font-size="12" fill="#f3f4f6" font-weight="700" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">🔓 [달성 역량]</text>
+<text x="304" y="2038" font-size="11" fill="#a7adb5" font-weight="400" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">스트레스 상황에서도 침착하게 근본적인 원인을 분석하</text>
+<text x="304" y="2056" font-size="11" fill="#a7adb5" font-weight="400" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">고 대안을 제시할 수 있습니다.</text>
+<rect x="288" y="2060" width="364" height="48" rx="16" fill="#3f444b" stroke="#484d55"/>
+<path d="M410 2075 L418 2078 V2084 a8 10 0 0 1 -8 9 a8 10 0 0 1 -8 -9 V2078 Z" fill="none" stroke="#a7adb5" stroke-width="1.4"/><path d="M404 2083 L409 2088 L417 2077" fill="none" stroke="#a7adb5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="478" y="2090" font-size="15" fill="#a7adb5" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">신뢰도 60 필요</text>
+<rect x="760" y="2188" width="420" height="280" rx="20" fill="#34383f" stroke="#484d55"/>
+<rect x="788" y="2216" width="64" height="64" rx="16" fill="#3f444b" stroke="#484d55"/>
+<text x="820" y="2260" font-size="30" text-anchor="middle" font-family="'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif">🐉</text>
+<rect x="872" y="2218" width="48" height="24" rx="6" fill="#3f444b"/>
+<text x="896" y="2234" font-size="12" fill="#f3f4f6" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">Lv.4</text>
+<text x="872" y="2268" font-size="19" fill="#f3f4f6" font-weight="700" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">냉철한 임원</text>
+<rect x="1120" y="2214" width="34" height="34" rx="10" fill="#3f444b" stroke="#484d55"/>
+<rect x="1131" y="2223.5" width="12" height="9" rx="2" fill="none" stroke="#a7adb5" stroke-width="1.5"/><path d="M1133 2223.5 v-3.5 a4 4 0 0 1 8 0 v3.5" fill="none" stroke="#a7adb5" stroke-width="1.5" stroke-linecap="round"/>
+<text x="788" y="2306" font-size="13" fill="#a7adb5" font-weight="400" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">회사의 인재상과 컬처핏을 날카롭게 검증합니다.</text>
+<rect x="788" y="2328" width="364" height="78" rx="4" fill="#3a3f46"/>
+<rect x="788" y="2328" width="4" height="78" rx="0" fill="#a7adb5"/>
+<text x="804" y="2352" font-size="12" fill="#f3f4f6" font-weight="700" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">🔓 [달성 역량]</text>
+<text x="804" y="2374" font-size="11" fill="#a7adb5" font-weight="400" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">조직의 비전에 부합하며 거시적인 관점에서의 엔지니어</text>
+<text x="804" y="2392" font-size="11" fill="#a7adb5" font-weight="400" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">링 가치를 증명할 수 있습니다.</text>
+<rect x="788" y="2396" width="364" height="48" rx="16" fill="#3f444b" stroke="#484d55"/>
+<path d="M910 2411 L918 2414 V2420 a8 10 0 0 1 -8 9 a8 10 0 0 1 -8 -9 V2414 Z" fill="none" stroke="#a7adb5" stroke-width="1.4"/><path d="M904 2419 L909 2424 L917 2413" fill="none" stroke="#a7adb5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="978" y="2426" font-size="15" fill="#a7adb5" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">신뢰도 100 필요</text>
+<line x1="720" y1="1040" x2="720" y2="2328" stroke="#484d55" stroke-width="2"/>
+<circle cx="720" cy="1250" r="6" fill="#a7adb5"/>
+<circle cx="720" cy="1656" r="6" fill="#484d55"/>
+<circle cx="720" cy="1992" r="6" fill="#484d55"/>
+<circle cx="720" cy="2328" r="6" fill="#484d55"/>
+</svg>

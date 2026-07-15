@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="902" viewBox="0 0 1440 902" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">
+<rect x="0" y="0" width="1440" height="902" fill="#eef0f2"/>
+<rect x="0" y="0" width="1440" height="72" rx="0" fill="#ffffff"/>
+<line x1="0" y1="72" x2="1440" y2="72" stroke="#d6dae0" stroke-width="1"/>
+<rect x="24" y="16" width="40" height="40" rx="12" fill="#565b63"/>
+<text x="44" y="41" font-size="13" fill="#ffffff" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">CD</text>
+<text x="76" y="46" font-size="22" fill="#2f333a" font-weight="700" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">커리어 던전</text>
+<circle cx="1402" cy="36" r="15" fill="none" stroke="#6c7278" stroke-width="1.5"/><circle cx="1402" cy="32" r="4.5" fill="none" stroke="#6c7278" stroke-width="1.5"/><path d="M1394 46 a8 8 0 0 1 16 0" fill="none" stroke="#6c7278" stroke-width="1.5"/>
+<path d="M285 133 L276 138 L285 143 M276 138 L286 138" fill="none" stroke="#6c7278" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="296" y="143" font-size="14" fill="#6c7278" font-weight="700" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">면접 던전으로 돌아가기</text>
+<text x="272" y="188" font-size="32" fill="#2f333a" font-weight="700" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">마이페이지</text>
+<text x="272" y="216" font-size="14" fill="#9aa0a8" font-weight="400" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">내 프로필, 파일 관리 및 전적을 확인하세요.</text>
+<rect x="272" y="250" width="150" height="40" rx="12" fill="#e7e9ec" stroke="#d6dae0"/>
+<text x="347" y="276" font-size="12" fill="#6c7278" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">[01_PROFILE]</text>
+<rect x="426" y="250" width="150" height="44" rx="12" fill="#ffffff" stroke="#d6dae0"/>
+<text x="501" y="278" font-size="12" fill="#2f333a" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">[02_HISTORY]</text>
+<rect x="580" y="250" width="150" height="40" rx="12" fill="#e7e9ec" stroke="#d6dae0"/>
+<text x="655" y="276" font-size="12" fill="#6c7278" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">[03_CONFIG]</text>
+<rect x="272" y="290" width="896" height="552" rx="20" fill="#ffffff" stroke="#d6dae0"/>
+<rect x="272" y="290" width="40" height="12" rx="0" fill="#ffffff"/>
+<text x="304" y="322" font-size="20" fill="#2f333a" font-weight="700" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">나의 면접 전적</text>
+<rect x="304" y="350" width="832" height="176" rx="16" fill="#ffffff" stroke="#d6dae0"/>
+<rect x="304" y="350" width="832" height="64" rx="16" fill="#eef0f2"/>
+<rect x="304" y="406" width="832" height="8" rx="0" fill="#eef0f2"/>
+<line x1="304" y1="414" x2="1136" y2="414" stroke="#d6dae0" stroke-width="1"/>
+<circle cx="336" cy="382" r="16" fill="#e7e9ec" stroke="#d6dae0" stroke-width="1"/>
+<text x="336" y="387" font-size="14" text-anchor="middle" font-family="'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif">😎</text>
+<text x="364" y="387" font-size="16" fill="#2f333a" font-weight="700" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">널널한 대리</text>
+<text x="462" y="387" font-size="13" fill="#9aa0a8" font-weight="400" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">(1)</text>
+<path d="M1098 384 L1104 378 L1110 384" fill="none" stroke="#9aa0a8" stroke-width="1.6" stroke-linecap="round"/>
+<rect x="324" y="434" width="792" height="72" rx="12" fill="#ffffff" stroke="#d6dae0"/>
+<text x="340" y="458" font-size="13" fill="#9aa0a8" font-weight="400" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">[26.07.09]</text>
+<rect x="340" y="470" width="56" height="22" rx="6" fill="#e7e9ec" stroke="#d6dae0"/>
+<text x="368" y="485" font-size="11" fill="#6c7278" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">React</text>
+<text x="408" y="485" font-size="15" fill="#2f333a" font-weight="700" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">중점 면접</text>
+<text x="972" y="476" font-size="14" fill="#6c7278" font-weight="700" text-anchor="end" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">90 점</text>
+<rect x="988" y="462" width="56" height="24" rx="6" fill="#e7e9ec"/>
+<text x="1016" y="478" font-size="11" fill="#2f333a" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">합격</text>
+<path d="M1069 464 L1075 470 L1069 476" fill="none" stroke="#c4c9cf" stroke-width="1.6" stroke-linecap="round"/>
+<rect x="304" y="542" width="832" height="260" rx="16" fill="#ffffff" stroke="#d6dae0"/>
+<rect x="304" y="542" width="832" height="64" rx="16" fill="#eef0f2"/>
+<rect x="304" y="598" width="832" height="8" rx="0" fill="#eef0f2"/>
+<line x1="304" y1="606" x2="1136" y2="606" stroke="#d6dae0" stroke-width="1"/>
+<circle cx="336" cy="574" r="16" fill="#e7e9ec" stroke="#d6dae0" stroke-width="1"/>
+<text x="336" y="579" font-size="14" text-anchor="middle" font-family="'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif">🧐</text>
+<text x="364" y="579" font-size="16" fill="#2f333a" font-weight="700" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">깐깐한 과장</text>
+<text x="462" y="579" font-size="13" fill="#9aa0a8" font-weight="400" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">(2)</text>
+<path d="M1098 576 L1104 570 L1110 576" fill="none" stroke="#9aa0a8" stroke-width="1.6" stroke-linecap="round"/>
+<rect x="324" y="626" width="792" height="72" rx="12" fill="#ffffff" stroke="#d6dae0"/>
+<text x="340" y="650" font-size="13" fill="#9aa0a8" font-weight="400" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">[26.07.08]</text>
+<rect x="340" y="662" width="40" height="22" rx="6" fill="#e7e9ec" stroke="#d6dae0"/>
+<text x="360" y="677" font-size="11" fill="#6c7278" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">MSA</text>
+<text x="392" y="677" font-size="15" fill="#2f333a" font-weight="700" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">중점 면접</text>
+<text x="972" y="668" font-size="14" fill="#6c7278" font-weight="700" text-anchor="end" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">55 점</text>
+<rect x="988" y="654" width="56" height="24" rx="6" fill="#e7e9ec"/>
+<text x="1016" y="670" font-size="11" fill="#2f333a" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">불합격</text>
+<path d="M1069 656 L1075 662 L1069 668" fill="none" stroke="#c4c9cf" stroke-width="1.6" stroke-linecap="round"/>
+<rect x="324" y="710" width="792" height="72" rx="12" fill="#ffffff" stroke="#d6dae0"/>
+<text x="340" y="734" font-size="13" fill="#9aa0a8" font-weight="400" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">[26.07.05]</text>
+<rect x="340" y="746" width="56" height="22" rx="6" fill="#e7e9ec" stroke="#d6dae0"/>
+<text x="368" y="761" font-size="11" fill="#6c7278" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">Redis</text>
+<text x="408" y="761" font-size="15" fill="#2f333a" font-weight="700" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">중점 면접</text>
+<text x="972" y="752" font-size="14" fill="#6c7278" font-weight="700" text-anchor="end" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">65 점</text>
+<rect x="988" y="738" width="56" height="24" rx="6" fill="#e7e9ec"/>
+<text x="1016" y="754" font-size="11" fill="#2f333a" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">불합격</text>
+<path d="M1069 740 L1075 746 L1069 752" fill="none" stroke="#c4c9cf" stroke-width="1.6" stroke-linecap="round"/>
+</svg>

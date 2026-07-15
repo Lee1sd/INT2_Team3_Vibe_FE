@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="700" viewBox="0 0 1440 700" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">
+<rect x="0" y="0" width="1440" height="700" fill="#eef0f2"/>
+<rect x="0" y="0" width="1440" height="72" rx="0" fill="#ffffff"/>
+<line x1="0" y1="72" x2="1440" y2="72" stroke="#d6dae0" stroke-width="1"/>
+<rect x="24" y="16" width="40" height="40" rx="12" fill="#565b63"/>
+<text x="44" y="41" font-size="13" fill="#ffffff" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">CD</text>
+<text x="76" y="46" font-size="22" fill="#2f333a" font-weight="700" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">커리어 던전</text>
+<circle cx="1402" cy="36" r="15" fill="none" stroke="#6c7278" stroke-width="1.5"/><circle cx="1402" cy="32" r="4.5" fill="none" stroke="#6c7278" stroke-width="1.5"/><path d="M1394 46 a8 8 0 0 1 16 0" fill="none" stroke="#6c7278" stroke-width="1.5"/>
+<rect x="672" y="136" width="96" height="28" rx="6" fill="#e7e9ec" stroke="#d6dae0"/>
+<text x="720" y="155" font-size="12.5" fill="#6c7278" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">STEP 01</text>
+<text x="720" y="208" font-size="26" fill="#2f333a" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">무기(이력서) 장착</text>
+<text x="720" y="238" font-size="14" fill="#6c7278" font-weight="400" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">이력서를 업로드하여 당신만의 맞춤형 면접 던전을 생성하세요.</text>
+<rect x="384" y="278" width="672" height="300" rx="20" fill="#ffffff" stroke="#b7bcc4" stroke-width="2" stroke-dasharray="10,8"/>
+<rect x="688" y="354" width="64" height="64" rx="16" fill="#eef0f2" stroke="#d6dae0"/>
+<path d="M705 393 a9 9 0 0 1 2 -18 a12 12 0 0 1 23 3 a8 8 0 0 1 -2 15" fill="none" stroke="#6c7278" stroke-width="1.6"/><path d="M720 395 L720 380 M714 386 L720 380 L726 386" fill="none" stroke="#6c7278" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="720" y="448" font-size="20" fill="#2f333a" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">클릭하여 파일 업로드</text>
+<text x="720" y="474" font-size="14" fill="#9aa0a8" font-weight="400" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">지원 형식: PDF, TXT, MD (최대 10MB)</text>
+</svg>
