@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1180" viewBox="0 0 1200 1180">
+  <rect width="1200" height="1180" fill="#FBFBFD"/>
+  <text x="600" y="52" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="28" font-weight="700" fill="#202B3D" text-anchor="middle">커리어 던전 — 화면 흐름도 (Screen Flow)</text>
+  <text x="600" y="78" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="13" fill="#7890A0" text-anchor="middle">화면(Screen) 단위 이동 · 사용자 흐름도(User Flow)와 별도</text>
+
+  <!-- Legend -->
+  <rect x="40" y="40" width="200" height="92" rx="10" fill="#FFFFFF" stroke="#CDD7E0" stroke-width="1"/>
+  <rect x="56" y="56" width="28" height="18" rx="4" fill="#FFFFFF" stroke="#CDD7E0" stroke-width="2"/>
+  <text x="94" y="70" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="12" fill="#202B3D">화면 (Screen)</text>
+  <rect x="56" y="82" width="28" height="18" rx="4" fill="#E6F2FF" stroke="#0078FF" stroke-width="2"/>
+  <text x="94" y="96" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="12" fill="#202B3D">허브 화면</text>
+  <polygon points="70,118 84,126 70,134 56,126" fill="#F0E6FF" stroke="#673AB7" stroke-width="1.5"/>
+  <text x="94" y="130" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="12" fill="#202B3D">조건 분기</text>
+
+  <!-- [1] Login -->
+  <rect x="220" y="110" width="280" height="80" rx="12" fill="#FFFFFF" stroke="#CDD7E0" stroke-width="2"/>
+<text x="360" y="156" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="18" font-weight="700" fill="#202B3D" text-anchor="middle">[1] 랜딩 / 로그인 화면</text>
+
+  <!-- arrow 1 -> 2 -->
+  <path d="M 360 190 L 360 248" fill="none" stroke="#98A8B9" stroke-width="2"/>
+  <g transform="translate(360,248) rotate(90)">
+    <polygon points="0,-5 10,0 0,5" fill="#98A8B9"/>
+  </g>
+  
+    <rect x="220" y="206" width="280" height="28" rx="14" fill="#F4F4F8" stroke="#CDD7E0" stroke-width="1"/>
+    <text x="360" y="225" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="13" font-weight="700" fill="#0078FF" text-anchor="middle">'Google 계정으로 시작하기' 클릭</text>
+
+  <!-- [2] Main lobby -->
+  <rect x="220" y="260" width="280" height="80" rx="12" fill="#E6F2FF" stroke="#0078FF" stroke-width="2"/>
+<text x="360" y="294" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="18" font-weight="700" fill="#202B3D" text-anchor="middle">[2] 메인 로비 (/dungeon)</text>
+<text x="360" y="318" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="13" fill="#7890A0" text-anchor="middle">(이력서 미등록 / 등록완료)</text>
+
+  <!-- [3] MyPage -->
+  <rect x="720" y="260" width="280" height="80" rx="12" fill="#FFFFFF" stroke="#CDD7E0" stroke-width="2"/>
+<text x="860" y="294" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="18" font-weight="700" fill="#202B3D" text-anchor="middle">[3] 마이페이지 (/mypage)</text>
+<text x="860" y="318" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="13" fill="#7890A0" text-anchor="middle">(이력서 업로드 · 뱃지)</text>
+
+  <!-- 2 -> 3 -->
+  <path d="M 500 290 L 710 290" fill="none" stroke="#98A8B9" stroke-width="2"/>
+  <g transform="translate(710,290) rotate(0)">
+    <polygon points="0,-5 10,0 0,5" fill="#98A8B9"/>
+  </g>
+  
+    <rect x="490" y="262" width="240" height="28" rx="14" fill="#F4F4F8" stroke="#CDD7E0" stroke-width="1"/>
+    <text x="610" y="281" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="13" font-weight="700" fill="#0078FF" text-anchor="middle">'이력서 업로드하러 가기' 클릭</text>
+
+  <!-- 3 -> 2 return -->
+  <path d="M 720 330 L 510 330" fill="none" stroke="#98A8B9" stroke-width="2"/>
+  <g transform="translate(510,330) rotate(180)">
+    <polygon points="0,-5 10,0 0,5" fill="#98A8B9"/>
+  </g>
+  
+    <rect x="485" y="334" width="250" height="28" rx="14" fill="#F4F4F8" stroke="#CDD7E0" stroke-width="1"/>
+    <text x="610" y="353" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="13" font-weight="700" fill="#0078FF" text-anchor="middle">'면접 던전으로 돌아가기' 클릭</text>
+
+  <!-- 2 -> 4 -->
+  <path d="M 360 340 L 360 408" fill="none" stroke="#98A8B9" stroke-width="2"/>
+  <g transform="translate(360,408) rotate(90)">
+    <polygon points="0,-5 10,0 0,5" fill="#98A8B9"/>
+  </g>
+  
+    <rect x="215" y="366" width="290" height="28" rx="14" fill="#F4F4F8" stroke="#CDD7E0" stroke-width="1"/>
+    <text x="360" y="385" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="13" font-weight="700" fill="#0078FF" text-anchor="middle">키워드 선택 후 '면접 시작하기' 클릭</text>
+
+  <!-- [4] Interview -->
+  <rect x="220" y="420" width="280" height="80" rx="12" fill="#FFFFFF" stroke="#CDD7E0" stroke-width="2"/>
+<text x="360" y="454" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="18" font-weight="700" fill="#202B3D" text-anchor="middle">[4] AI 면접 진행 화면</text>
+<text x="360" y="478" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="13" fill="#7890A0" text-anchor="middle">(질문 3 + 꼬리질문 1)</text>
+
+  <!-- 4 -> 5 -->
+  <path d="M 360 500 L 360 568" fill="none" stroke="#98A8B9" stroke-width="2"/>
+  <g transform="translate(360,568) rotate(90)">
+    <polygon points="0,-5 10,0 0,5" fill="#98A8B9"/>
+  </g>
+  
+    <rect x="290" y="526" width="140" height="28" rx="14" fill="#F4F4F8" stroke="#CDD7E0" stroke-width="1"/>
+    <text x="360" y="545" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="13" font-weight="700" fill="#0078FF" text-anchor="middle">모든 답변 완료</text>
+
+  <!-- [5] Decision -->
+  
+    <polygon points="360,570 510,640 360,710 210,640" fill="#F0E6FF" stroke="#673AB7" stroke-width="2"/>
+    <text x="360" y="634" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="15" font-weight="700" fill="#673AB7" text-anchor="middle">[5] 신뢰도 80% 달성?</text>
+    <text x="360" y="656" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="12" fill="#673AB7" text-anchor="middle">(분기점)</text>
+
+  <!-- [6] Badge modal -->
+  <rect x="720" y="600" width="280" height="80" rx="12" fill="#FFF8E6" stroke="#E6A800" stroke-width="2"/>
+<text x="860" y="634" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="18" font-weight="700" fill="#202B3D" text-anchor="middle">[6] 뱃지 획득 축하 모달</text>
+<text x="860" y="658" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="13" fill="#7890A0" text-anchor="middle">(80% 이상 시 팝업)</text>
+
+  <!-- Yes: 5 -> 6 -->
+  <path d="M 510 640 L 710 640" fill="none" stroke="#98A8B9" stroke-width="2"/>
+  <g transform="translate(710,640) rotate(0)">
+    <polygon points="0,-5 10,0 0,5" fill="#98A8B9"/>
+  </g>
+  
+    <rect x="540" y="610" width="150" height="28" rx="14" fill="#F4F4F8" stroke="#CDD7E0" stroke-width="1"/>
+    <text x="615" y="629" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="13" font-weight="700" fill="#0078FF" text-anchor="middle">Yes / 80% 이상</text>
+
+  <!-- [7] Feedback -->
+  <rect x="220" y="800" width="280" height="80" rx="12" fill="#FFFFFF" stroke="#CDD7E0" stroke-width="2"/>
+<text x="360" y="834" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="18" font-weight="700" fill="#202B3D" text-anchor="middle">[7] 종합 면접 피드백 화면</text>
+<text x="360" y="858" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="13" fill="#7890A0" text-anchor="middle">(결과 보고서 /result)</text>
+
+  <!-- No: 5 -> 7 -->
+  <path d="M 360 710 L 360 792" fill="none" stroke="#98A8B9" stroke-width="2"/>
+  <g transform="translate(360,792) rotate(90)">
+    <polygon points="0,-5 10,0 0,5" fill="#98A8B9"/>
+  </g>
+  
+    <rect x="245" y="742" width="230" height="28" rx="14" fill="#F4F4F8" stroke="#CDD7E0" stroke-width="1"/>
+    <text x="360" y="761" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="13" font-weight="700" fill="#0078FF" text-anchor="middle">No / 80% 미만 (모달 없음)</text>
+
+  <!-- 6 -> 7 -->
+  <path d="M 860 680 L 860 840 L 510 840" fill="none" stroke="#98A8B9" stroke-width="2"/>
+  <g transform="translate(510,840) rotate(180)">
+    <polygon points="0,-5 10,0 0,5" fill="#98A8B9"/>
+  </g>
+  
+    <rect x="765" y="746" width="190" height="28" rx="14" fill="#F4F4F8" stroke="#CDD7E0" stroke-width="1"/>
+    <text x="860" y="765" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="13" font-weight="700" fill="#0078FF" text-anchor="middle">'피드백 확인하기' 클릭</text>
+
+  <!-- 7 -> 2 return (left side, all positive coords) -->
+  <path d="M 220 840 L 120 840 L 120 300 L 210 300" fill="none" stroke="#98A8B9" stroke-width="2"/>
+  <g transform="translate(210,300) rotate(0)">
+    <polygon points="0,-5 10,0 0,5" fill="#98A8B9"/>
+  </g>
+  
+    <rect x="20" y="556" width="200" height="28" rx="14" fill="#F4F4F8" stroke="#CDD7E0" stroke-width="1"/>
+    <text x="120" y="575" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="13" font-weight="700" fill="#0078FF" text-anchor="middle">'던전 맵으로 돌아가기' 클릭</text>
+
+  <!-- Footer note -->
+  <text x="600" y="1140" font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" font-size="12" fill="#9AA0A8" text-anchor="middle">피그마: File → Place image / 또는 SVG 파일을 캔버스로 드래그 · 복붙(Ctrl+V)은 지원되지 않을 수 있음</text>
+</svg>

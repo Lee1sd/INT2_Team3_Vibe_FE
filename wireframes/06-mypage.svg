@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1192" viewBox="0 0 1440 1192" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">
+<rect x="0" y="0" width="1440" height="1192" fill="#eef0f2"/>
+<rect x="0" y="0" width="1440" height="72" rx="0" fill="#ffffff"/>
+<line x1="0" y1="72" x2="1440" y2="72" stroke="#d6dae0" stroke-width="1"/>
+<rect x="24" y="16" width="40" height="40" rx="12" fill="#565b63"/>
+<text x="44" y="41" font-size="13" fill="#ffffff" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">CD</text>
+<text x="76" y="46" font-size="22" fill="#2f333a" font-weight="700" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">커리어 던전</text>
+<circle cx="1402" cy="36" r="15" fill="none" stroke="#6c7278" stroke-width="1.5"/><circle cx="1402" cy="32" r="4.5" fill="none" stroke="#6c7278" stroke-width="1.5"/><path d="M1394 46 a8 8 0 0 1 16 0" fill="none" stroke="#6c7278" stroke-width="1.5"/>
+<path d="M285 133 L276 138 L285 143 M276 138 L286 138" fill="none" stroke="#6c7278" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="296" y="143" font-size="14" fill="#6c7278" font-weight="700" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">면접 던전으로 돌아가기</text>
+<text x="272" y="188" font-size="32" fill="#2f333a" font-weight="700" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">마이페이지</text>
+<text x="272" y="216" font-size="14" fill="#9aa0a8" font-weight="400" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">내 프로필, 파일 관리 및 전적을 확인하세요.</text>
+<rect x="272" y="250" width="150" height="44" rx="12" fill="#ffffff" stroke="#d6dae0"/>
+<text x="347" y="278" font-size="12" fill="#2f333a" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">[01_PROFILE]</text>
+<rect x="426" y="250" width="150" height="40" rx="12" fill="#e7e9ec" stroke="#d6dae0"/>
+<text x="501" y="276" font-size="12" fill="#6c7278" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">[02_HISTORY]</text>
+<rect x="580" y="250" width="150" height="40" rx="12" fill="#e7e9ec" stroke="#d6dae0"/>
+<text x="655" y="276" font-size="12" fill="#6c7278" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">[03_CONFIG]</text>
+<rect x="272" y="290" width="896" height="842" rx="20" fill="#ffffff" stroke="#d6dae0"/>
+<rect x="272" y="290" width="40" height="12" rx="0" fill="#ffffff"/>
+<text x="304" y="322" font-size="20" fill="#2f333a" font-weight="700" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">프로필 정보</text>
+<rect x="304" y="342" width="832" height="120" rx="20" fill="#eef0f2" stroke="#d6dae0"/>
+<circle cx="372" cy="402" r="40" fill="#e7e9ec" stroke="#ffffff" stroke-width="1"/>
+<text x="372" y="410" font-size="24" fill="#9aa0a8" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">U</text>
+<circle cx="400" cy="430" r="12" fill="#ffffff" stroke="#d6dae0" stroke-width="1"/>
+<rect x="392" y="425" width="16" height="12" rx="2" fill="none" stroke="#6c7278" stroke-width="1.3"/><circle cx="400" cy="431" r="3.5" fill="none" stroke="#6c7278" stroke-width="1.3"/><rect x="397" y="422" width="6" height="3" rx="1" fill="none" stroke="#6c7278" stroke-width="1.2"/>
+<text x="442" y="392" font-size="20" fill="#2f333a" font-weight="700" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">익명 사용자</text>
+<path d="M577 379 l3 3 L568 394 L565 394 L565 391 Z" fill="none" stroke="#9aa0a8" stroke-width="1.4" stroke-linejoin="round"/>
+<line x1="442" y1="398" x2="562" y2="398" stroke="#b7bcc4" stroke-width="1" stroke-dasharray="4,4"/>
+<text x="442" y="424" font-size="14" fill="#9aa0a8" font-weight="400" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">user@example.com</text>
+<text x="304" y="502" font-size="20" fill="#2f333a" font-weight="700" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">머쓱이 뱃지 도감</text>
+<circle cx="452" cy="496" r="8" fill="none" stroke="#9aa0a8" stroke-width="1.5"/><path d="M449.5 493.5 a2.5 2.5 0 1 1 2.5 2.5 v1.5" fill="none" stroke="#9aa0a8" stroke-width="1.4" stroke-linecap="round"/><circle cx="452" cy="500.5" r="1" fill="#9aa0a8"/>
+<rect x="304" y="522" width="196" height="210" rx="16" fill="#ffffff" stroke="#d6dae0"/>
+<rect x="370" y="542" width="64" height="64" rx="16" fill="#eef0f2" stroke="#d6dae0"/>
+<text x="402" y="584" font-size="28" text-anchor="middle" font-family="'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif">🐣</text>
+<text x="402" y="630" font-size="12" fill="#6c7278" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">Lv.1</text>
+<text x="402" y="650" font-size="14" fill="#2f333a" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">인턴 머쓱</text>
+<text x="402" y="672" font-size="12" fill="#9aa0a8" font-weight="400" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">면접의 첫 걸음을</text>
+<text x="402" y="690" font-size="12" fill="#9aa0a8" font-weight="400" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">내딛다</text>
+<rect x="516" y="522" width="196" height="210" rx="16" fill="#ffffff" stroke="#d6dae0"/>
+<rect x="582" y="542" width="64" height="64" rx="16" fill="#e7e9ec" stroke="#d6dae0"/>
+<text x="614" y="584" font-size="28" text-anchor="middle" font-family="'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif">🐥</text>
+<text x="614" y="630" font-size="12" fill="#6c7278" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">Lv.2</text>
+<text x="614" y="650" font-size="14" fill="#2f333a" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">대리 머쓱</text>
+<text x="614" y="672" font-size="12" fill="#9aa0a8" font-weight="400" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">꼬리 질문에도</text>
+<text x="614" y="690" font-size="12" fill="#9aa0a8" font-weight="400" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">당황하지 않음</text>
+<rect x="575" y="700" width="78" height="22" rx="4" fill="#e7e9ec"/>
+<rect x="585.6" y="708.75" width="10.8" height="8.1" rx="1.8" fill="none" stroke="#9aa0a8" stroke-width="1.35"/><path d="M587.4 708.75 v-3.15 a3.6 3.6 0 0 1 7.2 0 v3.15" fill="none" stroke="#9aa0a8" stroke-width="1.35" stroke-linecap="round"/>
+<text x="623" y="715" font-size="11" fill="#9aa0a8" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">LOCKED</text>
+<rect x="728" y="522" width="196" height="210" rx="16" fill="#ffffff" stroke="#d6dae0"/>
+<rect x="794" y="542" width="64" height="64" rx="16" fill="#e7e9ec" stroke="#d6dae0"/>
+<text x="826" y="584" font-size="28" text-anchor="middle" font-family="'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif">🦅</text>
+<text x="826" y="630" font-size="12" fill="#6c7278" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">Lv.3</text>
+<text x="826" y="650" font-size="14" fill="#2f333a" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">과장 머쓱</text>
+<text x="826" y="672" font-size="12" fill="#9aa0a8" font-weight="400" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">면접관을 리드하기</text>
+<text x="826" y="690" font-size="12" fill="#9aa0a8" font-weight="400" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">시작함</text>
+<rect x="787" y="700" width="78" height="22" rx="4" fill="#e7e9ec"/>
+<rect x="797.6" y="708.75" width="10.8" height="8.1" rx="1.8" fill="none" stroke="#9aa0a8" stroke-width="1.35"/><path d="M799.4 708.75 v-3.15 a3.6 3.6 0 0 1 7.2 0 v3.15" fill="none" stroke="#9aa0a8" stroke-width="1.35" stroke-linecap="round"/>
+<text x="835" y="715" font-size="11" fill="#9aa0a8" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">LOCKED</text>
+<rect x="940" y="522" width="196" height="210" rx="16" fill="#ffffff" stroke="#d6dae0"/>
+<rect x="1006" y="542" width="64" height="64" rx="16" fill="#e7e9ec" stroke="#d6dae0"/>
+<text x="1038" y="584" font-size="28" text-anchor="middle" font-family="'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif">🐉</text>
+<text x="1038" y="630" font-size="12" fill="#6c7278" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">Lv.4</text>
+<text x="1038" y="650" font-size="14" fill="#2f333a" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">팀장 머쓱</text>
+<text x="1038" y="672" font-size="12" fill="#9aa0a8" font-weight="400" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">모든 면접관을</text>
+<text x="1038" y="690" font-size="12" fill="#9aa0a8" font-weight="400" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">제패한 지원자</text>
+<rect x="999" y="700" width="78" height="22" rx="4" fill="#e7e9ec"/>
+<rect x="1009.6" y="708.75" width="10.8" height="8.1" rx="1.8" fill="none" stroke="#9aa0a8" stroke-width="1.35"/><path d="M1011.4 708.75 v-3.15 a3.6 3.6 0 0 1 7.2 0 v3.15" fill="none" stroke="#9aa0a8" stroke-width="1.35" stroke-linecap="round"/>
+<text x="1047" y="715" font-size="11" fill="#9aa0a8" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">LOCKED</text>
+<text x="296" y="796" font-size="16" fill="#2f333a" font-weight="700" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">이력서 데이터 풀 (Resume)</text>
+<rect x="504" y="782" width="36" height="20" rx="10" fill="#e7e9ec"/>
+<text x="522" y="796" font-size="11" fill="#6c7278" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">필수</text>
+<text x="548" y="796" font-size="13" fill="#9aa0a8" font-weight="400" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">(1/3)</text>
+<defs><clipPath id="upbtn_1026_779"><rect x="1026" y="779" width="118" height="30" rx="8"/></clipPath></defs>
+<rect x="1026" y="779" width="118" height="30" rx="8" fill="#e7e9ec" stroke="#d6dae0"/>
+<g clip-path="url(#upbtn_1026_779)">
+<g transform="translate(1044,794)"><path d="M-4.5 1.2c0-2.2 1.6-3.7 3.6-3.7 0.4-1.5 1.8-2.5 3.4-2.5 2 0 3.5 1.5 3.5 3.4h0.3c1.4 0 2.5 1.1 2.5 2.5s-1.1 2.5-2.5 2.5H-2.2c-1.3 0-2.3-1-2.3-2.2z" fill="none" stroke="#6c7278" stroke-width="1.2" stroke-linejoin="round"/><path d="M0 5.2V-0.2M-2.2 1.8L0-0.2l2.2 2" fill="none" stroke="#6c7278" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></g>
+<text x="1096" y="798" font-size="12" fill="#6c7278" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">추가 업로드</text>
+</g>
+<rect x="296" y="820" width="848" height="64" rx="16" fill="#ffffff" stroke="#d6dae0"/>
+<rect x="296" y="820" width="848" height="64" rx="0" fill="#e7e9ec"/>
+<circle cx="320" cy="852" r="8" fill="#ffffff" stroke="#6c7278" stroke-width="1.5"/>
+<circle cx="320" cy="852" r="4" fill="#565b63"/>
+<text x="340" y="848" font-size="14" fill="#2f333a" font-weight="700" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">resume_v3.pdf</text>
+<rect x="452" y="834" width="48" height="18" rx="4" fill="#565b63"/>
+<text x="476" y="847" font-size="10" fill="#ffffff" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">ACTIVE</text>
+<text x="340" y="868" font-size="12" fill="#9aa0a8" font-weight="400" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">1.24 MB</text>
+<circle cx="1116" cy="852" r="10" fill="none" stroke="#6c7278" stroke-width="1.6"/>
+<path d="M1110 852 L1115 857 L1123 846" fill="none" stroke="#6c7278" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="296" y="940" font-size="16" fill="#2f333a" font-weight="700" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">포트폴리오 데이터 풀 (Portfolio)</text>
+<text x="560" y="940" font-size="13" fill="#9aa0a8" font-weight="400" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">(0/3)</text>
+<defs><clipPath id="upbtn_1026_923"><rect x="1026" y="923" width="118" height="30" rx="8"/></clipPath></defs>
+<rect x="1026" y="923" width="118" height="30" rx="8" fill="#e7e9ec" stroke="#d6dae0"/>
+<g clip-path="url(#upbtn_1026_923)">
+<g transform="translate(1044,938)"><path d="M-4.5 1.2c0-2.2 1.6-3.7 3.6-3.7 0.4-1.5 1.8-2.5 3.4-2.5 2 0 3.5 1.5 3.5 3.4h0.3c1.4 0 2.5 1.1 2.5 2.5s-1.1 2.5-2.5 2.5H-2.2c-1.3 0-2.3-1-2.3-2.2z" fill="none" stroke="#6c7278" stroke-width="1.2" stroke-linejoin="round"/><path d="M0 5.2V-0.2M-2.2 1.8L0-0.2l2.2 2" fill="none" stroke="#6c7278" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></g>
+<text x="1096" y="942" font-size="12" fill="#6c7278" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">추가 업로드</text>
+</g>
+<rect x="296" y="964" width="848" height="128" rx="16" fill="#eef0f2" stroke="#d6dae0"/>
+<circle cx="720" cy="1008" r="24" fill="#e7e9ec"/>
+<path d="M713 998 h9 l5 5 v15 h-14 z" fill="none" stroke="#9aa0a8" stroke-width="1.5" stroke-linejoin="round"/><path d="M722 998 v5 h5" fill="none" stroke="#9aa0a8" stroke-width="1.5" stroke-linejoin="round"/><path d="M716 1009 h8 M716 1013 h8 M716 1017 h5" fill="none" stroke="#9aa0a8" stroke-width="1.4" stroke-linecap="round"/>
+<text x="720" y="1060" font-size="14" fill="#9aa0a8" font-weight="400" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">업로드된 파일이 없습니다.</text>
+</svg>

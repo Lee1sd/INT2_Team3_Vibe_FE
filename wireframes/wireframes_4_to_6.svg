@@ -1,0 +1,77 @@
+<svg width="3300" height="900" viewBox="0 0 3300 900" xmlns="http://www.w3.org/2000/svg" style="font-family: sans-serif;"><text x="512" y="40" font-size="32px" fill="#333333" font-weight="bold" text-anchor="middle">4. My Page (/mypage)</text>
+  <rect x="0" y="80" width="1024" height="768" rx="8" fill="#f5f5f5" stroke="#e0e0e0" />
+  
+  <rect x="0" y="80" width="1024" height="60" rx="0" fill="#ffffff" stroke="#e0e0e0" />
+  <rect x="20" y="90" width="40" height="40" rx="8" fill="#cccccc" stroke="none" />
+  <text x="75" y="115" font-size="18px" fill="#333333" font-weight="bold" text-anchor="start">커리어 던전</text>
+  <circle cx="994" cy="110" r="16" fill="#cccccc" stroke="none"/>
+
+  
+  <text x="312" y="200" font-size="24px" fill="#333333" font-weight="bold" text-anchor="start">마이페이지</text>
+  <text x="312" y="225" font-size="14px" fill="#777777" font-weight="normal" text-anchor="start">내 이력서를 관리하고 획득한 뱃지를 확인하세요.</text>
+  
+  <!-- Resume Upload Section -->
+  <text x="312" y="270" font-size="18px" fill="#333333" font-weight="bold" text-anchor="start">이력서 / 포트폴리오 관리</text>
+  <rect x="312" y="290" width="400" height="200" rx="16" fill="#ffffff" stroke="#e0e0e0" />
+  <text x="512" y="380" font-size="16px" fill="#333333" font-weight="bold" text-anchor="middle">클릭하거나 파일을 드래그하여 업로드</text>
+  <text x="512" y="410" font-size="12px" fill="#777777" font-weight="normal" text-anchor="middle">지원 형식: PDF, TXT, MD (최대 10MB)</text>
+  
+  <!-- Badges -->
+  <text x="312" y="530" font-size="18px" fill="#333333" font-weight="bold" text-anchor="start">머쓱이 뱃지 도감</text>
+  <rect x="312" y="550" width="190" height="200" rx="16" fill="#ffffff" stroke="#e0e0e0" />
+  <rect x="367" y="570" width="80" height="80" rx="16" fill="#f5f5f5" stroke="#e0e0e0" />
+  <text x="407" y="680" font-size="12px" fill="#cccccc" font-weight="bold" text-anchor="middle">Lv.1</text>
+  <text x="407" y="700" font-size="14px" fill="#333333" font-weight="bold" text-anchor="middle">초보 머쓱이</text>
+  
+  <rect x="522" y="550" width="190" height="200" rx="16" fill="#ffffff" stroke="#e0e0e0" />
+  <rect x="577" y="570" width="80" height="80" rx="16" fill="#f5f5f5" stroke="#e0e0e0" />
+<text x="1586" y="40" font-size="32px" fill="#333333" font-weight="bold" text-anchor="middle">5. Interview Process (/interview/:id)</text>
+  <rect x="1074" y="80" width="1024" height="768" rx="8" fill="#333333" stroke="#e0e0e0" />
+  
+  <!-- Top bar -->
+  <rect x="1074" y="80" width="1024" height="60" rx="0" fill="#333333" stroke="#777777" />
+  <rect x="1094" y="95" width="80" height="30" rx="8" fill="#777777" stroke="none" />
+  <text x="1134" y="115" font-size="14px" fill="#ffffff" font-weight="bold" text-anchor="middle">나가기</text>
+  <rect x="2038" y="95" width="40" height="30" rx="8" fill="#cccccc" stroke="none" />
+  
+  <!-- Chat area -->
+  <!-- System message -->
+  <rect x="1386" y="180" width="400" height="30" rx="16" fill="#777777" stroke="none" />
+  <text x="1586" y="200" font-size="12px" fill="#ffffff" font-weight="bold" text-anchor="middle">면접관이 지원자의 이력서를 검토하고 있습니다...</text>
+  
+  <!-- Interviewer Chat -->
+  <rect x="1094" y="240" width="48" height="48" rx="12" fill="#777777" stroke="none" />
+  <rect x="1154" y="240" width="400" height="120" rx="16" fill="#777777" stroke="none" />
+  <text x="1174" y="270" font-size="16px" fill="#ffffff" font-weight="bold" text-anchor="start">자기소개를 먼저 부탁드립니다.</text>
+  
+  <!-- Input area -->
+  <rect x="1074" y="748" width="1024" height="100" rx="0" fill="#333333" stroke="#777777" />
+  <rect x="1094" y="768" width="864" height="60" rx="16" fill="#777777" stroke="#e0e0e0" />
+  <text x="1114" y="800" font-size="14px" fill="#cccccc" font-weight="normal" text-anchor="start">답변을 입력하세요...</text>
+  <rect x="1968" y="768" width="110" height="60" rx="16" fill="#cccccc" stroke="#e0e0e0" />
+  <text x="2023" y="800" font-size="14px" fill="#333333" font-weight="bold" text-anchor="middle">답변 제출</text>
+<text x="2660" y="40" font-size="32px" fill="#333333" font-weight="bold" text-anchor="middle">6. Result Report (/result/:id)</text>
+  <rect x="2148" y="80" width="1024" height="768" rx="8" fill="#f5f5f5" stroke="#e0e0e0" />
+  
+  <rect x="2148" y="80" width="1024" height="60" rx="0" fill="#ffffff" stroke="#e0e0e0" />
+  <rect x="2168" y="90" width="40" height="40" rx="8" fill="#cccccc" stroke="none" />
+  <text x="2223" y="115" font-size="18px" fill="#333333" font-weight="bold" text-anchor="start">커리어 던전</text>
+  <circle cx="3142" cy="110" r="16" fill="#cccccc" stroke="none"/>
+
+  
+  <rect x="2360" y="180" width="600" height="600" rx="16" fill="#ffffff" stroke="#e0e0e0" />
+  <rect x="2610" y="210" width="100" height="30" rx="8" fill="#f5f5f5" stroke="#e0e0e0" />
+  <text x="2660" y="230" font-size="24px" fill="#333333" font-weight="bold" text-anchor="middle">면접 결과 보고서</text>
+  
+  <!-- Score -->
+  <rect x="2560" y="300" width="200" height="100" rx="16" fill="#f5f5f5" stroke="#e0e0e0" />
+  <text x="2660" y="360" font-size="48px" fill="#333333" font-weight="bold" text-anchor="middle">+15</text>
+  
+  <!-- Feedback -->
+  <text x="2400" y="440" font-size="18px" fill="#333333" font-weight="bold" text-anchor="start">종합 면접 피드백</text>
+  <rect x="2400" y="460" width="520" height="150" rx="8" fill="#f5f5f5" stroke="#e0e0e0" />
+  <text x="2420" y="490" font-size="14px" fill="#777777" font-weight="normal" text-anchor="start">답변이 매우 구체적이며 직무 적합성이...</text>
+  
+  <rect x="2400" y="660" width="520" height="60" rx="16" fill="#333333" stroke="none" />
+  <text x="2660" y="695" font-size="16px" fill="#ffffff" font-weight="bold" text-anchor="middle">던전으로 돌아가기</text>
+</svg>

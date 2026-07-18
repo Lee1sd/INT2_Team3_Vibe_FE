@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="872" viewBox="0 0 1440 872" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">
+<rect x="0" y="0" width="1440" height="872" fill="#eef0f2"/>
+<rect x="0" y="0" width="1440" height="72" rx="0" fill="#ffffff"/>
+<line x1="0" y1="72" x2="1440" y2="72" stroke="#d6dae0" stroke-width="1"/>
+<rect x="24" y="16" width="40" height="40" rx="12" fill="#565b63"/>
+<text x="44" y="41" font-size="13" fill="#ffffff" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">CD</text>
+<text x="76" y="46" font-size="22" fill="#2f333a" font-weight="700" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">커리어 던전</text>
+<circle cx="1402" cy="36" r="15" fill="none" stroke="#6c7278" stroke-width="1.5"/><circle cx="1402" cy="32" r="4.5" fill="none" stroke="#6c7278" stroke-width="1.5"/><path d="M1394 46 a8 8 0 0 1 16 0" fill="none" stroke="#6c7278" stroke-width="1.5"/>
+<path d="M285 133 L276 138 L285 143 M276 138 L286 138" fill="none" stroke="#6c7278" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="296" y="143" font-size="14" fill="#6c7278" font-weight="700" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">면접 던전으로 돌아가기</text>
+<text x="272" y="188" font-size="32" fill="#2f333a" font-weight="700" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">마이페이지</text>
+<text x="272" y="216" font-size="14" fill="#9aa0a8" font-weight="400" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">내 프로필, 파일 관리 및 전적을 확인하세요.</text>
+<rect x="272" y="250" width="150" height="40" rx="12" fill="#e7e9ec" stroke="#d6dae0"/>
+<text x="347" y="276" font-size="12" fill="#6c7278" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">[01_PROFILE]</text>
+<rect x="426" y="250" width="150" height="40" rx="12" fill="#e7e9ec" stroke="#d6dae0"/>
+<text x="501" y="276" font-size="12" fill="#6c7278" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">[02_HISTORY]</text>
+<rect x="580" y="250" width="150" height="44" rx="12" fill="#ffffff" stroke="#d6dae0"/>
+<text x="655" y="278" font-size="12" fill="#2f333a" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">[03_CONFIG]</text>
+<rect x="272" y="290" width="896" height="522" rx="20" fill="#ffffff" stroke="#d6dae0"/>
+<rect x="272" y="290" width="40" height="12" rx="0" fill="#ffffff"/>
+<text x="304" y="322" font-size="20" fill="#2f333a" font-weight="700" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">개인정보 취급 및 보안 방침</text>
+<rect x="304" y="342" width="832" height="300" rx="20" fill="#ffffff" stroke="#d6dae0"/>
+<path d="M332 365 L340 368 V374 a8 10 0 0 1 -8 9 a8 10 0 0 1 -8 -9 V368 Z" fill="none" stroke="#6c7278" stroke-width="1.4"/><path d="M326 373 L331 378 L339 367" fill="none" stroke="#6c7278" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="356" y="380" font-size="16" fill="#2f333a" font-weight="700" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">당신의 데이터는 안전하게 보호됩니다</text>
+<rect x="320" y="408" width="800" height="64" rx="16" fill="#eef0f2" stroke="#d6dae0"/>
+<rect x="336" y="424" width="32" height="32" rx="8" fill="#e7e9ec"/>
+<text x="352" y="445" font-size="15" fill="#2f333a" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">1</text>
+<text x="384" y="436" font-size="14" fill="#2f333a" font-weight="700" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">원본 파일 즉시 파기</text>
+<text x="384" y="458" font-size="13" fill="#6c7278" font-weight="400" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">업로드된 파일은 파싱 후 즉시 영구적으로 삭제됩니다.</text>
+<rect x="320" y="480" width="800" height="64" rx="16" fill="#eef0f2" stroke="#d6dae0"/>
+<rect x="336" y="496" width="32" height="32" rx="8" fill="#e7e9ec"/>
+<text x="352" y="517" font-size="15" fill="#2f333a" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">2</text>
+<text x="384" y="508" font-size="14" fill="#2f333a" font-weight="700" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">추출 텍스트 암호화 및 캐싱</text>
+<text x="384" y="530" font-size="13" fill="#6c7278" font-weight="400" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">추출된 데이터는 암호화되어 캐싱되며 목적 외 이용은 차단됩니다.</text>
+<rect x="320" y="552" width="800" height="64" rx="16" fill="#eef0f2" stroke="#d6dae0"/>
+<rect x="336" y="568" width="32" height="32" rx="8" fill="#e7e9ec"/>
+<text x="352" y="589" font-size="15" fill="#2f333a" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">3</text>
+<text x="384" y="580" font-size="14" fill="#2f333a" font-weight="700" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">민감정보 마스킹 처리</text>
+<text x="384" y="602" font-size="13" fill="#6c7278" font-weight="400" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">AI 전송 전 모든 개인 식별·민감정보는 마스킹 처리됩니다.</text>
+<text x="304" y="682" font-size="20" fill="#2f333a" font-weight="700" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">계정 관리</text>
+<rect x="304" y="702" width="832" height="90" rx="20" fill="#ffffff" stroke="#d6dae0"/>
+<rect x="328" y="722" width="384" height="50" rx="16" fill="#e7e9ec" stroke="#d6dae0"/>
+<text x="520" y="753" font-size="14" fill="#6c7278" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">로그아웃</text>
+<rect x="728" y="722" width="384" height="50" rx="16" fill="#ffffff" stroke="#d6dae0"/>
+<text x="920" y="753" font-size="14" fill="#6c7278" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">회원 탈퇴</text>
+</svg>

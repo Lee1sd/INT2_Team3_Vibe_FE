@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1000" viewBox="0 0 1440 1000" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">
+<rect x="0" y="0" width="1440" height="1000" fill="#eef0f2"/>
+<rect x="0" y="0" width="1440" height="72" rx="0" fill="#ffffff"/>
+<line x1="0" y1="72" x2="1440" y2="72" stroke="#d6dae0" stroke-width="1"/>
+<rect x="24" y="16" width="40" height="40" rx="12" fill="#565b63"/>
+<text x="44" y="41" font-size="13" fill="#ffffff" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">CD</text>
+<text x="76" y="46" font-size="22" fill="#2f333a" font-weight="700" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">커리어 던전</text>
+<circle cx="1402" cy="36" r="15" fill="none" stroke="#6c7278" stroke-width="1.5"/><circle cx="1402" cy="32" r="4.5" fill="none" stroke="#6c7278" stroke-width="1.5"/><path d="M1394 46 a8 8 0 0 1 16 0" fill="none" stroke="#6c7278" stroke-width="1.5"/>
+<rect x="658" y="136" width="124" height="30" rx="6" fill="#e7e9ec" stroke="#d6dae0"/>
+<path d="M682 143 L676 152 L680 152 L678 159 L684 150 L680 150 Z" fill="#6c7278"/>
+<text x="728" y="156" font-size="13" fill="#6c7278" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">분석 완료</text>
+<text x="720" y="216" font-size="32" fill="#2f333a" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">면접 결과 보고서</text>
+<text x="720" y="248" font-size="14" fill="#9aa0a8" font-weight="400" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">당신의 답변을 바탕으로 신뢰도가 평가되었습니다.</text>
+<rect x="384" y="288" width="672" height="310" rx="20" fill="#ffffff" stroke="#d6dae0"/>
+<rect x="650" y="316" width="140" height="28" rx="6" fill="#e7e9ec"/>
+<text x="712" y="335" font-size="13" fill="#6c7278" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">면접 점수</text>
+<circle cx="768" cy="330" r="8" fill="none" stroke="#9aa0a8" stroke-width="1.5"/><path d="M765.5 327.5 a2.5 2.5 0 1 1 2.5 2.5 v1.5" fill="none" stroke="#9aa0a8" stroke-width="1.4" stroke-linecap="round"/><circle cx="768" cy="334.5" r="1" fill="#9aa0a8"/>
+<text x="720" y="418" font-size="56" fill="#2f333a" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">100</text>
+<text x="778" y="418" font-size="24" fill="#9aa0a8" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">점</text>
+<text x="873.6" y="454" font-size="12" fill="#9aa0a8" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">레벨업 기준 (80점)</text>
+<rect x="464" y="468" width="512" height="16" rx="8" fill="#eef0f2" stroke="#d6dae0"/>
+<rect x="464" y="468" width="512" height="16" rx="8" fill="#565b63"/>
+<line x1="873.6" y1="468" x2="873.6" y2="484" stroke="#c4c9cf" stroke-width="2"/>
+<text x="464" y="510" font-size="13" fill="#9aa0a8" font-weight="700" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">0점</text>
+<text x="720" y="510" font-size="13" fill="#9aa0a8" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">50점</text>
+<text x="976" y="510" font-size="13" fill="#2f333a" font-weight="700" text-anchor="end" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">100점 (레벨업)</text>
+<rect x="384" y="640" width="672" height="200" rx="20" fill="#ffffff" stroke="#d6dae0"/>
+<rect x="411" y="669" width="18" height="14" rx="3" fill="none" stroke="#6c7278" stroke-width="1.4"/><path d="M417 683 L414 688 L422 683" fill="none" stroke="#6c7278" stroke-width="1.4"/>
+<text x="440" y="682" font-size="20" fill="#2f333a" font-weight="700" text-anchor="start" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">종합 면접 피드백</text>
+<rect x="408" y="700" width="624" height="112" rx="16" fill="#eef0f2" stroke="#d6dae0"/>
+<rect x="428" y="726" width="584" height="10" rx="5" fill="#d3d7dc"/>
+<rect x="428" y="750" width="584" height="10" rx="5" fill="#d3d7dc"/>
+<rect x="428" y="774" width="494" height="10" rx="5" fill="#d3d7dc"/>
+<rect x="608" y="880" width="224" height="50" rx="16" fill="#565b63"/>
+<text x="712" y="912" font-size="14" fill="#ffffff" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">던전 맵으로 돌아가기</text>
+<text x="810" y="912" font-size="18" fill="#ffffff" font-weight="700" text-anchor="middle" font-family="-apple-system, 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif">›</text>
+</svg>

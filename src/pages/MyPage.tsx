@@ -1,0 +1,551 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { fileService } from '../domains/resume/resume.service';
+import { UploadCloud, FileText, CheckCircle2, Loader2, AlertCircle, ShieldCheck, Lock, LogOut, UserMinus, ArrowLeft, ChevronDown, ChevronUp, Camera, Edit2, ChevronRight } from 'lucide-react';
+import { twMerge } from 'tailwind-merge';
+import { authService } from '../domains/auth/auth.service';
+import { User } from '../types';
+import { InfoTooltip } from '../components/InfoTooltip';
+import { HistoryDrawer, InterviewHistoryItem } from '../components/HistoryDrawer';
+
+const BADGES = [
+  { level: 1, name: '인턴 머쓱', icon: '🐣', description: '면접의 첫 걸음을 내딛다' },
+  { level: 2, name: '대리 머쓱', icon: '🐥', description: '꼬리 질문에도 당황하지 않음' },
+  { level: 3, name: '과장 머쓱', icon: '🦅', description: '면접관을 리드하기 시작함' },
+  { level: 4, name: '팀장 머쓱', icon: '🐉', description: '모든 면접관을 제패한 지원자' },
+];
+
+const MOCK_HISTORY: InterviewHistoryItem[] = [
+  {
+    id: '1',
+    date: '26.07.09',
+    interviewerName: '널널한 대리',
+    score: 90,
+    passed: true,
+    tag: 'React',
+    feedback: '전반적으로 프론트엔드 기본기가 탄탄하며, 실무에서 마주할 수 있는 트레이드오프 상황에 대한 이해도가 높습니다. 캐싱 정합성 문제에서 다소 아쉬운 점이 있었으나 꼬리 질문을 통해 훌륭하게 방어했습니다. 합격을 축하합니다!',
+    logs: [
+      { speaker: 'interviewer', name: '널널한 대리', message: '반갑습니다. 지원자님의 이력서를 흥미롭게 읽었습니다.\n\n[질문 1] 이력서에 작성하신 캐싱 전략에서 정합성 문제는 어떻게 해결하셨나요?' },
+      { speaker: 'applicant', name: '지원자', message: 'TTL을 짧게 가져가서 일시적인 불일치를 허용했습니다.' },
+      { speaker: 'interviewer', name: '널널한 대리', message: '[질문 2] 데이터베이스 락(Lock)을 사용하지 않은 특별한 이유가 있나요?' },
+      { speaker: 'applicant', name: '지원자', message: '읽기 작업이 90% 이상이라 락 오버헤드를 피하고 싶었습니다.' },
+      { speaker: 'interviewer', name: '널널한 대리', message: '[질문 3] 트래픽이 갑자기 10배 증가한다면 현재 아키텍처에서 가장 먼저 병목이 발생할 곳은 어디인가요?' },
+      { speaker: 'applicant', name: '지원자', message: 'DB 커넥션 풀 부족으로 인한 DB 병목이 예상됩니다.' },
+      { speaker: 'interviewer', name: '널널한 대리', message: '첫 번째 답변(Q1)에 대한 설명이 가장 부족합니다. 구체적인 해결 방안이 없네요.\n\n[추가 질문] 캐싱 정합성 문제에 대해 구체적인 해결 경험이 없으신가요? 예를 들어, Write-Through나 Cache Aside 패턴을 고려해보셨나요?' },
+      { speaker: 'applicant', name: '지원자', message: 'Cache Aside 패턴을 적용해 본 적이 있습니다. 데이터 변경 시 캐시 지우는 방식으로 정합성을 보장했습니다.' },
+      { speaker: 'interviewer', name: '널널한 대리', message: '꼬리질문 방어에 성공했습니다. 트레이드오프를 잘 이해하고 있군요.' }
+    ]
+  },
+  {
+    id: '2',
+    date: '26.07.08',
+    interviewerName: '깐깐한 과장',
+    score: 55,
+    passed: false,
+    tag: 'MSA',
+    feedback: '개별 기술에 대한 사용 경험은 있으나, 분산 시스템과 아키텍처 레벨에서의 깊이 있는 고민이 부족해 보입니다. 특히 메시지 큐의 데이터 유실 엣지 케이스 등 실무 장애 상황에 대한 대비책을 더 학습하시면 좋겠습니다.',
+    logs: [
+      { speaker: 'interviewer', name: '깐깐한 과장', message: '반갑습니다. 지원자님의 이력서를 흥미롭게 읽었습니다.\n\n[질문 1] 이력서의 MSA 아키텍처에서 서비스 간 트랜잭션 처리는 어떻게 하셨나요?' },
+      { speaker: 'applicant', name: '지원자', message: '분산 트랜잭션은 2PC로 해결했습니다.' },
+      { speaker: 'interviewer', name: '깐깐한 과장', message: '[질문 2] 메시지 큐(Kafka) 도입 시 발생할 수 있는 메시지 유실 문제는 어떻게 대비했나요?' },
+      { speaker: 'applicant', name: '지원자', message: '카프카는 기본적으로 데이터가 유실되지 않는다고 알고 있습니다.' },
+      { speaker: 'interviewer', name: '깐깐한 과장', message: '[질문 3] OOM(Out of Memory) 발생 시 디버깅 과정과 원인을 설명해주세요.' },
+      { speaker: 'applicant', name: '지원자', message: '힙 메모리를 늘려서 해결했습니다.' },
+      { speaker: 'interviewer', name: '깐깐한 과장', message: '답변들의 깊이가 전반적으로 얕습니다. 특히 카프카에 대한 이해가 부족해 보입니다.\n\n[추가 질문] 카프카에서 acks=all로 설정하더라도 메시지가 유실될 수 있는 엣지 케이스는 무엇이 있으며, 이를 보완하기 위한 Outbox 패턴에 대해 설명해 보시겠어요?' },
+      { speaker: 'applicant', name: '지원자', message: 'Outbox 패턴은 아직 사용해 본 적이 없어 잘 모르겠습니다. 더 공부하겠습니다.' },
+      { speaker: 'interviewer', name: '깐깐한 과장', message: '아키텍처 고민이 부족합니다. 본인이 사용한 기술에 대한 더 깊은 이해가 필요합니다.' }
+    ]
+  },
+  {
+    id: '3',
+    date: '26.07.05',
+    interviewerName: '깐깐한 과장',
+    score: 65,
+    passed: false,
+    tag: 'Redis',
+    feedback: '동시성 제어에 대한 기본적인 이해는 갖추었으나, 실제 트래픽 환경에서의 성능 테스트 경험이 다소 부족합니다.',
+    logs: []
+  }
+];
+
+interface UploadedFile {
+  id: string;
+  name: string;
+  size: number;
+  status: 'UPLOADING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
+  errorMsg?: string;
+}
+
+function MultiFileUploader({ 
+  title, 
+  maxFiles = 3, 
+  required = false 
+}: { 
+  title: string, 
+  maxFiles?: number,
+  required?: boolean
+}) {
+  const [files, setFiles] = useState<UploadedFile[]>([]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      if (files.length >= maxFiles) {
+        alert(`최대 ${maxFiles}개까지만 업로드할 수 있습니다.`);
+        return;
+      }
+      const newFile = e.target.files[0];
+      const newId = Math.random().toString(36).substr(2, 9);
+      
+      const fileEntry: UploadedFile = {
+        id: newId,
+        name: newFile.name,
+        size: newFile.size,
+        status: 'UPLOADING'
+      };
+      
+      setFiles(prev => [...prev, fileEntry]);
+      if (!selectedId) setSelectedId(newId);
+
+      // Simulate upload & processing
+      setTimeout(() => {
+        setFiles(prev => prev.map(f => f.id === newId ? { ...f, status: 'PROCESSING' } : f));
+        setTimeout(() => {
+          setFiles(prev => prev.map(f => f.id === newId ? { ...f, status: 'COMPLETED' } : f));
+        }, 1500);
+      }, 1000);
+    }
+  };
+
+  return (
+    <section className="mb-10">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-[16px] leading-[24px] font-bold text-blue-grey-900 flex items-center gap-2">
+          {title}
+          {required && <span className="text-[11px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold">필수</span>}
+          <span className="text-[13px] text-blue-grey-400 font-normal ml-2">({files.length}/{maxFiles})</span>
+        </h3>
+        
+        <button 
+          onClick={() => fileInputRef.current?.click()}
+          disabled={files.length >= maxFiles}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-bold text-primary bg-primary/5 hover:bg-primary/10 border border-primary/20 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <UploadCloud className="w-4 h-4" />
+          추가 업로드
+        </button>
+        <input 
+          type="file" 
+          ref={fileInputRef} 
+          onChange={handleFileSelect} 
+          className="hidden" 
+          accept=".pdf,.txt,.md"
+        />
+      </div>
+
+      <div className="bg-white border border-blue-grey-100 rounded-2xl overflow-hidden shadow-sm">
+        {files.length === 0 ? (
+          <div className="p-8 text-center bg-blue-grey-10/50">
+            <div className="w-12 h-12 bg-blue-grey-25 rounded-full flex items-center justify-center mx-auto mb-3">
+              <FileText className="w-6 h-6 text-blue-grey-400" />
+            </div>
+            <p className="text-[14px] text-blue-grey-500">업로드된 파일이 없습니다.</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-blue-grey-50">
+            {files.map(file => (
+              <div 
+                key={file.id} 
+                className={twMerge(
+                  "p-4 flex items-center gap-4 transition-colors",
+                  selectedId === file.id ? "bg-primary/5" : "hover:bg-blue-grey-10/50 cursor-pointer"
+                )}
+                onClick={() => file.status === 'COMPLETED' && setSelectedId(file.id)}
+              >
+                <div className="flex-shrink-0 relative">
+                  <input 
+                    type="radio" 
+                    checked={selectedId === file.id}
+                    readOnly
+                    disabled={file.status !== 'COMPLETED'}
+                    className="w-4 h-4 text-primary focus:ring-primary border-blue-grey-300"
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="text-[14px] font-bold text-blue-grey-900 truncate flex items-center gap-2">
+                    {file.name}
+                    {selectedId === file.id && (
+                      <span className="text-[10px] bg-primary text-white px-1.5 py-0.5 rounded font-mono">ACTIVE</span>
+                    )}
+                  </h4>
+                  <p className="text-[12px] text-blue-grey-500 font-mono mt-0.5">
+                    {(file.size / 1024 / 1024).toFixed(2)} MB
+                  </p>
+                </div>
+                <div className="flex-shrink-0 flex items-center">
+                  {file.status === 'UPLOADING' && <Loader2 className="w-5 h-5 text-blue-grey-400 animate-spin" />}
+                  {file.status === 'PROCESSING' && <Loader2 className="w-5 h-5 text-primary animate-spin" />}
+                  {file.status === 'COMPLETED' && <CheckCircle2 className="w-5 h-5 text-success" />}
+                  {file.status === 'FAILED' && <AlertCircle className="w-5 h-5 text-danger" />}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+const TABS = [
+  { id: 'PROFILE', label: '[01_PROFILE]' },
+  { id: 'HISTORY', label: '[02_HISTORY]' },
+  { id: 'CONFIG', label: '[03_CONFIG]' },
+] as const;
+
+type TabId = typeof TABS[number]['id'];
+
+export default function MyPage() {
+  const [user, setUser] = useState<User | null>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [selectedHistory, setSelectedHistory] = useState<InterviewHistoryItem | null>(null);
+  const [activeTab, setActiveTab] = useState<TabId>('PROFILE');
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
+  const [isDeleteAccountModalOpen, setIsDeleteAccountModalOpen] = useState(false);
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    authService.getCurrentUser().then(setUser);
+  }, []);
+
+  const currentLevel = user?.level || 1;
+
+  const handleLogout = async () => {
+    await authService.logout();
+    navigate('/');
+  };
+
+  const handleWithdraw = async () => {
+    await authService.withdraw();
+    navigate('/');
+  };
+
+  const toggleGroup = (groupName: string) => {
+    setExpandedGroups(prev => ({
+      ...prev,
+      [groupName]: !prev[groupName]
+    }));
+  };
+
+  // Group history by interviewerName
+  const groupedHistory = MOCK_HISTORY.reduce((acc, item) => {
+    if (!acc[item.interviewerName]) acc[item.interviewerName] = [];
+    acc[item.interviewerName].push(item);
+    return acc;
+  }, {} as Record<string, InterviewHistoryItem[]>);
+
+  return (
+    <div className="max-w-4xl mx-auto py-12 px-6">
+      {/* Back Button */}
+      <div className="mb-8">
+        <Link 
+          to="/dungeon"
+          className="inline-flex items-center text-blue-grey-500 hover:text-blue-grey-900 transition-colors text-[14px] font-bold"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          면접 던전으로 돌아가기
+        </Link>
+      </div>
+
+      <div className="mb-10">
+        <h2 className="text-[32px] font-bold text-blue-grey-900 mb-2">마이페이지</h2>
+        <p className="text-blue-grey-500 text-[14px] font-normal">내 프로필, 파일 관리 및 전적을 확인하세요.</p>
+      </div>
+
+      {/* Index Tabs */}
+      <div className="flex items-end">
+        {TABS.map(tab => {
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={twMerge(
+                "px-5 sm:px-8 py-3 font-mono text-[13px] font-bold rounded-t-2xl border-t border-l border-r transition-all relative outline-none",
+                isActive 
+                  ? "bg-white border-blue-grey-100 text-primary z-10 pb-4 -mb-[1px]" 
+                  : "bg-blue-grey-25 border-blue-grey-100 text-blue-grey-500 hover:text-blue-grey-700 hover:bg-blue-grey-50 pb-3"
+              )}
+            >
+              {tab.label}
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Content Area */}
+      <div className="bg-white border border-blue-grey-100 p-6 sm:p-10 rounded-b-2xl rounded-tr-2xl min-h-[50vh] relative z-0 shadow-sm">
+        
+        {/* PROFILE TAB */}
+        {activeTab === 'PROFILE' && (
+          <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+            
+            {/* 프로필 정보 섹션 */}
+            <section className="mb-12 border-b border-blue-grey-50 pb-10">
+              <h3 className="text-[20px] leading-[28px] font-bold text-blue-grey-900 mb-6">프로필 정보</h3>
+              <div className="flex flex-col sm:flex-row items-center gap-6 sm:gap-8 bg-blue-grey-10/50 border border-blue-grey-75 p-6 rounded-2xl">
+                <div className="relative group">
+                  <div className="w-24 h-24 rounded-full bg-blue-grey-100 overflow-hidden border-4 border-white shadow-sm flex items-center justify-center">
+                    {user?.photoURL ? (
+                      <img src={user.photoURL} alt="Profile" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-3xl font-bold text-blue-grey-400">
+                        {user?.email?.charAt(0).toUpperCase() || 'U'}
+                      </span>
+                    )}
+                  </div>
+                  <button className="absolute bottom-0 right-0 p-2 bg-white rounded-full border border-blue-grey-100 text-blue-grey-600 shadow-sm hover:text-primary transition-colors">
+                    <Camera className="w-4 h-4" />
+                  </button>
+                </div>
+                
+                <div className="flex-1 w-full text-center sm:text-left">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2 justify-center sm:justify-start">
+                    <input 
+                      type="text" 
+                      defaultValue={user?.displayName || '익명 사용자'} 
+                      className="text-[20px] font-bold text-blue-grey-900 bg-transparent border-b border-dashed border-blue-grey-300 focus:border-primary focus:outline-none px-1 py-0.5 text-center sm:text-left w-auto max-w-[200px]"
+                    />
+                    <Edit2 className="w-4 h-4 text-blue-grey-400 inline-block" />
+                  </div>
+                  <p className="text-[14px] text-blue-grey-500 font-mono">{user?.email}</p>
+                </div>
+              </div>
+            </section>
+
+            {/* 머쓱이 뱃지 도감 */}
+            <section className="mb-12 border-b border-blue-grey-50 pb-10">
+              <h3 className="text-[20px] leading-[28px] font-bold text-blue-grey-900 mb-6 flex items-center gap-2">
+                머쓱이 뱃지 도감
+                <div className="ml-2 inline-block">
+                  <InfoTooltip 
+                    question="Q. 신뢰도 게이지란 무엇인가요?" 
+                    answer="A. 다음 면접관(레벨)을 해금하기 위해 필요한 누적 경험치입니다." 
+                  />
+                </div>
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {BADGES.map((badge) => {
+                  const isUnlocked = currentLevel >= badge.level;
+                  return (
+                    <div 
+                      key={badge.level} 
+                      className={twMerge(
+                        "bg-white border rounded-2xl p-5 flex flex-col items-center text-center transition-all",
+                        isUnlocked ? "border-blue-grey-100 shadow-sm hover:-translate-y-1 hover:shadow-md" : "border-blue-grey-100 opacity-60"
+                      )}
+                    >
+                      <div className={twMerge(
+                        "w-16 h-16 rounded-2xl flex items-center justify-center text-3xl mb-4 relative",
+                        isUnlocked ? "bg-blue-grey-25 border border-blue-grey-75" : "bg-blue-grey-50 border border-blue-grey-75 grayscale opacity-50"
+                      )}>
+                        {isUnlocked && <div className="absolute inset-0 bg-primary/5 rounded-2xl"></div>}
+                        <span className="relative z-10">{badge.icon}</span>
+                      </div>
+                      <div className="text-[12px] font-mono font-bold text-primary mb-1">Lv.{badge.level}</div>
+                      <h4 className="text-[14px] font-bold text-blue-grey-900 mb-2">{badge.name}</h4>
+                      <p className="text-[12px] text-blue-grey-500 leading-relaxed font-normal">{badge.description}</p>
+                      
+                      {!isUnlocked && (
+                        <div className="mt-4 flex items-center justify-center gap-1 text-[11px] font-mono text-blue-grey-400 bg-blue-grey-50 px-2 py-1 rounded">
+                          <Lock className="w-3 h-3" />
+                          LOCKED
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+
+            {/* 다중 업로드 영역 */}
+            <MultiFileUploader title="이력서 데이터 풀 (Resume)" required maxFiles={3} />
+            <MultiFileUploader title="포트폴리오 데이터 풀 (Portfolio)" maxFiles={3} />
+
+          </div>
+        )}
+
+        {/* HISTORY TAB */}
+        {activeTab === 'HISTORY' && (
+          <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+             <h3 className="text-[20px] leading-[28px] font-bold text-blue-grey-900 mb-6 flex items-center gap-2">
+              나의 면접 전적
+            </h3>
+            
+            <div className="space-y-4">
+              {Object.entries(groupedHistory).map(([groupName, items]) => {
+                const isExpanded = expandedGroups[groupName] !== false; // default true
+                
+                return (
+                  <div key={groupName} className="border border-blue-grey-100 rounded-2xl overflow-hidden bg-white shadow-sm">
+                    <button 
+                      onClick={() => toggleGroup(groupName)}
+                      className="w-full flex items-center justify-between p-5 bg-blue-grey-10/50 hover:bg-blue-grey-25 transition-colors border-b border-blue-grey-50"
+                    >
+                      <h4 className="text-[16px] font-bold text-blue-grey-900 flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-blue-grey-100 flex items-center justify-center text-[14px] border border-blue-grey-200">
+                          {groupName.includes('대리') ? '😎' : groupName.includes('과장') ? '🧐' : '🐣'}
+                        </div>
+                        {groupName} <span className="text-[13px] font-normal text-blue-grey-500 font-mono">({items.length})</span>
+                      </h4>
+                      {isExpanded ? <ChevronUp className="w-5 h-5 text-blue-grey-400" /> : <ChevronDown className="w-5 h-5 text-blue-grey-400" />}
+                    </button>
+                    
+                    {isExpanded && (
+                      <div className="p-5 flex flex-col gap-3 bg-slate-50">
+                        {items.map((history) => (
+                          <button 
+                            key={history.id}
+                            onClick={() => {
+                              setSelectedHistory(history);
+                              setIsDrawerOpen(true);
+                            }}
+                            className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-white border border-slate-100 rounded-xl hover:-translate-y-0.5 hover:shadow-md transition-all text-left group shadow-sm cursor-pointer"
+                          >
+                            <div className="mb-3 sm:mb-0">
+                              <div className="flex items-center gap-2 mb-2">
+                                <span className="text-slate-500 font-mono text-[13px]">[{history.date}]</span>
+                              </div>
+                              <h4 className="text-[15px] font-bold text-blue-grey-900 group-hover:text-primary transition-colors flex items-center gap-2 flex-wrap">
+                                {history.tag && (
+                                  <span className="bg-blue-50 text-blue-600 px-2 py-1 rounded-md text-[11px] font-bold border border-blue-100">
+                                    {history.tag}
+                                  </span>
+                                )}
+                                <span className="ml-1 text-blue-grey-700">중점 면접</span>
+                              </h4>
+                            </div>
+                            <div className="flex items-center gap-4 shrink-0 mt-3 sm:mt-0">
+                              <div className="text-[14px] font-bold font-mono text-slate-500">
+                                {history.score} <span className="text-[11px] font-normal text-blue-grey-500">점</span>
+                              </div>
+                              <div className={twMerge(
+                                "px-3 py-1 rounded-md text-[11px] font-bold font-mono text-center w-16",
+                                history.passed ? "bg-success/10 text-success" : "bg-danger/10 text-danger"
+                              )}>
+                                {history.passed ? "합격" : "불합격"}
+                              </div>
+                              <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-primary transition-colors" />
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* CONFIG TAB */}
+        {activeTab === 'CONFIG' && (
+          <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+            {/* Same config layout as before... */}
+            <section className="mb-10">
+              <h3 className="text-[20px] leading-[28px] font-bold text-blue-grey-900 mb-6 flex items-center gap-2">
+                개인정보 취급 및 보안 방침
+              </h3>
+              <div className="bg-white border border-blue-grey-100 rounded-2xl p-6 shadow-sm">
+                <div className="flex items-center gap-3 mb-6 border-b border-blue-grey-50 pb-4">
+                  <ShieldCheck className="w-5 h-5 text-success" />
+                  <h4 className="text-[16px] font-bold text-blue-grey-900">당신의 데이터는 안전하게 보호됩니다</h4>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="flex items-start gap-4 p-4 bg-blue-grey-10 rounded-2xl border border-blue-grey-50">
+                    <div className="w-8 h-8 bg-blue-grey-25 rounded-lg flex items-center justify-center flex-shrink-0 text-blue-grey-900 font-bold">1</div>
+                    <div>
+                      <h5 className="text-[14px] leading-[20px] font-bold text-blue-grey-900 mb-1">원본 파일 즉시 파기</h5>
+                      <p className="text-blue-grey-900 text-[14px] leading-[20px] font-normal">업로드된 파일은 서버 임시 경로에서 파싱 후 즉시 영구적으로 삭제됩니다.</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-4 p-4 bg-blue-grey-10 rounded-2xl border border-blue-grey-50">
+                    <div className="w-8 h-8 bg-blue-grey-25 rounded-lg flex items-center justify-center flex-shrink-0 text-blue-grey-900 font-bold">2</div>
+                    <div>
+                      <h5 className="text-[14px] leading-[20px] font-bold text-blue-grey-900 mb-1">추출 텍스트 암호화 및 캐싱</h5>
+                      <p className="text-blue-grey-900 text-[14px] leading-[20px] font-normal">추출된 데이터는 암호화되어 캐싱되며, 목적 외의 이용은 원천 차단됩니다.</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-4 p-4 bg-blue-grey-10 rounded-2xl border border-blue-grey-50">
+                    <div className="w-8 h-8 bg-blue-grey-25 rounded-lg flex items-center justify-center flex-shrink-0 text-blue-grey-900 font-bold">3</div>
+                    <div>
+                      <h5 className="text-[14px] leading-[20px] font-bold text-blue-grey-900 mb-1">민감정보 마스킹 처리</h5>
+                      <p className="text-blue-grey-900 text-[14px] leading-[20px] font-normal">AI(LLM)에 전송되기 전, 모든 개인 식별 및 민감정보는 안전하게 마스킹 처리됩니다.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section>
+              <h3 className="text-[20px] leading-[28px] font-bold text-blue-grey-900 mb-6 flex items-center gap-2">
+                계정 관리
+              </h3>
+              <div className="bg-white border border-blue-grey-100 rounded-2xl p-6 flex flex-col sm:flex-row gap-4 shadow-sm">
+                <button 
+                  onClick={handleLogout}
+                  className="flex-1 flex items-center justify-center gap-2 py-3 px-4 bg-blue-grey-50 text-blue-grey-700 border border-blue-grey-100 rounded-2xl text-[14px] font-bold hover:bg-blue-grey-100 transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                  로그아웃
+                </button>
+                <button 
+                  onClick={() => setIsDeleteAccountModalOpen(true)}
+                  className="flex-1 flex items-center justify-center gap-2 py-3 px-4 bg-danger/5 text-danger border border-danger/10 rounded-2xl text-[14px] font-bold hover:bg-danger/10 transition-colors"
+                >
+                  <UserMinus className="w-4 h-4" />
+                  회원 탈퇴
+                </button>
+              </div>
+            </section>
+          </div>
+        )}
+
+      </div>
+
+      {/* Delete Account Warning Modal */}
+      {isDeleteAccountModalOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white border border-blue-grey-100 rounded-2xl p-8 max-w-md w-full shadow-2xl">
+            <h3 className="text-xl font-bold text-blue-grey-900 mb-3 text-center">떠나신다니 아쉬워요 😢</h3>
+            <p className="text-blue-grey-500 text-[15px] leading-relaxed mb-8 text-center">
+              탈퇴 시 그동안 쌓아온 신뢰도 게이지와 모든 면접 전적, 등록된 이력서 데이터가 영구적으로 삭제되며 절대 복구할 수 없습니다. 그래도 탈퇴하시겠습니까?
+            </p>
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setIsDeleteAccountModalOpen(false)}
+                className="flex-1 py-3 px-4 bg-blue-grey-100 hover:bg-blue-grey-200 text-blue-grey-700 rounded-xl font-bold transition-colors"
+              >
+                취소
+              </button>
+              <button 
+                onClick={handleWithdraw}
+                className="flex-1 py-3 px-4 bg-danger hover:bg-red-600 text-white rounded-xl font-bold transition-colors"
+              >
+                네, 탈퇴하겠습니다
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <HistoryDrawer 
+        isOpen={isDrawerOpen} 
+        onClose={() => setIsDrawerOpen(false)} 
+        historyItem={selectedHistory} 
+      />
+    </div>
+  );
+}

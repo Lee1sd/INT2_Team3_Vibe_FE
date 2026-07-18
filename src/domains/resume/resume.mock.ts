@@ -1,0 +1,50 @@
+// 백엔드 /api/resumes 가 준비되기 전까지 업로드/파싱 흐름을 검증하기 위한 목업 구현.
+import { UploadResponse } from './resume.types';
+
+let memoryMockUploaded = false;
+
+export const resumeMock = {
+  uploadResume: async (file: File): Promise<UploadResponse> => {
+    console.log('Uploading file:', file.name);
+    memoryMockUploaded = true;
+    try {
+      localStorage.setItem('mock_resume_uploaded', 'true');
+      localStorage.setItem('hasResume', 'true');
+    } catch (e) {}
+
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({
+          fileId: 'f123',
+          status: 'PROCESSING',
+        });
+      }, 1500);
+    });
+  },
+
+  checkParseStatus: async (fileId: string): Promise<UploadResponse> => {
+    console.log('Checking status for file:', fileId);
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({
+          fileId,
+          status: 'COMPLETED',
+        });
+      }, 1000);
+    });
+  },
+
+  checkResumeStatus: async (): Promise<boolean> => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        let isUploaded = memoryMockUploaded;
+        try {
+          if (localStorage.getItem('mock_resume_uploaded') === 'true') {
+            isUploaded = true;
+          }
+        } catch (e) {}
+        resolve(isUploaded);
+      }, 300);
+    });
+  },
+};

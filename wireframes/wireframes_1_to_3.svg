@@ -1,0 +1,81 @@
+<svg width="3300" height="900" viewBox="0 0 3300 900" xmlns="http://www.w3.org/2000/svg" style="font-family: sans-serif;"><text x="512" y="40" font-size="32px" fill="#333333" font-weight="bold" text-anchor="middle">1. Login (/)</text>
+  <rect x="0" y="80" width="1024" height="768" rx="8" fill="#f5f5f5" stroke="#e0e0e0" />
+  
+  <rect x="0" y="80" width="1024" height="60" rx="0" fill="#ffffff" stroke="#e0e0e0" />
+  <rect x="20" y="90" width="40" height="40" rx="8" fill="#cccccc" stroke="none" />
+  <text x="75" y="115" font-size="18px" fill="#333333" font-weight="bold" text-anchor="start">커리어 던전</text>
+  <circle cx="994" cy="110" r="16" fill="#cccccc" stroke="none"/>
+
+  
+  <!-- Login Card -->
+  <rect x="312" y="280" width="400" height="300" rx="16" fill="#ffffff" stroke="#e0e0e0" />
+  <rect x="472" y="320" width="80" height="80" rx="16" fill="#f5f5f5" stroke="#e0e0e0" />
+  <text x="512" y="440" font-size="24px" fill="#333333" font-weight="bold" text-anchor="middle">커리어 던전 입장</text>
+  <text x="512" y="470" font-size="14px" fill="#777777" font-weight="normal" text-anchor="middle">당신의 이력서로 구성된 맞춤형 면접관을</text>
+  <text x="512" y="490" font-size="14px" fill="#777777" font-weight="normal" text-anchor="middle">격파하고 신뢰도를 얻어내세요!</text>
+  
+  <rect x="352" y="510" width="320" height="48" rx="8" fill="#dddddd" stroke="#e0e0e0" />
+  <text x="512" y="540" font-size="14px" fill="#555555" font-weight="bold" text-anchor="middle">Google 계정으로 시작하기</text>
+  
+  <rect x="412" y="610" width="200" height="32" rx="8" fill="#f5f5f5" stroke="#e0e0e0" />
+  <text x="512" y="630" font-size="12px" fill="#777777" font-weight="normal" text-anchor="middle">INFO Mock 모드입니다.</text>
+<text x="1586" y="40" font-size="32px" fill="#333333" font-weight="bold" text-anchor="middle">2. Resume Upload (/upload)</text>
+  <rect x="1074" y="80" width="1024" height="768" rx="8" fill="#f5f5f5" stroke="#e0e0e0" />
+  
+  <rect x="1074" y="80" width="1024" height="60" rx="0" fill="#ffffff" stroke="#e0e0e0" />
+  <rect x="1094" y="90" width="40" height="40" rx="8" fill="#cccccc" stroke="none" />
+  <text x="1149" y="115" font-size="18px" fill="#333333" font-weight="bold" text-anchor="start">커리어 던전</text>
+  <circle cx="2068" cy="110" r="16" fill="#cccccc" stroke="none"/>
+
+  
+  <rect x="1536" y="180" width="100" height="24" rx="4" fill="#dddddd" stroke="none" />
+  <text x="1586" y="196" font-size="12px" fill="#555555" font-weight="bold" text-anchor="middle">STEP 01</text>
+  
+  <text x="1586" y="235" font-size="26px" fill="#333333" font-weight="bold" text-anchor="middle">무기(이력서) 장착</text>
+  <text x="1586" y="265" font-size="14px" fill="#777777" font-weight="normal" text-anchor="middle">이력서를 업로드하여 당신만의 맞춤형 면접 던전을 생성하세요.</text>
+  
+  <!-- Upload Area -->
+  <rect x="1286" y="310" width="600" height="300" rx="16" fill="#ffffff" stroke="#bbbbbb" stroke-dasharray="10,10"/>
+  <rect x="1546" y="360" width="80" height="80" rx="16" fill="#f5f5f5" stroke="#e0e0e0" />
+  <text x="1586" y="480" font-size="20px" fill="#333333" font-weight="bold" text-anchor="middle">클릭하여 파일 업로드</text>
+  <text x="1586" y="510" font-size="14px" fill="#777777" font-weight="normal" text-anchor="middle">지원 형식: PDF, TXT, MD (최대 10MB)</text>
+<text x="2660" y="40" font-size="32px" fill="#333333" font-weight="bold" text-anchor="middle">3. Dungeon (/dungeon)</text>
+  <rect x="2148" y="80" width="1024" height="768" rx="8" fill="#f5f5f5" stroke="#e0e0e0" />
+  
+  <rect x="2148" y="80" width="1024" height="60" rx="0" fill="#ffffff" stroke="#e0e0e0" />
+  <rect x="2168" y="90" width="40" height="40" rx="8" fill="#cccccc" stroke="none" />
+  <text x="2223" y="115" font-size="18px" fill="#333333" font-weight="bold" text-anchor="start">커리어 던전</text>
+  <circle cx="3142" cy="110" r="16" fill="#cccccc" stroke="none"/>
+
+  
+  <!-- Hero Section -->
+  <rect x="2148" y="140" width="1024" height="300" rx="0" fill="#f5f5f5" stroke="#e0e0e0" />
+  <rect x="2610" y="170" width="100" height="24" rx="12" fill="#ffffff" stroke="#e0e0e0" />
+  <text x="2660" y="186" font-size="12px" fill="#777777" font-weight="bold" text-anchor="middle">현재 레벨: Lv.1</text>
+  
+  <text x="2660" y="230" font-size="32px" fill="#333333" font-weight="bold" text-anchor="middle">사용자님,</text>
+  <text x="2660" y="270" font-size="32px" fill="#333333" font-weight="bold" text-anchor="middle">다음 면접관이 기다립니다.</text>
+  
+  <rect x="2596" y="310" width="128" height="128" rx="16" fill="#ffffff" stroke="#e0e0e0" />
+  <text x="2660" y="460" font-size="18px" fill="#333333" font-weight="bold" text-anchor="middle">초보 머쓱이 뱃지</text>
+  
+  <!-- Gauge -->
+  <rect x="2410" y="490" width="500" height="100" rx="16" fill="#ffffff" stroke="#e0e0e0" />
+  <text x="2430" y="520" font-size="14px" fill="#333333" font-weight="bold" text-anchor="start">신뢰도 게이지</text>
+  <text x="2890" y="520" font-size="14px" fill="#333333" font-weight="bold" text-anchor="end">0 / 100</text>
+  <rect x="2430" y="540" width="460" height="16" rx="8" fill="#f5f5f5" stroke="#e0e0e0" />
+  <rect x="2430" y="540" width="100" height="16" rx="8" fill="#cccccc" stroke="none" />
+  
+  <!-- Dungeon List -->
+  <rect x="2148" y="610" width="1024" height="238" rx="0" fill="#333333" stroke="none" /> <!-- Dark bg for map -->
+  <text x="2660" y="660" font-size="24px" fill="#ffffff" font-weight="bold" text-anchor="middle">면접관 던전</text>
+  
+  <!-- Interviewer Card Left -->
+  <rect x="2260" y="710" width="380" height="100" rx="16" fill="#777777" stroke="#e0e0e0" />
+  <rect x="2280" y="730" width="64" height="64" rx="12" fill="#333333" stroke="#e0e0e0" />
+  <rect x="2360" y="735" width="40" height="20" rx="4" fill="#cccccc" stroke="none" />
+  <text x="2360" y="775" font-size="18px" fill="#ffffff" font-weight="bold" text-anchor="start">Lv.1 온화한 대리 면접관</text>
+  
+  <!-- Connection Line -->
+  <rect x="2658" y="710" width="4" height="100" rx="0" fill="#777777" stroke="none" />
+</svg>
