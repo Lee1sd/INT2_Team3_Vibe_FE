@@ -18,20 +18,32 @@ export default function InterviewerList() {
 
   useEffect(() => {
     const fetchData = async () => {
-      try {
-        const [userData, interviewerData, uploadStatus] = await Promise.all([
-          authService.getCurrentUser(),
-          engineService.getInterviewers(),
-          fileService.checkResumeStatus()
-        ]);
-        setUser(userData);
-        setInterviewers(interviewerData);
-        setIsUploaded(uploadStatus);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setIsLoading(false);
+      // getCurrentUser가 아직 미연동이어도 면접관 목록은 뜨게, 요청을 독립적으로 처리한다.
+      const [userResult, interviewerResult, uploadResult] = await Promise.allSettled([
+        authService.getCurrentUser(),
+        engineService.getInterviewers(),
+        fileService.checkResumeStatus(),
+      ]);
+
+      if (userResult.status === 'fulfilled') {
+        setUser(userResult.value);
+      } else {
+        console.error(userResult.reason);
       }
+
+      if (interviewerResult.status === 'fulfilled') {
+        setInterviewers(interviewerResult.value);
+      } else {
+        console.error(interviewerResult.reason);
+      }
+
+      if (uploadResult.status === 'fulfilled') {
+        setIsUploaded(uploadResult.value);
+      } else {
+        console.error(uploadResult.reason);
+      }
+
+      setIsLoading(false);
     };
     fetchData();
   }, []);
