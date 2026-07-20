@@ -19,33 +19,32 @@ export default function ResumeUpload() {
     }
   };
 
+  // setInterval 대신 순차 await 루프로 폴링한다 — 이전 요청이 끝난 뒤에만 다음 요청을 보내므로,
+  // 늦게 도착한 응답이 이미 확정된 timeout/FAILED 상태를 덮어쓰는 레이스 컨디션이 없다(#15).
   const pollStatus = async (fileId: string) => {
-    let attempts = 0;
-    const interval = setInterval(async () => {
+    const MAX_ATTEMPTS = 10;
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      await new Promise((resolve) => setTimeout(resolve, 2000));
       try {
         const res = await fileService.checkParseStatus(fileId);
         if (res.status === 'COMPLETED') {
-          clearInterval(interval);
           setStatus('COMPLETED');
           setTimeout(() => navigate('/dungeon'), 1000);
-        } else if (res.status === 'FAILED') {
-          clearInterval(interval);
+          return;
+        }
+        if (res.status === 'FAILED') {
           setStatus('FAILED');
           setErrorMsg('이력서 파싱에 실패했습니다. 다른 파일을 시도해주세요.');
+          return;
         }
       } catch (e) {
-        clearInterval(interval);
         setStatus('FAILED');
         setErrorMsg('서버와 통신 중 오류가 발생했습니다.');
+        return;
       }
-      
-      attempts++;
-      if (attempts > 10) {
-        clearInterval(interval);
-        setStatus('FAILED');
-        setErrorMsg('파싱 시간이 초과되었습니다.');
-      }
-    }, 2000);
+    }
+    setStatus('FAILED');
+    setErrorMsg('파싱 시간이 초과되었습니다.');
   };
 
   const handleUpload = async () => {

@@ -27,8 +27,12 @@ const realAuthService: AuthService = {
     // 백엔드 명세에는 이 개념이 없다. 이력서 보유 여부는 RS-002(파싱 상태 조회) 결과로 판단해야 한다.
   },
   logout: async () => {
-    await authApi.logout();
-    setAccessToken(null);
+    // 로그아웃 API가 실패해도 로컬 accessToken은 항상 정리해야 무효한 토큰이 남지 않는다.
+    try {
+      await authApi.logout();
+    } finally {
+      setAccessToken(null);
+    }
   },
   withdraw: async () => {
     throw new Error('회원 탈퇴 API가 아직 api-spec.md에 정의되어 있지 않습니다. 백엔드팀에 확인하세요.');

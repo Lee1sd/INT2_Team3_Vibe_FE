@@ -62,15 +62,19 @@ export default function InterviewProcess() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [isInterviewFinished, setIsInterviewFinished] = useState(false);
   const [isAbandonModalOpen, setIsAbandonModalOpen] = useState(false);
-  
-  // Hardcoded session ID for MVP simplicity
-  const sessionId = 'session_123';
+
+  // startInterview 응답의 실제 sessionId를 사용한다 (#11: 하드코딩된 'session_123' 제거).
+  const [sessionId, setSessionId] = useState('');
 
   useEffect(() => {
     const initInterview = async () => {
       try {
+        // TODO(#6): resumeId('f123')는 여전히 하드코딩되어 있음 — 이력서 보유확인(RS-003)이
+        // 실제 연동되면 현재 사용자의 실제 resumeId로 교체해야 한다. 이 이슈(#11)는 그와 별개로
+        // createSession 인자 순서 오류 + sessionId 하드코딩만 다룬다.
         const res = await engineService.startInterview(interviewerId || 'iv1', 'f123', selectedKeyword);
         setSession(res);
+        setSessionId(res.sessionId || '');
       } catch (e) {
         console.error(e);
       } finally {

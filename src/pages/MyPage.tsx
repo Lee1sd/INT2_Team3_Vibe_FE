@@ -76,18 +76,48 @@ interface UploadedFile {
   errorMsg?: string;
 }
 
-function MultiFileUploader({ 
-  title, 
-  maxFiles = 3, 
-  required = false 
-}: { 
-  title: string, 
+function MultiFileUploader({
+  title,
+  maxFiles = 3,
+  required = false,
+  resumeType = 'RESUME',
+}: {
+  title: string,
   maxFiles?: number,
-  required?: boolean
+  required?: boolean,
+  resumeType?: 'RESUME' | 'PORTFOLIO',
 }) {
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const updateFile = (id: string, patch: Partial<UploadedFile>) => {
+    setFiles(prev => prev.map(f => (f.id === id ? { ...f, ...patch } : f)));
+  };
+
+  // fileService(mock/실제 API 스위칭)를 실제로 호출한다 — setTimeout 시뮬레이션 제거(#12).
+  // 상태 조회도 ResumeUpload.tsx(#15)와 동일하게 순차 await 루프로 폴링해 레이스 컨디션을 피한다.
+  const pollUntilDone = async (localId: string, fileId: string) => {
+    const MAX_ATTEMPTS = 10;
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      try {
+        const res = await fileService.checkParseStatus(fileId);
+        if (res.status === 'COMPLETED') {
+          updateFile(localId, { status: 'COMPLETED' });
+          return;
+        }
+        if (res.status === 'FAILED') {
+          updateFile(localId, { status: 'FAILED', errorMsg: '이력서 파싱에 실패했습니다.' });
+          return;
+        }
+      } catch (e) {
+        updateFile(localId, { status: 'FAILED', errorMsg: '서버와 통신 중 오류가 발생했습니다.' });
+        return;
+      }
+    }
+    updateFile(localId, { status: 'FAILED', errorMsg: '파싱 시간이 초과되었습니다.' });
+  };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -97,24 +127,24 @@ function MultiFileUploader({
       }
       const newFile = e.target.files[0];
       const newId = Math.random().toString(36).substr(2, 9);
-      
+
       const fileEntry: UploadedFile = {
         id: newId,
         name: newFile.name,
         size: newFile.size,
         status: 'UPLOADING'
       };
-      
+
       setFiles(prev => [...prev, fileEntry]);
       if (!selectedId) setSelectedId(newId);
 
-      // Simulate upload & processing
-      setTimeout(() => {
-        setFiles(prev => prev.map(f => f.id === newId ? { ...f, status: 'PROCESSING' } : f));
-        setTimeout(() => {
-          setFiles(prev => prev.map(f => f.id === newId ? { ...f, status: 'COMPLETED' } : f));
-        }, 1500);
-      }, 1000);
+      try {
+        const res = await fileService.uploadResume(newFile, resumeType);
+        updateFile(newId, { status: 'PROCESSING' });
+        await pollUntilDone(newId, res.fileId);
+      } catch (err) {
+        updateFile(newId, { status: 'FAILED', errorMsg: '업로드 중 오류가 발생했습니다.' });
+      }
     }
   };
 
@@ -370,8 +400,8 @@ export default function MyPage() {
             </section>
 
             {/* 다중 업로드 영역 */}
-            <MultiFileUploader title="이력서 데이터 풀 (Resume)" required maxFiles={3} />
-            <MultiFileUploader title="포트폴리오 데이터 풀 (Portfolio)" maxFiles={3} />
+            <MultiFileUploader title="이력서 데이터 풀 (Resume)" required maxFiles={3} resumeType="RESUME" />
+            <MultiFileUploader title="포트폴리오 데이터 풀 (Portfolio)" maxFiles={3} resumeType="PORTFOLIO" />
 
           </div>
         )}

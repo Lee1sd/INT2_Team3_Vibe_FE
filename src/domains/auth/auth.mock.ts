@@ -62,13 +62,8 @@ export const authMock = {
     });
   },
 
+  // mock 상에서는 탈퇴와 로그아웃이 동일한 로컬 상태 초기화만 하면 되므로 logout을 재사용한다.
   withdraw: async (): Promise<void> => {
-    return new Promise((resolve) => {
-      memoryHasResume = false;
-      try {
-        localStorage.removeItem('hasResume');
-      } catch (e) {}
-      setTimeout(() => resolve(), 500);
-    });
+    return authMock.logout();
   },
 };

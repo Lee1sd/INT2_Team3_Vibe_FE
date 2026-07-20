@@ -60,6 +60,7 @@ export const interviewMock = {
     return new Promise((resolve) => {
       setTimeout(() => {
         resolve({
+          sessionId: 'session_123',
           evaluation: null,
           passed: false,
           nextTurn: {

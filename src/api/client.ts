@@ -27,10 +27,11 @@ export class ApiError extends Error {
   code: string;
   status: number;
 
-  constructor(body: ApiErrorBody) {
-    super(body.message);
-    this.code = body.code;
-    this.status = body.status;
+  constructor(body: Partial<ApiErrorBody>) {
+    super(body.message || '알 수 없는 오류가 발생했습니다.');
+    this.name = 'ApiError';
+    this.code = body.code || 'UNKNOWN_ERROR';
+    this.status = body.status ?? 500;
   }
 }
 
@@ -58,7 +59,14 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   if (res.status === 204) {
     return undefined as T;
   }
-  return (await res.json()) as T;
+
+  // 204가 아니어도 body가 빈 응답일 수 있다 — res.json()을 바로 호출하면 파싱 에러가 나므로
+  // 먼저 텍스트로 읽어 빈 문자열인지 확인한다.
+  const text = await res.text();
+  if (!text) {
+    return undefined as T;
+  }
+  return JSON.parse(text) as T;
 }
 
 export const apiClient = {
