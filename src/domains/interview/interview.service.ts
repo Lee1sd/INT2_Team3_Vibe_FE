@@ -66,13 +66,16 @@ const realInterviewService: InterviewService = {
   },
 
   startInterview: async (interviewerId, resumeId, selectedKeyword) => {
-    const res = await interviewApi.createSession(Number(interviewerId), Number(resumeId), selectedKeyword);
+    // interviewApi.createSession의 시그니처는 (resumeId, interviewerId, keyword) 순서다 — 이전에
+    // 인자가 뒤바뀌어 전달되던 버그(#11)를 수정.
+    const res = await interviewApi.createSession(Number(resumeId), Number(interviewerId), selectedKeyword);
     const questions: Question[] = res.questions.map((q) => ({
       id: String(q.questionId),
       content: q.question,
       type: 'MAIN',
     }));
     return {
+      sessionId: String(res.sessionId),
       evaluation: null,
       passed: false,
       nextTurn: { type: 'FOLLOW_UP', turn: 1 },

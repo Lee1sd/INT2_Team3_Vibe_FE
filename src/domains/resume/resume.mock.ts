@@ -4,8 +4,8 @@ import { UploadResponse } from './resume.types';
 let memoryMockUploaded = false;
 
 export const resumeMock = {
-  uploadResume: async (file: File): Promise<UploadResponse> => {
-    console.log('Uploading file:', file.name);
+  uploadResume: async (file: File, type: 'RESUME' | 'PORTFOLIO' = 'RESUME'): Promise<UploadResponse> => {
+    console.log('Uploading file:', file.name, 'type:', type);
     memoryMockUploaded = true;
     try {
       localStorage.setItem('mock_resume_uploaded', 'true');

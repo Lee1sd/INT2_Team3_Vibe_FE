@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { evaluationService } from '../domains/progress/progress.service';
 import { authService } from '../domains/auth/auth.service';
-import { GaugeUpdate, User } from '../types';
-import { Award, ChevronRight, Zap, MessageSquare } from 'lucide-react';
+import { engineService } from '../domains/interview/interview.service';
+import { GaugeUpdate, User, Interviewer } from '../types';
+import { Award, ChevronRight, Zap, MessageSquare, AlertCircle } from 'lucide-react';
 import { InfoTooltip } from '../components/InfoTooltip';
 
 export default function Result() {
@@ -11,34 +12,71 @@ export default function Result() {
   const navigate = useNavigate();
   const [result, setResult] = useState<GaugeUpdate | null>(null);
   const [user, setUser] = useState<User | null>(null);
+  const [unlockedInterviewer, setUnlockedInterviewer] = useState<Interviewer | null>(null);
   const [displayedGauge, setDisplayedGauge] = useState(0);
   const [showBadgeModal, setShowBadgeModal] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
+    // 컴포넌트 언마운트/sessionId 변경 시 정리해야 하는 게이지 애니메이션 타이머(#16).
+    let gaugeTimer: ReturnType<typeof setTimeout> | undefined;
+
     const fetchResult = async () => {
+      setError(null);
       try {
-        const [userData, resData] = await Promise.all([
+        const [userData, resData, interviewers] = await Promise.all([
           authService.getCurrentUser(),
-          evaluationService.getGaugeUpdate(sessionId || '')
+          evaluationService.getGaugeUpdate(sessionId || ''),
+          engineService.getInterviewers(),
         ]);
+        if (cancelled) return;
+
         setUser(userData);
         setResult(resData);
         setDisplayedGauge(resData.previousGauge);
-        
+        setUnlockedInterviewer(
+          resData.unlockedInterviewerId
+            ? interviewers.find((iv) => iv.id === resData.unlockedInterviewerId) ?? null
+            : null
+        );
+
         // 80% 이상 달성 (또는 레벨업) 시 모달 표시
         if (resData.newGauge >= 80 || resData.levelUp) {
           setShowBadgeModal(true);
         }
-        
-        setTimeout(() => {
-          setDisplayedGauge(resData.newGauge);
+
+        gaugeTimer = setTimeout(() => {
+          if (!cancelled) setDisplayedGauge(resData.newGauge);
         }, 800);
       } catch (e) {
         console.error(e);
+        // 실패 시 무한 로딩 대신 명시적인 에러 상태를 보여준다(#16).
+        if (!cancelled) setError('결과를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.');
       }
     };
     fetchResult();
+
+    return () => {
+      cancelled = true;
+      if (gaugeTimer) clearTimeout(gaugeTimer);
+    };
   }, [sessionId]);
+
+  if (error) {
+    return (
+      <div className="flex flex-col justify-center items-center min-h-[70vh] gap-4 px-6 text-center">
+        <AlertCircle className="w-12 h-12 text-danger" />
+        <p className="text-blue-grey-700 text-[14px] leading-[20px] font-normal">{error}</p>
+        <button
+          onClick={() => navigate('/dungeon')}
+          className="px-6 py-2 border border-blue-grey-75 rounded-lg text-blue-grey-700 text-[14px] leading-[20px] font-bold hover:bg-blue-grey-25 transition-colors"
+        >
+          던전 맵으로 돌아가기
+        </button>
+      </div>
+    );
+  }
 
   if (!result || !user) {
     return (
@@ -135,7 +173,11 @@ export default function Result() {
                 <Award className="w-12 h-12 text-warning fill-warning" />
               </div>
               <h3 className="text-[26px] leading-[32px] font-bold text-blue-grey-900 mb-2">새로운 뱃지 획득!</h3>
-              <p className="text-blue-grey-900 text-[14px] leading-[20px] font-normal mb-6">Lv.2 깐깐한 과장 면접관이 해금되었습니다.</p>
+              <p className="text-blue-grey-900 text-[14px] leading-[20px] font-normal mb-6">
+                {unlockedInterviewer
+                  ? `Lv.${unlockedInterviewer.level} ${unlockedInterviewer.name} 면접관이 해금되었습니다.`
+                  : '축하합니다! 레벨업에 성공했습니다.'}
+              </p>
               
               <div className="w-full text-[14px] leading-[20px] font-normal bg-blue-grey-25 text-blue-grey-900 p-5 rounded-2xl border border-blue-grey-75 shadow-inner mb-8 italic">
                 "트레이드오프를 설명할 줄 아는군요. 다음 단계로 오시죠."

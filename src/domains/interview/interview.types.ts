@@ -47,6 +47,9 @@ export interface NextTurn {
 }
 
 export interface InterviewResponse {
+  // startInterview 응답에만 포함된다 — 이후 submitAnswers/submitFollowUp 호출은 화면이 들고 있는
+  // 값을 그대로 재사용하므로 응답에 다시 실어줄 필요가 없다 (#11: 하드코딩된 'session_123' 제거).
+  sessionId?: string;
   evaluation: EvaluationDetail | null; // Null if just starting or fetching questions without evaluation
   passed: boolean;
   nextTurn: NextTurn;

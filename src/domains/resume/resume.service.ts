@@ -4,7 +4,7 @@ import { resumeMock } from './resume.mock';
 import { UploadResponse } from './resume.types';
 
 interface ResumeService {
-  uploadResume: (file: File) => Promise<UploadResponse>;
+  uploadResume: (file: File, type?: 'RESUME' | 'PORTFOLIO') => Promise<UploadResponse>;
   checkParseStatus: (fileId: string) => Promise<UploadResponse>;
   checkResumeStatus: () => Promise<boolean>;
 }
@@ -20,7 +20,7 @@ function toUploadResponse(res: ResumeApiResponse): UploadResponse {
 }
 
 const realResumeService: ResumeService = {
-  uploadResume: async (file) => toUploadResponse(await resumeApi.upload(file, 'RESUME')),
+  uploadResume: async (file, type = 'RESUME') => toUploadResponse(await resumeApi.upload(file, type)),
   checkParseStatus: async (fileId) => toUploadResponse(await resumeApi.getStatus(Number(fileId))),
   checkResumeStatus: async () => {
     // RS-002는 특정 resumeId를 조회하는 API라 "현재 이력서를 보유하고 있는가"를 바로
