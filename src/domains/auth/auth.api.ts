@@ -17,9 +17,10 @@ export const authApi = {
 
   /**
    * AU-002(구글 콜백)는 브라우저가 자동으로 이동하는 리다이렉트라 프론트가 직접 fetch로
-   * 호출하지 않는다. 백엔드는 콜백 처리가 끝나면 `/oauth/callback?accessToken=...`으로
-   * 프론트를 리다이렉트하고, 프론트는 `src/pages/OAuthCallback.tsx`에서 그 값을 읽어
-   * setAccessToken을 호출한다(refreshToken은 별도로 HttpOnly 쿠키에 담겨 전달됨).
+   * 호출하지 않는다. 백엔드는 콜백 처리가 끝나면 `/oauth/callback#accessToken=...`으로
+   * 프론트를 리다이렉트하고(쿼리 파라미터가 아니라 URL fragment — ADR-017 참고), 프론트는
+   * `src/pages/OAuthCallback.tsx`에서 그 값을 읽어 setAccessToken을 호출한다
+   * (refreshToken은 별도로 HttpOnly 쿠키에 담겨 전달됨).
    */
 
   /** AU-003 — Access Token 재발급 (Refresh Token은 쿠키로 자동 전송). */
