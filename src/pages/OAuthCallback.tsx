@@ -22,7 +22,8 @@ export default function OAuthCallback() {
     // 넘기면 키 이름에 '#'까지 포함돼버리므로 앞의 '#'을 잘라내고 파싱한다.
     const hash = window.location.hash.replace(/^#/, '');
     const params = new URLSearchParams(hash);
-    const accessToken = params.get('accessToken') ?? getAccessToken();
+    // 빈 문자열('#accessToken=')도 토큰 없음으로 보고 저장된 값으로 fallback
+    const accessToken = params.get('accessToken') || getAccessToken();
 
     if (accessToken) {
       setAccessToken(accessToken);
