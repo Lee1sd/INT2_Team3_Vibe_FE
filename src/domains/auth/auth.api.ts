@@ -38,9 +38,10 @@ export const authApi = {
    * (AU-002 응답에는 user가 포함되지만, 새로고침 후 다시 조회할 방법이 명세에 없음)
    * 이 자리는 백엔드팀과 협의해 예: GET /api/users/me 추가가 필요하다.
    */
-  getCurrentUser: (): Promise<User> => {
-    throw new Error(
-      'GET /api/users/me 같은 프로필 조회 API가 아직 api-spec.md에 없습니다. 백엔드팀(표지민)에게 확인하세요.'
-    );
-  },
+  getCurrentUser: (): Promise<User> =>
+    Promise.reject(
+      new Error(
+        'GET /api/users/me 같은 프로필 조회 API가 아직 api-spec.md에 없습니다. 백엔드팀(표지민)에게 확인하세요.'
+      )
+    ),
 };
