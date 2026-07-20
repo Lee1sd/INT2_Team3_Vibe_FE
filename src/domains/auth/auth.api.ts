@@ -17,11 +17,9 @@ export const authApi = {
 
   /**
    * AU-002(구글 콜백)는 브라우저가 자동으로 이동하는 리다이렉트라 프론트가 직접 fetch로
-   * 호출하지 않는다. 문제는 콜백 처리가 끝난 뒤 백엔드가 accessToken을 프론트에 어떻게
-   * 전달할지가 api-spec.md에 아직 명시되어 있지 않다는 점이다 (쿼리 파라미터로 붙여서
-   * 프론트 페이지로 리다이렉트 / 별도 프론트 콜백 페이지에서 재조회 등 여러 방식이 가능).
-   * 표지민(백엔드 인증 담당)에게 확인 후 이 자리에 실제 처리 로직(예: URL의 accessToken을
-   * 읽어 setAccessToken 호출)을 채워야 한다.
+   * 호출하지 않는다. 백엔드는 콜백 처리가 끝나면 `/oauth/callback?accessToken=...`으로
+   * 프론트를 리다이렉트하고, 프론트는 `src/pages/OAuthCallback.tsx`에서 그 값을 읽어
+   * setAccessToken을 호출한다(refreshToken은 별도로 HttpOnly 쿠키에 담겨 전달됨).
    */
 
   /** AU-003 — Access Token 재발급 (Refresh Token은 쿠키로 자동 전송). */
