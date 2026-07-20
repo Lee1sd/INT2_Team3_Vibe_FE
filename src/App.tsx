@@ -6,6 +6,7 @@
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { UserCircle } from 'lucide-react';
 import Login from './pages/Login';
+import OAuthCallback from './pages/OAuthCallback';
 import ResumeUpload from './pages/ResumeUpload';
 import InterviewerList from './pages/InterviewerList';
 import InterviewProcess from './pages/InterviewProcess';
@@ -33,6 +34,7 @@ export default function App() {
         <main className="w-full">
           <Routes>
             <Route path="/" element={<Login />} />
+            <Route path="/oauth/callback" element={<OAuthCallback />} />
             <Route path="/upload" element={<ResumeUpload />} />
             <Route path="/dungeon" element={<InterviewerList />} />
             <Route path="/interview/:interviewerId" element={<InterviewProcess />} />
