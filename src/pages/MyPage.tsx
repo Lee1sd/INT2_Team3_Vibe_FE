@@ -248,30 +248,58 @@ export default function MyPage() {
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const [isDeleteAccountModalOpen, setIsDeleteAccountModalOpen] = useState(false);
   const navigate = useNavigate();
+  /** 저장이 끝난 뒤에는 늦게 도착한 getCurrentUser가 이름을 덮지 못하게 한다. */
+  const nameHydratedFromServer = useRef(false);
+  const isSavingNameRef = useRef(false);
   
   useEffect(() => {
-    authService.getCurrentUser().then((currentUser) => {
-      setUser(currentUser);
-      setNameInput(currentUser.displayName || currentUser.name || '');
-    }).catch(console.error);
+    let cancelled = false;
+
+    authService
+      .getCurrentUser()
+      .then((currentUser) => {
+        if (cancelled) return;
+        setUser((prev) => {
+          // 이미 로컬에서 이름을 저장했다면 서버의 오래된 스냅샷으로 되돌리지 않는다.
+          if (nameHydratedFromServer.current && prev) {
+            return prev;
+          }
+          return currentUser;
+        });
+        if (!nameHydratedFromServer.current) {
+          setNameInput(currentUser.displayName || currentUser.name || '');
+          nameHydratedFromServer.current = true;
+        }
+      })
+      .catch((e) => {
+        if (!cancelled) console.error(e);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const currentLevel = user?.level || 1;
   const savedName = user?.name || '';
   const trimmedName = nameInput.trim();
-  const isNameDirty = Boolean(user && trimmedName && trimmedName !== savedName);
+  const isNameDirty = Boolean(user && trimmedName !== savedName);
 
   const handleNameSave = async () => {
+    if (isSavingNameRef.current) return;
+
     if (!user || !trimmedName || trimmedName === savedName) {
       setIsEditingName(false);
       setNameInput(savedName);
       return;
     }
 
+    isSavingNameRef.current = true;
     setIsSavingName(true);
     setNameSaveStatus('idle');
     try {
       const updated = await authService.updateName(trimmedName);
+      nameHydratedFromServer.current = true;
       setUser((prev) =>
         prev
           ? { ...prev, name: updated.name, displayName: updated.name }
@@ -286,6 +314,7 @@ export default function MyPage() {
       setNameSaveStatus('error');
       setNameInput(savedName);
     } finally {
+      isSavingNameRef.current = false;
       setIsSavingName(false);
     }
   };
@@ -425,13 +454,15 @@ export default function MyPage() {
                     </div>
                     {isNameDirty && !isSavingName && (
                       <>
-                        <button
-                          type="button"
-                          onClick={() => void handleNameSave()}
-                          className="px-3 py-1.5 rounded-lg bg-primary text-white text-[13px] font-bold hover:bg-[#005bb5] transition-colors"
-                        >
-                          저장
-                        </button>
+                        {trimmedName ? (
+                          <button
+                            type="button"
+                            onClick={() => void handleNameSave()}
+                            className="px-3 py-1.5 rounded-lg bg-primary text-white text-[13px] font-bold hover:bg-[#005bb5] transition-colors"
+                          >
+                            저장
+                          </button>
+                        ) : null}
                         <button
                           type="button"
                           onClick={handleNameCancel}
