@@ -238,18 +238,92 @@ type TabId = typeof TABS[number]['id'];
 
 export default function MyPage() {
   const [user, setUser] = useState<User | null>(null);
+  const [nameInput, setNameInput] = useState('');
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [isSavingName, setIsSavingName] = useState(false);
+  const [nameSaveStatus, setNameSaveStatus] = useState<'idle' | 'saved' | 'error'>('idle');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedHistory, setSelectedHistory] = useState<InterviewHistoryItem | null>(null);
   const [activeTab, setActiveTab] = useState<TabId>('PROFILE');
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const [isDeleteAccountModalOpen, setIsDeleteAccountModalOpen] = useState(false);
   const navigate = useNavigate();
+  /** 저장이 끝난 뒤에는 늦게 도착한 getCurrentUser가 이름을 덮지 못하게 한다. */
+  const nameHydratedFromServer = useRef(false);
+  const isSavingNameRef = useRef(false);
   
   useEffect(() => {
-    authService.getCurrentUser().then(setUser);
+    let cancelled = false;
+
+    authService
+      .getCurrentUser()
+      .then((currentUser) => {
+        if (cancelled) return;
+        setUser((prev) => {
+          // 이미 로컬에서 이름을 저장했다면 서버의 오래된 스냅샷으로 되돌리지 않는다.
+          if (nameHydratedFromServer.current && prev) {
+            return prev;
+          }
+          return currentUser;
+        });
+        if (!nameHydratedFromServer.current) {
+          setNameInput(currentUser.displayName || currentUser.name || '');
+          nameHydratedFromServer.current = true;
+        }
+      })
+      .catch((e) => {
+        if (!cancelled) console.error(e);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const currentLevel = user?.level || 1;
+  const savedName = user?.name || '';
+  const trimmedName = nameInput.trim();
+  const isNameDirty = Boolean(user && trimmedName !== savedName);
+
+  const handleNameSave = async () => {
+    if (isSavingNameRef.current) return;
+
+    if (!user || !trimmedName || trimmedName === savedName) {
+      setIsEditingName(false);
+      setNameInput(savedName);
+      return;
+    }
+
+    isSavingNameRef.current = true;
+    setIsSavingName(true);
+    setNameSaveStatus('idle');
+    try {
+      const updated = await authService.updateName(trimmedName);
+      nameHydratedFromServer.current = true;
+      setUser((prev) =>
+        prev
+          ? { ...prev, name: updated.name, displayName: updated.name }
+          : prev
+      );
+      setNameInput(updated.name);
+      setNameSaveStatus('saved');
+      setIsEditingName(false);
+      window.setTimeout(() => setNameSaveStatus('idle'), 2000);
+    } catch (e) {
+      console.error(e);
+      setNameSaveStatus('error');
+      setNameInput(savedName);
+    } finally {
+      isSavingNameRef.current = false;
+      setIsSavingName(false);
+    }
+  };
+
+  const handleNameCancel = () => {
+    setNameInput(savedName);
+    setIsEditingName(false);
+    setNameSaveStatus('idle');
+  };
 
   const handleLogout = async () => {
     await authService.logout();
@@ -342,14 +416,83 @@ export default function MyPage() {
                 
                 <div className="flex-1 w-full text-center sm:text-left">
                   <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2 justify-center sm:justify-start">
-                    <input 
-                      type="text" 
-                      defaultValue={user?.displayName || '익명 사용자'} 
-                      className="text-[20px] font-bold text-blue-grey-900 bg-transparent border-b border-dashed border-blue-grey-300 focus:border-primary focus:outline-none px-1 py-0.5 text-center sm:text-left w-auto max-w-[200px]"
-                    />
-                    <Edit2 className="w-4 h-4 text-blue-grey-400 inline-block" />
+                    <div
+                      className={twMerge(
+                        "inline-flex items-center gap-2 rounded-xl px-2 py-1 transition-colors",
+                        isEditingName || isNameDirty
+                          ? "bg-white border border-primary/40 shadow-sm"
+                          : "border border-transparent"
+                      )}
+                    >
+                      <input 
+                        type="text" 
+                        value={nameInput}
+                        onChange={(e) => {
+                          setNameInput(e.target.value);
+                          setNameSaveStatus('idle');
+                        }}
+                        onFocus={() => setIsEditingName(true)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            void handleNameSave();
+                          }
+                          if (e.key === 'Escape') {
+                            e.preventDefault();
+                            handleNameCancel();
+                            e.currentTarget.blur();
+                          }
+                        }}
+                        disabled={isSavingName || !user}
+                        aria-label="이름 수정"
+                        className="text-[20px] font-bold text-blue-grey-900 bg-transparent focus:outline-none px-1 py-0.5 text-center sm:text-left w-auto max-w-[200px] disabled:opacity-50"
+                      />
+                      <Edit2 className={twMerge(
+                        "w-4 h-4 shrink-0",
+                        isEditingName || isNameDirty ? "text-primary" : "text-blue-grey-400"
+                      )} />
+                    </div>
+                    {isNameDirty && !isSavingName && (
+                      <>
+                        {trimmedName ? (
+                          <button
+                            type="button"
+                            onClick={() => void handleNameSave()}
+                            className="px-3 py-1.5 rounded-lg bg-primary text-white text-[13px] font-bold hover:bg-[#005bb5] transition-colors"
+                          >
+                            저장
+                          </button>
+                        ) : null}
+                        <button
+                          type="button"
+                          onClick={handleNameCancel}
+                          className="px-3 py-1.5 rounded-lg border border-blue-grey-75 text-blue-grey-600 text-[13px] font-bold hover:bg-blue-grey-25 transition-colors"
+                        >
+                          취소
+                        </button>
+                      </>
+                    )}
+                    {isSavingName && (
+                      <span className="inline-flex items-center gap-1.5 text-[13px] font-bold text-primary">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        저장 중
+                      </span>
+                    )}
                   </div>
-                  <p className="text-[14px] text-blue-grey-500 font-mono">{user?.email}</p>
+                  <p className="text-[13px] text-blue-grey-500 font-normal min-h-[20px]">
+                    {isSavingName
+                      ? '이름을 서버에 저장하고 있어요.'
+                      : nameSaveStatus === 'saved'
+                        ? '이름이 저장되었습니다.'
+                        : nameSaveStatus === 'error'
+                          ? '이름 저장에 실패했습니다. 다시 시도해 주세요.'
+                          : isNameDirty
+                            ? '이름이 수정되었습니다. 저장을 눌러 반영하세요.'
+                            : isEditingName
+                              ? '이름을 수정한 뒤 저장을 누르거나 Enter를 누르세요. Esc로 취소할 수 있어요.'
+                              : '이름을 클릭하면 수정할 수 있어요.'}
+                  </p>
+                  <p className="text-[14px] text-blue-grey-500 font-mono mt-1">{user?.email}</p>
                 </div>
               </div>
             </section>
