@@ -59,9 +59,22 @@ function toInterviewer(item: InterviewerApiItem): Interviewer {
   };
 }
 
-function toApiAnswers(answers: Answer[]): { questionId: number; answerText: string }[] {
+function toStringId(id: number | null | undefined): string | undefined {
+  return id == null ? undefined : String(id);
+}
+
+function toNumberId(id: string | undefined): number | undefined {
+  if (id == null || id.trim() === '') return undefined;
+
+  const numericId = Number(id);
+  return Number.isFinite(numericId) ? numericId : undefined;
+}
+
+function toApiAnswers(answers: Answer[], fallbackQuestionId?: string): { questionId: number; answerText: string }[] {
   return answers.map((answer) => ({
-    questionId: Number(answer.questionId),
+    questionId: toNumberId(answer.questionId) ?? toNumberId(fallbackQuestionId) ?? (() => {
+      throw new Error('Question ID is required to submit an interview answer.');
+    })(),
     answerText: answer.content,
   }));
 }
@@ -74,14 +87,15 @@ function toNextTurn(res: SubmitAnswersApiResponse, turn: number): NextTurn {
   return {
     type: 'FOLLOW_UP',
     turn,
-    questionId: res.nextTurn.targetQuestionId !== undefined ? String(res.nextTurn.targetQuestionId) : undefined,
+    questionId: toStringId(res.nextTurn.targetQuestionId),
     question: res.nextTurn.question,
   };
 }
 
 function toInterviewResponse(res: SubmitAnswersApiResponse, turn: number): InterviewResponse {
   const nextTurn = toNextTurn(res, turn);
-  const followUpQuestionId = nextTurn.questionId ?? (res.weakestQuestionId !== undefined ? String(res.weakestQuestionId) : undefined);
+  const weakestQuestionId = toStringId(res.weakestQuestionId);
+  const followUpQuestionId = nextTurn.questionId ?? weakestQuestionId;
 
   return {
     evaluations: res.evaluations.map((evaluation) => ({
@@ -90,15 +104,15 @@ function toInterviewResponse(res: SubmitAnswersApiResponse, turn: number): Inter
       feedback: evaluation.feedback,
     })),
     totalScore: res.totalScore,
-    weakestQuestionId: res.weakestQuestionId !== undefined ? String(res.weakestQuestionId) : undefined,
+    weakestQuestionId,
     overallFeedback: res.overallFeedback,
     passed: res.passed,
     nextTurn,
     questions:
-      nextTurn.type === 'FOLLOW_UP' && res.nextTurn?.question
+      nextTurn.type === 'FOLLOW_UP' && res.nextTurn?.question && followUpQuestionId
         ? [
             {
-              id: followUpQuestionId ?? 'follow-up',
+              id: followUpQuestionId,
               content: res.nextTurn.question,
               type: 'FOLLOW_UP',
             },
@@ -136,7 +150,7 @@ const realInterviewService: InterviewService = {
   },
 
   submitFollowUp: async (sessionId, answer) => {
-    const res = await interviewApi.submitAnswers(Number(sessionId), toApiAnswers([answer]));
+    const res = await interviewApi.submitAnswers(Number(sessionId), toApiAnswers([answer], answer.questionId));
     return toInterviewResponse(res, 3);
   },
 };

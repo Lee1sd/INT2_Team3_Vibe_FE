@@ -25,10 +25,10 @@ export interface CreateSessionApiResponse {
 export interface SubmitAnswersApiResponse {
   evaluations: { questionId: number; score: number; feedback?: string }[];
   totalScore: number;
-  weakestQuestionId?: number;
+  weakestQuestionId?: number | null;
   passed: boolean;
   overallFeedback?: string;
-  nextTurn?: { type: 'FOLLOW_UP' | 'END'; targetQuestionId?: number; question?: string };
+  nextTurn?: { type: 'FOLLOW_UP' | 'END'; targetQuestionId?: number | null; question?: string };
 }
 
 export const interviewApi = {
