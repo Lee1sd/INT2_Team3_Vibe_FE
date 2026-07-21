@@ -1,7 +1,7 @@
 // 페이지 컴포넌트가 실제로 import하는 진입점. VITE_USE_MOCK으로 mock/실제 API를 스위칭한다.
-import { interviewApi, InterviewerApiItem } from './interview.api';
+import { interviewApi, InterviewerApiItem, SubmitAnswersApiResponse } from './interview.api';
 import { interviewMock } from './interview.mock';
-import { Interviewer, InterviewResponse, Question, Answer } from './interview.types';
+import { Interviewer, InterviewResponse, Question, Answer, NextTurn } from './interview.types';
 
 interface InterviewService {
   getInterviewers: () => Promise<Interviewer[]>;
@@ -59,6 +59,73 @@ function toInterviewer(item: InterviewerApiItem): Interviewer {
   };
 }
 
+function toStringId(id: number | null | undefined): string | undefined {
+  return id == null ? undefined : String(id);
+}
+
+function toNumberId(id: string | undefined): number | undefined {
+  if (id == null || id.trim() === '') return undefined;
+
+  const numericId = Number(id);
+  return Number.isFinite(numericId) ? numericId : undefined;
+}
+
+function toApiAnswers(answers: Answer[], fallbackQuestionId?: string): { questionId: number; answerText: string }[] {
+  return answers.map((answer) => ({
+    questionId: toNumberId(answer.questionId) ?? toNumberId(fallbackQuestionId) ?? (() => {
+      throw new Error('Question ID is required to submit an interview answer.');
+    })(),
+    answerText: answer.content,
+  }));
+}
+
+function toNextTurn(res: SubmitAnswersApiResponse, turn: number): NextTurn {
+  if (!res.nextTurn || res.nextTurn.type === 'END') {
+    return { type: 'END', turn };
+  }
+
+  const questionId = toStringId(res.nextTurn.targetQuestionId);
+  if (!questionId || !res.nextTurn.question) {
+    return { type: 'END', turn };
+  }
+
+  return {
+    type: 'FOLLOW_UP',
+    turn,
+    questionId,
+    question: res.nextTurn.question,
+  };
+}
+
+function toInterviewResponse(res: SubmitAnswersApiResponse, turn: number): InterviewResponse {
+  const nextTurn = toNextTurn(res, turn);
+  const weakestQuestionId = toStringId(res.weakestQuestionId);
+  const followUpQuestionId = nextTurn.questionId ?? weakestQuestionId;
+
+  return {
+    evaluations: res.evaluations.map((evaluation) => ({
+      questionId: String(evaluation.questionId),
+      score: evaluation.score,
+      feedback: evaluation.feedback,
+    })),
+    totalScore: res.totalScore,
+    weakestQuestionId,
+    overallFeedback: res.overallFeedback,
+    passed: res.passed,
+    nextTurn,
+    questions:
+      nextTurn.type === 'FOLLOW_UP' && followUpQuestionId
+        ? [
+            {
+              id: followUpQuestionId,
+              content: nextTurn.question,
+              type: 'FOLLOW_UP',
+            },
+          ]
+        : undefined,
+  };
+}
+
 const realInterviewService: InterviewService = {
   getInterviewers: async () => {
     const res = await interviewApi.getInterviewers();
@@ -76,25 +143,20 @@ const realInterviewService: InterviewService = {
     }));
     return {
       sessionId: String(res.sessionId),
-      evaluation: null,
       passed: false,
       nextTurn: { type: 'FOLLOW_UP', turn: 1 },
       questions,
     };
   },
 
-  submitAnswers: async () => {
-    // 백엔드는 세부 평가항목(intent/accuracy/reasoning/tradeoff)을 절대 반환하지 않기로 확정했다
-    // (score+feedback, totalScore만 내려옴). interview.types.ts의 EvaluationDetail/InterviewResponse와
-    // InterviewProcess.tsx 화면 로직을 실제 응답 형태에 맞게 다시 설계해야 실제 연동이 가능하다.
-    throw new Error(
-      '백엔드 응답 형태(evaluations[]+totalScore)와 프론트 EvaluationDetail 타입이 달라 그대로 연동할 수 없습니다. ' +
-        'IS-002 응답 형태에 맞게 타입/화면을 다시 설계한 뒤 이 함수를 구현하세요.'
-    );
+  submitAnswers: async (sessionId, answers) => {
+    const res = await interviewApi.submitAnswers(Number(sessionId), toApiAnswers(answers));
+    return toInterviewResponse(res, 2);
   },
 
-  submitFollowUp: async () => {
-    throw new Error('submitAnswers와 동일한 이유로 아직 실제 연동할 수 없습니다.');
+  submitFollowUp: async (sessionId, answer) => {
+    const res = await interviewApi.submitAnswers(Number(sessionId), toApiAnswers([answer], answer.questionId));
+    return toInterviewResponse(res, 3);
   },
 };
 

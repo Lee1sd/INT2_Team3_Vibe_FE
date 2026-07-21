@@ -49,6 +49,17 @@ const getInterviewerDetails = (id: string | undefined) => {
   return map[id || ''] || { name: '알 수 없는 면접관', level: 1, avatar: '👤' };
 };
 
+const getSessionFeedback = (session: InterviewResponse): string => {
+  if (session.overallFeedback) return session.overallFeedback;
+
+  const targetQuestionId = session.weakestQuestionId ?? session.nextTurn.questionId;
+  const targetEvaluation = targetQuestionId
+    ? session.evaluations?.find((evaluation) => evaluation.questionId === targetQuestionId)
+    : undefined;
+
+  return targetEvaluation?.feedback ?? session.evaluations?.find((evaluation) => evaluation.feedback)?.feedback ?? '';
+};
+
 export default function InterviewProcess() {
   const { interviewerId } = useParams();
   const navigate = useNavigate();
@@ -122,7 +133,7 @@ export default function InterviewProcess() {
       if (session.questions && session.questions.length > 0) {
         const q = session.questions[currentQuestionIndex];
         if (isFollowUp && currentQuestionIndex === 0) {
-          const feedback = session.evaluation?.feedback || '';
+          const feedback = getSessionFeedback(session);
           setPhases([feedback, `[추가 질문]\n${q.content}`]);
         } else {
           if (!isFollowUp && currentQuestionIndex === 0) {
