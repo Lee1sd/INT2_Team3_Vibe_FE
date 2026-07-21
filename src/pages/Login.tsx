@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { getAccessToken } from '../api/client';
 import { authService } from '../domains/auth/auth.service';
 import { Mail } from 'lucide-react';
@@ -10,11 +10,9 @@ export default function Login() {
   const navigate = useNavigate();
 
   // AuthBootstrap이 refresh로 세션을 복구한 뒤면 로그인 화면을 건너뛴다.
-  useEffect(() => {
-    if (getAccessToken()) {
-      navigate('/dungeon', { replace: true });
-    }
-  }, [navigate]);
+  if (getAccessToken()) {
+    return <Navigate to="/dungeon" replace />;
+  }
 
   const handleLogin = async (provider: string) => {
     setIsLoading(true);
