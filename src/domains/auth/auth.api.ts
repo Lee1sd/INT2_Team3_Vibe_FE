@@ -26,7 +26,11 @@ export const authApi = {
    * (refreshToken은 별도로 HttpOnly 쿠키에 담겨 전달됨).
    */
 
-  /** AU-003 — Access Token 재발급 (Refresh Token은 쿠키로 자동 전송). */
+  /**
+   * AU-003 — Access Token 재발급 (Refresh Token은 쿠키로 자동 전송).
+   * 앱 부트/401 재시도의 기본 경로는 `api/client.ts`의 restoreSession·tryRefresh다.
+   * 이 메서드는 명시적 재발급이 필요할 때 사용한다.
+   */
   refresh: (): Promise<{ accessToken: string }> => apiClient.post('/api/auth/refresh'),
 
   /** AU-004 — 로그아웃. */

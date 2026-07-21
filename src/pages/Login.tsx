@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getAccessToken } from '../api/client';
 import { authService } from '../domains/auth/auth.service';
 import { Mail } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
@@ -7,6 +8,13 @@ import { twMerge } from 'tailwind-merge';
 export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+
+  // AuthBootstrap이 refresh로 세션을 복구한 뒤면 로그인 화면을 건너뛴다.
+  useEffect(() => {
+    if (getAccessToken()) {
+      navigate('/dungeon', { replace: true });
+    }
+  }, [navigate]);
 
   const handleLogin = async (provider: string) => {
     setIsLoading(true);
