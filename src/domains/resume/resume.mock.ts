@@ -1,5 +1,6 @@
 // 백엔드 /api/resumes 가 준비되기 전까지 업로드/파싱 흐름을 검증하기 위한 목업 구현.
 import { UploadResponse } from './resume.types';
+import {ResumeApiResponse} from "@/src/domains/resume/resume.api.ts";
 
 let memoryMockUploaded = false;
 
@@ -46,5 +47,8 @@ export const resumeMock = {
         resolve(isUploaded);
       }, 300);
     });
+  },
+  getResumeList: async (): Promise<ResumeApiResponse[]> => {
+    return [];
   },
 };

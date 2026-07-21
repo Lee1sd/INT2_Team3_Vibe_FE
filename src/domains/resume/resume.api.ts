@@ -8,6 +8,7 @@ export interface ResumeApiResponse {
   type: 'RESUME' | 'PORTFOLIO';
   parseStatus: 'PROCESSING' | 'DONE' | 'FAILED';
   extractedText?: string;
+  lastUploadedAt?: string;
 }
 
 export const resumeApi = {
@@ -21,4 +22,9 @@ export const resumeApi = {
 
   /** RS-002 — 파싱 상태 폴링. */
   getStatus: (resumeId: number): Promise<ResumeApiResponse> => apiClient.get(`/api/resumes/${resumeId}`),
+
+  /** RS-003 — 이력서 목록 조회 (createdAt 내림차순).
+   * [], "ResumeApiResponse(이력서 객체) 여러 개짜리 배열 */
+  getList: (): Promise<ResumeApiResponse[]> => apiClient.get('/api/resumes'),
+
 };

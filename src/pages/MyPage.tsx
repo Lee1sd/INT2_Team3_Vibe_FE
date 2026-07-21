@@ -91,6 +91,20 @@ function MultiFileUploader({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    fileService.getResumeList().then(list => {
+      const existing = list
+          .filter(r => r.type === resumeType)
+          .map(r => ({
+            id: String(r.resumeId),
+            name: `이력서 #${r.resumeId}`,
+            size: 0,
+            status: (r.parseStatus === 'DONE' ? 'COMPLETED' : r.parseStatus) as UploadedFile['status'],
+          }));
+      setFiles(existing);
+    });
+  }, [resumeType]);
+
   const updateFile = (id: string, patch: Partial<UploadedFile>) => {
     setFiles(prev => prev.map(f => (f.id === id ? { ...f, ...patch } : f)));
   };
