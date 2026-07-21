@@ -1,5 +1,6 @@
 // 백엔드 domain.auth 실제 엔드포인트 연동 구현.
 // 근거: INT2_Team3_Vibe_BE/docs/api/api-spec.md AU-001~004, UP-001~003, ADR-017.
+// 프로필 이미지: POST /api/users/me/photo (multipart) — BE ADR-018 예정 계약.
 import { apiClient } from '../../api/client';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
@@ -9,6 +10,12 @@ export interface UserMeApiResponse {
   id: number;
   name: string;
   email: string;
+  /** 없으면 null/생략. presigned GET 또는 조회용 URL. */
+  photoUrl?: string | null;
+}
+
+export interface ProfilePhotoUploadResponse {
+  photoUrl: string;
 }
 
 export const authApi = {
@@ -42,6 +49,20 @@ export const authApi = {
   /** UP-001 — 마이페이지 이름 수정. */
   updateName: (name: string): Promise<{ id: number; name: string }> =>
     apiClient.patch('/api/users/me', { name }),
+
+  /**
+   * 프로필 이미지 업로드 — multipart field name: `file`
+   * BE: S3 PutObject 후 photoUrl(presigned 등) 반환.
+   */
+  uploadProfilePhoto: (file: File): Promise<ProfilePhotoUploadResponse> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return apiClient.postForm('/api/users/me/photo', formData);
+  },
+
+  /** 프로필 이미지 삭제 (선택 API). */
+  deleteProfilePhoto: (): Promise<{ message: string }> =>
+    apiClient.delete('/api/users/me/photo'),
 
   /** UP-002 — 회원 탈퇴. */
   withdraw: (): Promise<{ message: string }> => apiClient.delete('/api/users/me'),
