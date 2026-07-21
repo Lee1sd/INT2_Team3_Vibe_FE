@@ -84,10 +84,15 @@ function toNextTurn(res: SubmitAnswersApiResponse, turn: number): NextTurn {
     return { type: 'END', turn };
   }
 
+  const questionId = toStringId(res.nextTurn.targetQuestionId);
+  if (!questionId || !res.nextTurn.question) {
+    return { type: 'END', turn };
+  }
+
   return {
     type: 'FOLLOW_UP',
     turn,
-    questionId: toStringId(res.nextTurn.targetQuestionId),
+    questionId,
     question: res.nextTurn.question,
   };
 }
@@ -109,11 +114,11 @@ function toInterviewResponse(res: SubmitAnswersApiResponse, turn: number): Inter
     passed: res.passed,
     nextTurn,
     questions:
-      nextTurn.type === 'FOLLOW_UP' && res.nextTurn?.question && followUpQuestionId
+      nextTurn.type === 'FOLLOW_UP' && followUpQuestionId
         ? [
             {
               id: followUpQuestionId,
-              content: res.nextTurn.question,
+              content: nextTurn.question,
               type: 'FOLLOW_UP',
             },
           ]

@@ -28,7 +28,7 @@ export interface SubmitAnswersApiResponse {
   weakestQuestionId?: number | null;
   passed: boolean;
   overallFeedback?: string;
-  nextTurn?: { type: 'FOLLOW_UP' | 'END'; targetQuestionId?: number | null; question?: string };
+  nextTurn?: { type: 'FOLLOW_UP'; targetQuestionId: number; question: string } | { type: 'END' };
 }
 
 export const interviewApi = {
