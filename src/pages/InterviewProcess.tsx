@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { authService } from '../domains/auth/auth.service';
 import { engineService } from '../domains/interview/interview.service';
+import { pickOpeningGreeting } from '../domains/interview/openingGreetings';
 import { InterviewResponse, Answer } from '../types';
 import { Loader2, Send, ArrowLeft } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
@@ -65,10 +67,21 @@ export default function InterviewProcess() {
 
   // startInterview 응답의 실제 sessionId를 사용한다 (#11: 하드코딩된 'session_123' 제거).
   const [sessionId, setSessionId] = useState('');
+  /** 세션 입장 시 1회 고른 오프닝 인사 — phase effect가 다시 돌아도 문구가 바뀌지 않게 고정한다. */
+  const [openingGreeting, setOpeningGreeting] = useState('');
 
   useEffect(() => {
     const initInterview = async () => {
       try {
+        let userName = '지원자';
+        try {
+          const user = await authService.getCurrentUser();
+          userName = user.displayName || user.name || '지원자';
+        } catch (e) {
+          console.error(e);
+        }
+        setOpeningGreeting(pickOpeningGreeting(userName));
+
         // TODO(#6): resumeId('f123')는 여전히 하드코딩되어 있음 — 이력서 보유확인(RS-003)이
         // 실제 연동되면 현재 사용자의 실제 resumeId로 교체해야 한다. 이 이슈(#11)는 그와 별개로
         // createSession 인자 순서 오류 + sessionId 하드코딩만 다룬다.
@@ -102,7 +115,9 @@ export default function InterviewProcess() {
           setPhases([feedback, `[추가 질문]\n${q.content}`]);
         } else {
           if (!isFollowUp && currentQuestionIndex === 0) {
-            setPhases(['반갑습니다. 지원자님의 이력서를 흥미롭게 읽었습니다.', `[질문 ${currentQuestionIndex + 1}]\n${q.content}`]);
+            const greeting =
+              openingGreeting || pickOpeningGreeting('지원자');
+            setPhases([greeting, `[질문 ${currentQuestionIndex + 1}]\n${q.content}`]);
           } else {
             setPhases([`[질문 ${currentQuestionIndex + 1}]\n${q.content}`]);
           }
@@ -110,7 +125,7 @@ export default function InterviewProcess() {
         setPhaseIndex(0);
       }
     }
-  }, [session, isFollowUp, currentQuestionIndex]);
+  }, [session, isFollowUp, currentQuestionIndex, openingGreeting]);
 
   const { displayedText, isComplete: isTypewriterComplete, skip: skipTypewriter } = useTypewriter(phases[phaseIndex] || '', 35);
   
