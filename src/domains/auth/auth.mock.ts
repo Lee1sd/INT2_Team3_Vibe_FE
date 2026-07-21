@@ -5,6 +5,9 @@ import { User } from './auth.types';
 let memoryHasResume = false;
 
 export const authMock = {
+  /** mock에는 refresh 쿠키가 없으므로 항상 세션 복구 성공으로 본다. */
+  restoreSession: async (): Promise<boolean> => true,
+
   login: async (): Promise<{ user: User }> => {
     return new Promise((resolve) => {
       setTimeout(() => {
@@ -44,6 +47,11 @@ export const authMock = {
       }, 500);
     });
   },
+
+  updateName: async (name: string): Promise<{ id: number; name: string }> => ({
+    id: 1,
+    name,
+  }),
 
   setHasResume: (hasResume: boolean) => {
     memoryHasResume = hasResume;

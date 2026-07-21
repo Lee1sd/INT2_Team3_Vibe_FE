@@ -1,12 +1,15 @@
 // 백엔드 domain.auth 실제 엔드포인트 연동 구현.
-// 근거: INT2_Team3_Vibe_BE/docs/api/api-spec.md AU-001~004, UP-001.
-// 백엔드 컨트롤러가 아직 하나도 구현되지 않았으므로(2026-07-15 기준), 이 파일의 함수들은
-// "명세는 있지만 실제로 호출하면 404/미구현"인 상태다. 백엔드 배포가 끝나면 VITE_USE_MOCK=false로
-// 전환해 이 구현을 실제로 사용한다.
+// 근거: INT2_Team3_Vibe_BE/docs/api/api-spec.md AU-001~004, UP-001~003, ADR-017.
 import { apiClient } from '../../api/client';
-import { User } from './auth.types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+
+/** UP-003 — GET /api/users/me 응답 (BE UserResponse). */
+export interface UserMeApiResponse {
+  id: number;
+  name: string;
+  email: string;
+}
 
 export const authApi = {
   /**
@@ -23,24 +26,23 @@ export const authApi = {
    * (refreshToken은 별도로 HttpOnly 쿠키에 담겨 전달됨).
    */
 
-  /** AU-003 — Access Token 재발급 (Refresh Token은 쿠키로 자동 전송). */
+  /**
+   * AU-003 — Access Token 재발급 (Refresh Token은 쿠키로 자동 전송).
+   * 앱 부트/401 재시도의 기본 경로는 `api/client.ts`의 restoreSession·tryRefresh다.
+   * 이 메서드는 명시적 재발급이 필요할 때 사용한다.
+   */
   refresh: (): Promise<{ accessToken: string }> => apiClient.post('/api/auth/refresh'),
 
   /** AU-004 — 로그아웃. */
   logout: (): Promise<{ message: string }> => apiClient.post('/api/auth/logout'),
 
+  /** UP-003 — 로그인한 유저 프로필 조회. */
+  getMe: (): Promise<UserMeApiResponse> => apiClient.get('/api/users/me'),
+
   /** UP-001 — 마이페이지 이름 수정. */
   updateName: (name: string): Promise<{ id: number; name: string }> =>
     apiClient.patch('/api/users/me', { name }),
 
-  /**
-   * 로그인한 유저 정보를 다시 조회하는 GET 엔드포인트가 api-spec.md에 없다.
-   * (AU-002 응답에는 user가 포함되지만, 새로고침 후 다시 조회할 방법이 명세에 없음)
-   * 이 자리는 백엔드팀과 협의해 예: GET /api/users/me 추가가 필요하다.
-   */
-  getCurrentUser: (): Promise<User> => {
-    throw new Error(
-      'GET /api/users/me 같은 프로필 조회 API가 아직 api-spec.md에 없습니다. 백엔드팀(표지민)에게 확인하세요.'
-    );
-  },
+  /** UP-002 — 회원 탈퇴. */
+  withdraw: (): Promise<{ message: string }> => apiClient.delete('/api/users/me'),
 };
