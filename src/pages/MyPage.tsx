@@ -238,6 +238,8 @@ type TabId = typeof TABS[number]['id'];
 
 export default function MyPage() {
   const [user, setUser] = useState<User | null>(null);
+  const [nameInput, setNameInput] = useState('');
+  const [isSavingName, setIsSavingName] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedHistory, setSelectedHistory] = useState<InterviewHistoryItem | null>(null);
   const [activeTab, setActiveTab] = useState<TabId>('PROFILE');
@@ -246,10 +248,34 @@ export default function MyPage() {
   const navigate = useNavigate();
   
   useEffect(() => {
-    authService.getCurrentUser().then(setUser);
+    authService.getCurrentUser().then((currentUser) => {
+      setUser(currentUser);
+      setNameInput(currentUser.displayName || currentUser.name || '');
+    }).catch(console.error);
   }, []);
 
   const currentLevel = user?.level || 1;
+
+  const handleNameSave = async () => {
+    const trimmed = nameInput.trim();
+    if (!user || !trimmed || trimmed === user.name) return;
+
+    setIsSavingName(true);
+    try {
+      const updated = await authService.updateName(trimmed);
+      setUser((prev) =>
+        prev
+          ? { ...prev, name: updated.name, displayName: updated.name }
+          : prev
+      );
+    } catch (e) {
+      console.error(e);
+      alert('이름 수정에 실패했습니다.');
+      setNameInput(user.name);
+    } finally {
+      setIsSavingName(false);
+    }
+  };
 
   const handleLogout = async () => {
     await authService.logout();
@@ -344,10 +370,21 @@ export default function MyPage() {
                   <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2 justify-center sm:justify-start">
                     <input 
                       type="text" 
-                      defaultValue={user?.displayName || '익명 사용자'} 
-                      className="text-[20px] font-bold text-blue-grey-900 bg-transparent border-b border-dashed border-blue-grey-300 focus:border-primary focus:outline-none px-1 py-0.5 text-center sm:text-left w-auto max-w-[200px]"
+                      value={nameInput}
+                      onChange={(e) => setNameInput(e.target.value)}
+                      onBlur={handleNameSave}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.currentTarget.blur();
+                        }
+                      }}
+                      disabled={isSavingName || !user}
+                      className="text-[20px] font-bold text-blue-grey-900 bg-transparent border-b border-dashed border-blue-grey-300 focus:border-primary focus:outline-none px-1 py-0.5 text-center sm:text-left w-auto max-w-[200px] disabled:opacity-50"
                     />
                     <Edit2 className="w-4 h-4 text-blue-grey-400 inline-block" />
+                    {isSavingName && (
+                      <Loader2 className="w-4 h-4 text-primary animate-spin" />
+                    )}
                   </div>
                   <p className="text-[14px] text-blue-grey-500 font-mono">{user?.email}</p>
                 </div>

@@ -9,6 +9,7 @@ import { User } from './auth.types';
 interface AuthService {
   login: () => Promise<{ user: User } | void>;
   getCurrentUser: () => Promise<User>;
+  updateName: (name: string) => Promise<{ id: number; name: string }>;
   setHasResume: (hasResume: boolean) => void;
   logout: () => Promise<void>;
   withdraw: () => Promise<void>;
@@ -51,6 +52,7 @@ const realAuthService: AuthService = {
     window.location.href = authApi.googleLoginUrl;
   },
   getCurrentUser: fetchCurrentUser,
+  updateName: (name: string) => authApi.updateName(name),
   setHasResume: () => {
     // 백엔드 명세에는 이 개념이 없다. 이력서 보유 여부는 RS-002(파싱 상태 조회) 결과로 판단해야 한다.
   },

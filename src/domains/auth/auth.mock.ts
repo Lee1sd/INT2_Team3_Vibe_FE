@@ -45,6 +45,12 @@ export const authMock = {
     });
   },
 
+  updateName: async (name: string): Promise<{ id: number; name: string }> => {
+    return new Promise((resolve) => {
+      setTimeout(() => resolve({ id: 1, name }), 300);
+    });
+  },
+
   setHasResume: (hasResume: boolean) => {
     memoryHasResume = hasResume;
     try {
