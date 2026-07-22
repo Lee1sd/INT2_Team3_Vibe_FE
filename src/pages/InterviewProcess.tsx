@@ -370,8 +370,8 @@ export default function InterviewProcess() {
         <InterviewerAvatar
           avatar={stageSprite || interviewer.avatar}
           name={interviewer.name}
-          className="h-[min(78vh,680px)] w-auto max-w-[min(92vw,520px)] translate-y-[2%] opacity-100"
-          imgClassName="h-[min(78vh,680px)] w-auto max-w-[min(92vw,520px)] object-contain object-bottom opacity-100"
+          className="h-[min(84vh,740px)] w-auto max-w-[min(94vw,560px)] -translate-y-[1%] opacity-100"
+          imgClassName="h-[min(84vh,740px)] w-auto max-w-[min(94vw,560px)] object-contain object-bottom opacity-100"
         />
       </div>
 
