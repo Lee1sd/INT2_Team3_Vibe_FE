@@ -7,6 +7,8 @@ interface ResumeService {
   uploadResume: (file: File, type?: 'RESUME' | 'PORTFOLIO') => Promise<UploadResponse>;
   checkParseStatus: (fileId: string) => Promise<UploadResponse>;
   checkResumeStatus: () => Promise<boolean>;
+  getResumeList: () => Promise<ResumeApiResponse[]>;
+  getLatestCompletedResumeId: () => Promise<string | null>;
 }
 
 const USE_MOCK = import.meta.env.VITE_USE_MOCK !== 'false';
@@ -23,9 +25,20 @@ const realResumeService: ResumeService = {
   uploadResume: async (file, type = 'RESUME') => toUploadResponse(await resumeApi.upload(file, type)),
   checkParseStatus: async (fileId) => toUploadResponse(await resumeApi.getStatus(Number(fileId))),
   checkResumeStatus: async () => {
-    // RS-002는 특정 resumeId를 조회하는 API라 "현재 이력서를 보유하고 있는가"를 바로
-    // 물어볼 방법이 아직 없다. 백엔드팀(이건희)과 협의해 목록 조회 API가 필요할 수 있다.
-    throw new Error('이력서 보유 여부를 조회하는 API가 아직 api-spec.md에 없습니다. 백엔드팀(이건희)에 확인하세요.');
+   const resumes = await  resumeApi.getList();
+   return resumes.some(r => r.type === 'RESUME' && r.parseStatus !== 'FAILED');
+  },
+
+  // 목록 조회: 배열 반환 (화면에 3개 뿌릴 때)
+  getResumeList: async () => {
+    return await resumeApi.getList();
+  },
+
+  /** 최신 파싱 완료 이력서를 면접 입력으로 선택한다. */
+  getLatestCompletedResumeId: async () => {
+    const resumes = await resumeApi.getList();
+    const resume = resumes.find((item) => item.type === 'RESUME' && item.parseStatus === 'DONE');
+    return resume ? String(resume.resumeId) : null;
   },
 };
 

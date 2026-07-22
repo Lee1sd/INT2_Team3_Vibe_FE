@@ -23,20 +23,19 @@ export interface Answer {
   content: string;
 }
 
-/**
- * 주의(FE/BE 불일치, 실제 연동 전 정리 필요): 백엔드는 채점 세부항목(intent/accuracy/reasoning/
- * tradeoff)을 절대 응답에 포함하지 않기로 확정했다 — score(0~25, IS-002)와 totalScore(0~100),
- * feedback 문장만 내려온다 (docs/api/api-contract.md, docs/ai/owners/choi-yongseong.md 체크리스트
- * "세부 점수는 API·화면에 노출하지 않는다" 참고). 이 타입은 mock 전용이며, 실제 연동 시에는
- * evaluations[]({questionId, score, feedback})+totalScore 중심으로 다시 설계해야 한다.
- */
+/** IS-002/IS-002b에서 공개하는 문항별 점수와 피드백이다. */
 export interface EvaluationDetail {
-  intent: number;
-  accuracy: number;
-  reasoning: number;
-  tradeoff: number;
-  total: number;
-  feedback: string;
+  questionId: string;
+  score: number;
+  feedback?: string;
+}
+
+/** 결과 화면에서 소비하는 IS-002b 최종 판정의 필수 필드만 표현한다. */
+export interface FinalInterviewResult {
+  evaluations: EvaluationDetail[];
+  totalScore: number;
+  passed: boolean;
+  overallFeedback: string;
 }
 
 export interface NextTurn {
@@ -50,7 +49,10 @@ export interface InterviewResponse {
   // startInterview 응답에만 포함된다 — 이후 submitAnswers/submitFollowUp 호출은 화면이 들고 있는
   // 값을 그대로 재사용하므로 응답에 다시 실어줄 필요가 없다 (#11: 하드코딩된 'session_123' 제거).
   sessionId?: string;
-  evaluation: EvaluationDetail | null; // Null if just starting or fetching questions without evaluation
+  evaluations?: EvaluationDetail[];
+  totalScore?: number;
+  weakestQuestionId?: string;
+  overallFeedback?: string;
   passed: boolean;
   nextTurn: NextTurn;
   questions?: Question[]; // Provided on initial load or follow-up
