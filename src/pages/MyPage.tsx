@@ -102,7 +102,11 @@ function MultiFileUploader({
             status: (r.parseStatus === 'DONE' ? 'COMPLETED' : r.parseStatus) as UploadedFile['status'],
           }));
       setFiles(existing);
-    });
+    })
+        .catch(error => {
+          console.error('이력서 목록 조회 실패', error);
+          setFiles([]); // 필요하다면 기본값
+        });
   }, [resumeType]);
 
   const updateFile = (id: string, patch: Partial<UploadedFile>) => {
