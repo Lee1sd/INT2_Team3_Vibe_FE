@@ -1,5 +1,6 @@
 // 백엔드 /api/interviewers, /api/interviews 등이 준비되기 전까지 면접 흐름을 검증하기 위한 목업 구현.
 import { Interviewer, InterviewResponse, Question, Answer } from './interview.types';
+import { InterviewHistoryApiResponse } from './interview.api';
 
 export const interviewMock = {
   getInterviewers: async (): Promise<Interviewer[]> => {
@@ -142,4 +143,24 @@ export const interviewMock = {
       }, 2000);
     });
   },
+
+  getHistory: async (): Promise<InterviewHistoryApiResponse> => ({
+    levels: [
+      {
+        level: 1,
+        interviewerName: 'Lv.1 면접관',
+        sessions: [
+          { sessionId: 1, createdAt: '2026-07-09T10:00:00', totalScore: 90 },
+        ],
+      },
+      {
+        level: 2,
+        interviewerName: 'Lv.2 면접관',
+        sessions: [
+          { sessionId: 2, createdAt: '2026-07-08T10:00:00', totalScore: 55 },
+          { sessionId: 3, createdAt: '2026-07-05T10:00:00', totalScore: 65 },
+        ],
+      },
+    ],
+  }),
 };

@@ -7,6 +7,8 @@ import { authService } from '../domains/auth/auth.service';
 import { User } from '../types';
 import { InfoTooltip } from '../components/InfoTooltip';
 import { HistoryDrawer, InterviewHistoryItem } from '../components/HistoryDrawer';
+import { engineService } from '../domains/interview/interview.service';
+import { InterviewHistoryApiResponse, InterviewHistoryLevelApiItem, InterviewHistorySessionApiItem } from '../domains/interview/interview.api';
 
 const BADGES = [
   { level: 1, name: '인턴 머쓱', icon: '🐣', description: '면접의 첫 걸음을 내딛다' },
@@ -254,6 +256,45 @@ const TABS = [
 
 type TabId = typeof TABS[number]['id'];
 
+const PASSING_SCORE = 70;
+
+function formatHistoryDate(createdAt: string): string {
+  const date = new Date(createdAt);
+  if (Number.isNaN(date.getTime())) return createdAt;
+
+  const year = String(date.getFullYear()).slice(-2);
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}.${month}.${day}`;
+}
+
+function getHistoryGroupName(level: InterviewHistoryLevelApiItem): string {
+  if (level.interviewerName) return level.interviewerName;
+  if (level.levelName) return level.levelName;
+  if (level.level != null) return `Lv.${level.level} 면접관`;
+  return '면접관';
+}
+
+function toHistoryItem(
+  session: InterviewHistorySessionApiItem,
+  level: InterviewHistoryLevelApiItem
+): InterviewHistoryItem {
+  return {
+    id: String(session.sessionId),
+    date: formatHistoryDate(session.createdAt),
+    interviewerName: getHistoryGroupName(level),
+    score: session.totalScore,
+    passed: session.totalScore >= PASSING_SCORE,
+    logs: [],
+  };
+}
+
+function toHistoryItems(history: InterviewHistoryApiResponse): InterviewHistoryItem[] {
+  return history.levels.flatMap((level) =>
+    level.sessions.map((session) => toHistoryItem(session, level))
+  );
+}
+
 export default function MyPage() {
   const [user, setUser] = useState<User | null>(null);
   const [nameInput, setNameInput] = useState('');
@@ -262,6 +303,9 @@ export default function MyPage() {
   const [nameSaveStatus, setNameSaveStatus] = useState<'idle' | 'saved' | 'error'>('idle');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedHistory, setSelectedHistory] = useState<InterviewHistoryItem | null>(null);
+  const [historyItems, setHistoryItems] = useState<InterviewHistoryItem[]>([]);
+  const [isHistoryLoading, setIsHistoryLoading] = useState(true);
+  const [historyError, setHistoryError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabId>('PROFILE');
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const [isDeleteAccountModalOpen, setIsDeleteAccountModalOpen] = useState(false);
@@ -291,6 +335,34 @@ export default function MyPage() {
       })
       .catch((e) => {
         if (!cancelled) console.error(e);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    setIsHistoryLoading(true);
+    setHistoryError(null);
+    engineService
+      .getHistory()
+      .then((history) => {
+        if (cancelled) return;
+        setHistoryItems(toHistoryItems(history));
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        console.error(error);
+        setHistoryItems([]);
+        setHistoryError('면접 전적을 불러오지 못했습니다.');
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsHistoryLoading(false);
+        }
       });
 
     return () => {
@@ -361,11 +433,12 @@ export default function MyPage() {
   };
 
   // Group history by interviewerName
-  const groupedHistory = MOCK_HISTORY.reduce((acc, item) => {
+  const groupedHistory = historyItems.reduce((acc, item) => {
     if (!acc[item.interviewerName]) acc[item.interviewerName] = [];
     acc[item.interviewerName].push(item);
     return acc;
   }, {} as Record<string, InterviewHistoryItem[]>);
+  const historyGroups = Object.entries(groupedHistory) as [string, InterviewHistoryItem[]][];
 
   return (
     <div className="max-w-4xl mx-auto py-12 px-6">
@@ -574,8 +647,22 @@ export default function MyPage() {
               나의 면접 전적
             </h3>
             
-            <div className="space-y-4">
-              {Object.entries(groupedHistory).map(([groupName, items]) => {
+            {isHistoryLoading ? (
+              <div className="flex items-center justify-center gap-2 py-12 text-[14px] font-bold text-blue-grey-500">
+                <Loader2 className="w-5 h-5 animate-spin" />
+                면접 전적을 불러오는 중입니다.
+              </div>
+            ) : historyError ? (
+              <div className="rounded-2xl border border-danger/10 bg-danger/5 p-6 text-center text-[14px] font-bold text-danger">
+                {historyError}
+              </div>
+            ) : historyItems.length === 0 ? (
+              <div className="rounded-2xl border border-blue-grey-100 bg-blue-grey-10/50 p-8 text-center text-[14px] text-blue-grey-500">
+                아직 면접 전적이 없습니다.
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {historyGroups.map(([groupName, items]) => {
                 const isExpanded = expandedGroups[groupName] !== false; // default true
                 
                 return (
@@ -635,8 +722,9 @@ export default function MyPage() {
                     )}
                   </div>
                 );
-              })}
-            </div>
+                })}
+              </div>
+            )}
           </div>
         )}
 
