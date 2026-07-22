@@ -26,7 +26,7 @@ const realResumeService: ResumeService = {
   checkParseStatus: async (fileId) => toUploadResponse(await resumeApi.getStatus(Number(fileId))),
   checkResumeStatus: async () => {
    const resumes = await  resumeApi.getList();
-   return resumes.some(r => r.parseStatus !== 'FAILED');
+   return resumes.some(r => r.type === 'RESUME' && r.parseStatus !== 'FAILED');
   },
 
   // 목록 조회: 배열 반환 (화면에 3개 뿌릴 때)
