@@ -100,7 +100,6 @@ function toNextTurn(res: SubmitAnswersApiResponse, turn: number): NextTurn {
 function toInterviewResponse(res: SubmitAnswersApiResponse, turn: number): InterviewResponse {
   const nextTurn = toNextTurn(res, turn);
   const weakestQuestionId = toStringId(res.weakestQuestionId);
-  const followUpQuestionId = nextTurn.questionId ?? weakestQuestionId;
 
   return {
     evaluations: res.evaluations.map((evaluation) => ({
@@ -114,10 +113,11 @@ function toInterviewResponse(res: SubmitAnswersApiResponse, turn: number): Inter
     passed: res.passed,
     nextTurn,
     questions:
-      nextTurn.type === 'FOLLOW_UP' && followUpQuestionId
+      nextTurn.type === 'FOLLOW_UP' && nextTurn.question
         ? [
             {
-              id: followUpQuestionId,
+              // targetQuestionId는 최저점 원문항이고, 새 꼬리질문의 외부 questionId는 항상 turn 4다.
+              id: '4',
               content: nextTurn.question,
               type: 'FOLLOW_UP',
             },

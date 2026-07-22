@@ -3,7 +3,13 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { authService } from '../domains/auth/auth.service';
 import { engineService } from '../domains/interview/interview.service';
 import { pickOpeningGreeting } from '../domains/interview/openingGreetings';
-import { InterviewResponse, Answer } from '../types';
+import { evaluationService } from '../domains/progress/progress.service';
+import { fileService } from '../domains/resume/resume.service';
+import {
+  saveFinalInterviewResult,
+  toFinalInterviewResult,
+} from '../domains/interview/interview-result.storage';
+import { InterviewResponse, Answer, FinalInterviewResult } from '../types';
 import { Loader2, Send, ArrowLeft } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 
@@ -75,6 +81,7 @@ export default function InterviewProcess() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [isInterviewFinished, setIsInterviewFinished] = useState(false);
   const [isAbandonModalOpen, setIsAbandonModalOpen] = useState(false);
+  const [finalResult, setFinalResult] = useState<FinalInterviewResult | null>(null);
 
   // startInterview 응답의 실제 sessionId를 사용한다 (#11: 하드코딩된 'session_123' 제거).
   const [sessionId, setSessionId] = useState('');
@@ -97,13 +104,23 @@ export default function InterviewProcess() {
         if (cancelled) return;
         setOpeningGreeting(pickOpeningGreeting(userName));
 
-        // TODO(#6): resumeId('f123')는 여전히 하드코딩되어 있음 — 이력서 보유확인(RS-003)이
-        // 실제 연동되면 현재 사용자의 실제 resumeId로 교체해야 한다. 이 이슈(#11)는 그와 별개로
-        // createSession 인자 순서 오류 + sessionId 하드코딩만 다룬다.
-        const res = await engineService.startInterview(interviewerId || 'iv1', 'f123', selectedKeyword);
+        // 최신 파싱 완료 이력서를 사용해 mock 전용 ID가 실제 API로 전달되지 않게 한다.
+        const resumeId = await fileService.getLatestCompletedResumeId();
+        if (!resumeId) {
+          throw new Error('면접에 사용할 파싱 완료 이력서가 없습니다.');
+        }
+        const res = await engineService.startInterview(interviewerId || 'iv1', resumeId, selectedKeyword);
         if (cancelled) return;
         setSession(res);
         setSessionId(res.sessionId || '');
+        if (res.sessionId) {
+          try {
+            await evaluationService.captureSnapshot(res.sessionId);
+          } catch (snapshotError) {
+            // 스냅샷 실패가 면접 시작 자체를 막지 않도록 결과 비교 기능만 비활성화한다.
+            console.error(snapshotError);
+          }
+        }
       } catch (e) {
         console.error(e);
       } finally {
@@ -212,6 +229,9 @@ export default function InterviewProcess() {
         
         setSession(res);
         if (res.nextTurn.type === 'END') {
+          const completedResult = toFinalInterviewResult(res);
+          saveFinalInterviewResult(sessionId, completedResult);
+          setFinalResult(completedResult);
           setIsInterviewFinished(true);
         }
       }
@@ -336,7 +356,7 @@ export default function InterviewProcess() {
           isTypewriterComplete && (
             <div className="shrink-0 flex justify-center mt-4">
               <button
-                onClick={() => navigate(`/result/${sessionId}`)}
+                onClick={() => navigate(`/result/${sessionId}`, { state: { finalResult } })}
                 className="px-8 py-4 bg-primary text-white rounded-2xl font-bold hover:bg-[#005bb5] transition-colors flex items-center justify-center gap-2 shadow-[0_0_30px_rgba(0,120,255,0.4)] text-[16px] md:text-[18px]"
                 style={{ animation: 'fadeIn 0.5s ease-in-out' }}
               >

@@ -1,19 +1,25 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { evaluationService } from '../domains/progress/progress.service';
 import { authService } from '../domains/auth/auth.service';
 import { engineService } from '../domains/interview/interview.service';
-import { GaugeUpdate, User, Interviewer } from '../types';
+import {
+  isFinalInterviewResult,
+  loadFinalInterviewResult,
+} from '../domains/interview/interview-result.storage';
+import { GaugeUpdate, User, Interviewer, FinalInterviewResult } from '../types';
 import { Award, ChevronRight, Zap, MessageSquare, AlertCircle } from 'lucide-react';
 import { InfoTooltip } from '../components/InfoTooltip';
 
 export default function Result() {
   const { sessionId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [result, setResult] = useState<GaugeUpdate | null>(null);
+  const [judgmentResult, setJudgmentResult] = useState<FinalInterviewResult | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [unlockedInterviewer, setUnlockedInterviewer] = useState<Interviewer | null>(null);
-  const [displayedGauge, setDisplayedGauge] = useState(0);
+  const [displayedScore, setDisplayedScore] = useState(0);
   const [showBadgeModal, setShowBadgeModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -25,6 +31,14 @@ export default function Result() {
     const fetchResult = async () => {
       setError(null);
       try {
+        const routedResult = (location.state as { finalResult?: unknown } | null)?.finalResult;
+        const finalResult = isFinalInterviewResult(routedResult)
+          ? routedResult
+          : loadFinalInterviewResult(sessionId || '');
+        if (!finalResult) {
+          throw new Error('세션의 최종 채점 결과를 찾을 수 없습니다.');
+        }
+
         const [userData, resData, interviewers] = await Promise.all([
           authService.getCurrentUser(),
           evaluationService.getGaugeUpdate(sessionId || ''),
@@ -34,20 +48,21 @@ export default function Result() {
 
         setUser(userData);
         setResult(resData);
-        setDisplayedGauge(resData.previousGauge);
+        setJudgmentResult(finalResult);
+        setDisplayedScore(0);
         setUnlockedInterviewer(
-          resData.unlockedInterviewerId
-            ? interviewers.find((iv) => iv.id === resData.unlockedInterviewerId) ?? null
+          resData.levelUp
+            ? interviewers.find((iv) => iv.level === resData.unlockedLevel) ?? null
             : null
         );
 
-        // 80% 이상 달성 (또는 레벨업) 시 모달 표시
-        if (resData.newGauge >= 80 || resData.levelUp) {
+        // BG-001 전후 목록에서 실제 신규 뱃지가 확인된 경우에만 기존 모달을 연다.
+        if (resData.newlyAcquiredBadge) {
           setShowBadgeModal(true);
         }
 
         gaugeTimer = setTimeout(() => {
-          if (!cancelled) setDisplayedGauge(resData.newGauge);
+          if (!cancelled) setDisplayedScore(finalResult.totalScore);
         }, 800);
       } catch (e) {
         console.error(e);
@@ -61,7 +76,7 @@ export default function Result() {
       cancelled = true;
       if (gaugeTimer) clearTimeout(gaugeTimer);
     };
-  }, [sessionId]);
+  }, [location.state, sessionId]);
 
   if (error) {
     return (
@@ -78,16 +93,13 @@ export default function Result() {
     );
   }
 
-  if (!result || !user) {
+  if (!result || !user || !judgmentResult) {
     return (
       <div className="flex justify-center items-center min-h-[70vh]">
         <div className="w-16 h-16 border-4 border-blue-grey-75 border-t-primary rounded-full animate-spin"></div>
       </div>
     );
   }
-
-  // Mock 데이터: 종합 면접 피드백
-  const mockFeedback = "지원자님은 질문의 의도를 정확히 파악하고 명확하게 답변하는 능력이 돋보입니다. 특히 기술적인 트레이드오프를 설명할 때 구체적인 예시를 들어 논리적으로 전개한 점이 훌륭했습니다. 다만, 일부 답변에서는 결론을 먼저 제시하는 두괄식 구성을 활용한다면 훨씬 더 강한 인상을 남길 수 있을 것입니다.";
 
   return (
     <>
@@ -110,14 +122,14 @@ export default function Result() {
             </div>
             
             <div className="text-6xl font-bold text-blue-grey-900 mb-8 font-mono tracking-tighter flex items-end justify-center">
-              {displayedGauge}<span className="text-2xl text-blue-grey-400 ml-1 mb-1">점</span>
+              {displayedScore}<span className="text-2xl text-blue-grey-400 ml-1 mb-1">점</span>
             </div>
 
             <div className="w-full max-w-md bg-white border border-blue-grey-75 rounded-2xl p-1 mb-4 relative">
               <div className="w-full h-4 bg-blue-grey-50 rounded-lg overflow-hidden relative">
                 <div 
                   className="h-full bg-gradient-to-r from-primary to-info rounded-lg transition-all duration-1000 relative z-10"
-                  style={{ width: `${Math.min(displayedGauge, 100)}%` }}
+                  style={{ width: `${Math.min(displayedScore, 100)}%` }}
                 >
                 </div>
                 {/* 80% Divider Line */}
@@ -132,7 +144,7 @@ export default function Result() {
             <div className="flex justify-between w-full max-w-md text-[14px] leading-[20px] font-bold text-blue-grey-400 px-1 relative">
               <span className="w-12 text-left">0점</span>
               <span className="absolute left-[50%] -translate-x-1/2">50점</span>
-              <span className={`w-24 text-right ${displayedGauge >= 100 ? 'text-primary' : ''}`}>100점 (레벨업)</span>
+              <span className={`w-24 text-right ${displayedScore >= 100 ? 'text-primary' : ''}`}>100점 (레벨업)</span>
             </div>
           </div>
         </div>
@@ -145,7 +157,7 @@ export default function Result() {
           </div>
           <div className="bg-blue-grey-10 rounded-2xl p-5 border border-blue-grey-50">
             <p className="text-blue-grey-700 text-[14px] leading-[20px] font-normal leading-relaxed whitespace-pre-wrap">
-              {mockFeedback}
+              {judgmentResult.overallFeedback}
             </p>
           </div>
         </div>
