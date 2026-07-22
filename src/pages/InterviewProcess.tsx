@@ -12,6 +12,7 @@ import {
 import { InterviewResponse, Answer, FinalInterviewResult } from '../types';
 import { AlertCircle, Loader2, Send, ArrowLeft } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
+import { InterviewerAvatar } from '../components/InterviewerAvatar';
 
 function useTypewriter(text: string, speed = 35) {
   const [displayedText, setDisplayedText] = useState('');
@@ -46,13 +47,14 @@ function useTypewriter(text: string, speed = 35) {
 }
 
 const getInterviewerDetails = (id: string | undefined) => {
-  const map: Record<string, {name: string, level: number, avatar: string}> = {
-    'iv1': { name: '널널한 대리', level: 1, avatar: '🐣' },
-    'iv2': { name: '깐깐한 과장', level: 2, avatar: '🐥' },
-    'iv3': { name: '압박면접 팀장', level: 3, avatar: '🦅' },
-    'iv4': { name: '최종보스 임원', level: 4, avatar: '👑' },
+  const map: Record<string, { name: string; level: number; avatar: string }> = {
+    iv1: { name: '널널한 대리', level: 1, avatar: '/interviewers/lv1-casual.png' },
+    iv2: { name: '깐깐한 과장', level: 2, avatar: '/interviewers/lv2-strict.png' },
+    // Lv.3+ 페르소나 이미지는 아직 없음 — 빈 슬롯.
+    iv3: { name: '압박면접 팀장', level: 3, avatar: '' },
+    iv4: { name: '최종보스 임원', level: 4, avatar: '' },
   };
-  return map[id || ''] || { name: '알 수 없는 면접관', level: 1, avatar: '👤' };
+  return map[id || ''] || { name: '알 수 없는 면접관', level: 1, avatar: '' };
 };
 
 const getSessionFeedback = (session: InterviewResponse): string => {
@@ -330,8 +332,13 @@ export default function InterviewProcess() {
       {/* Top Section: Interviewer */}
       <div className="flex-1 min-h-0 w-full flex flex-col items-center justify-center py-6 pt-16 relative z-10">
         <div className="animate-float flex flex-col items-center justify-center h-full w-full">
-          <div className="text-[110px] md:text-[130px] leading-none drop-shadow-[0_0_80px_rgba(0,120,255,0.15)] select-none shrink object-contain max-h-full h-full w-full flex items-center justify-center">
-            {interviewer.avatar}
+          <div className="drop-shadow-[0_0_80px_rgba(0,120,255,0.15)] select-none shrink max-h-full h-full w-full flex items-center justify-center px-6">
+            <InterviewerAvatar
+              avatar={interviewer.avatar}
+              name={interviewer.name}
+              className="max-h-[min(42vh,360px)] w-auto h-full"
+              imgClassName="max-h-[min(42vh,360px)] max-w-[min(90vw,420px)]"
+            />
           </div>
         </div>
       </div>
@@ -355,7 +362,12 @@ export default function InterviewProcess() {
         >
           {isSubmitting && (
             <div className="absolute inset-0 bg-blue-grey-920/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center rounded-2xl">
-              <div className="text-5xl mb-4 animate-bounce">🐣</div>
+              <InterviewerAvatar
+                avatar={interviewer.avatar}
+                name={interviewer.name}
+                className="w-20 h-20 mb-4 animate-bounce"
+                imgClassName="w-20 h-20"
+              />
               <p className="text-white font-bold animate-pulse">면접관이 답변을 날카롭게 검토하고 있습니다...</p>
             </div>
           )}

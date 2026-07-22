@@ -9,7 +9,8 @@ export interface Interviewer {
   isUnlocked: boolean;
   description: string;
   achievement?: string;
-  avatar: string; // URL or emoji
+  /** 정적 매핑: 이미지 경로(`/interviewers/...`) 또는 이모지. 비우면 슬롯만 표시. */
+  avatar: string;
 }
 
 export interface Question {

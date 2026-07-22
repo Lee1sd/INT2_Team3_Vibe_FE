@@ -7,6 +7,7 @@ import { Interviewer, User } from '../types';
 import { Lock, PlayCircle, ShieldCheck, Star } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 import { InfoTooltip } from '../components/InfoTooltip';
+import { InterviewerAvatar } from '../components/InterviewerAvatar';
 
 export default function InterviewerList() {
   const [interviewers, setInterviewers] = useState<Interviewer[]>([]);
@@ -167,8 +168,13 @@ export default function InterviewerList() {
                     )}>
                       <div className="flex items-start justify-between mb-8">
                         <div className="flex items-center gap-5">
-                          <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl bg-blue-grey-800 border border-blue-grey-700">
-                            {iv.avatar}
+                          <div className="w-16 h-16 rounded-2xl flex items-center justify-center overflow-hidden bg-blue-grey-800 border border-blue-grey-700">
+                            <InterviewerAvatar
+                              avatar={iv.avatar}
+                              name={iv.name}
+                              className="w-14 h-14"
+                              imgClassName="w-14 h-14"
+                            />
                           </div>
                           <div>
                             <div className={twMerge(
