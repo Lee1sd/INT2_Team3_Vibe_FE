@@ -144,7 +144,7 @@ export default function Result() {
             <div className="flex justify-between w-full max-w-md text-[14px] leading-[20px] font-bold text-blue-grey-400 px-1 relative">
               <span className="w-12 text-left">0점</span>
               <span className="absolute left-[50%] -translate-x-1/2">50점</span>
-              <span className={`w-24 text-right ${displayedScore >= 100 ? 'text-primary' : ''}`}>100점 (레벨업)</span>
+              <span className={`w-24 text-right ${displayedScore >= 100 ? 'text-primary' : ''}`}>100점</span>
             </div>
           </div>
         </div>
