@@ -3,8 +3,14 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { authService } from '../domains/auth/auth.service';
 import { engineService } from '../domains/interview/interview.service';
 import { pickOpeningGreeting } from '../domains/interview/openingGreetings';
-import { InterviewResponse, Answer } from '../types';
-import { Loader2, Send, ArrowLeft } from 'lucide-react';
+import { evaluationService } from '../domains/progress/progress.service';
+import { fileService } from '../domains/resume/resume.service';
+import {
+  saveFinalInterviewResult,
+  toFinalInterviewResult,
+} from '../domains/interview/interview-result.storage';
+import { InterviewResponse, Answer, FinalInterviewResult } from '../types';
+import { AlertCircle, Loader2, Send, ArrowLeft } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 
 function useTypewriter(text: string, speed = 35) {
@@ -75,6 +81,8 @@ export default function InterviewProcess() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [isInterviewFinished, setIsInterviewFinished] = useState(false);
   const [isAbandonModalOpen, setIsAbandonModalOpen] = useState(false);
+  const [finalResult, setFinalResult] = useState<FinalInterviewResult | null>(null);
+  const [initializationError, setInitializationError] = useState<'MISSING_RESUME' | 'FAILED' | null>(null);
 
   // startInterview 응답의 실제 sessionId를 사용한다 (#11: 하드코딩된 'session_123' 제거).
   const [sessionId, setSessionId] = useState('');
@@ -97,15 +105,27 @@ export default function InterviewProcess() {
         if (cancelled) return;
         setOpeningGreeting(pickOpeningGreeting(userName));
 
-        // TODO(#6): resumeId('f123')는 여전히 하드코딩되어 있음 — 이력서 보유확인(RS-003)이
-        // 실제 연동되면 현재 사용자의 실제 resumeId로 교체해야 한다. 이 이슈(#11)는 그와 별개로
-        // createSession 인자 순서 오류 + sessionId 하드코딩만 다룬다.
-        const res = await engineService.startInterview(interviewerId || 'iv1', 'f123', selectedKeyword);
+        // 최신 파싱 완료 이력서를 사용해 mock 전용 ID가 실제 API로 전달되지 않게 한다.
+        const resumeId = await fileService.getLatestCompletedResumeId();
+        if (!resumeId) {
+          if (!cancelled) setInitializationError('MISSING_RESUME');
+          return;
+        }
+        const res = await engineService.startInterview(interviewerId || 'iv1', resumeId, selectedKeyword);
         if (cancelled) return;
         setSession(res);
         setSessionId(res.sessionId || '');
+        if (res.sessionId) {
+          try {
+            await evaluationService.captureSnapshot(res.sessionId);
+          } catch (snapshotError) {
+            // 스냅샷 실패가 면접 시작 자체를 막지 않도록 결과 비교 기능만 비활성화한다.
+            console.error(snapshotError);
+          }
+        }
       } catch (e) {
         console.error(e);
+        if (!cancelled) setInitializationError('FAILED');
       } finally {
         if (!cancelled) {
           setIsLoading(false);
@@ -210,10 +230,14 @@ export default function InterviewProcess() {
           content: answers[q.id]
         });
         
-        setSession(res);
         if (res.nextTurn.type === 'END') {
+          // 최종 응답을 먼저 검증·저장한 뒤 종료 상태를 한 번에 반영해 불완전한 END 화면을 방지한다.
+          const completedResult = toFinalInterviewResult(res);
+          saveFinalInterviewResult(sessionId, completedResult);
+          setFinalResult(completedResult);
           setIsInterviewFinished(true);
         }
+        setSession(res);
       }
     } catch (e) {
       console.error(e);
@@ -228,6 +252,30 @@ export default function InterviewProcess() {
       <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-blue-grey-940">
         <Loader2 className="w-12 h-12 text-primary animate-spin mb-4" />
         <p className="text-blue-grey-500 font-bold">면접관이 지원자의 이력서를 검토하고 있습니다...</p>
+      </div>
+    );
+  }
+
+  if (initializationError) {
+    const isMissingResume = initializationError === 'MISSING_RESUME';
+
+    return (
+      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-blue-grey-940 px-6 text-center">
+        <AlertCircle className="w-12 h-12 text-warning mb-4" />
+        <h2 className="text-[20px] leading-[28px] font-bold text-white mb-3">
+          {isMissingResume ? '면접에 사용할 이력서가 없습니다.' : '면접을 시작하지 못했습니다.'}
+        </h2>
+        <p className="text-blue-grey-300 text-[14px] leading-[20px] font-normal mb-8">
+          {isMissingResume
+            ? '파싱이 완료된 이력서를 등록한 뒤 다시 면접을 시작해 주세요.'
+            : '잠시 후 던전 맵에서 다시 시도해 주세요.'}
+        </p>
+        <button
+          onClick={() => navigate(isMissingResume ? '/mypage' : '/dungeon', { replace: true })}
+          className="px-6 py-3 bg-primary text-white rounded-2xl text-[14px] leading-[20px] font-bold hover:bg-[#005bb5] transition-colors shadow-sm"
+        >
+          {isMissingResume ? '이력서 등록하러 가기' : '던전 맵으로 돌아가기'}
+        </button>
       </div>
     );
   }
@@ -336,7 +384,7 @@ export default function InterviewProcess() {
           isTypewriterComplete && (
             <div className="shrink-0 flex justify-center mt-4">
               <button
-                onClick={() => navigate(`/result/${sessionId}`)}
+                onClick={() => navigate(`/result/${sessionId}`, { state: { finalResult } })}
                 className="px-8 py-4 bg-primary text-white rounded-2xl font-bold hover:bg-[#005bb5] transition-colors flex items-center justify-center gap-2 shadow-[0_0_30px_rgba(0,120,255,0.4)] text-[16px] md:text-[18px]"
                 style={{ animation: 'fadeIn 0.5s ease-in-out' }}
               >

@@ -98,9 +98,8 @@ export const interviewMock = {
               feedback: '병목 지점은 짚었지만 트래픽 증가 상황의 대응 순서가 조금 더 필요합니다.',
             },
           ],
-          totalScore: 70,
+          totalScore: 60,
           weakestQuestionId: 'q1',
-          overallFeedback: '첫 번째 답변(Q1)에 대한 설명이 가장 부족합니다. 구체적인 해결 방안이 없네요.',
           passed: false,
           nextTurn: {
             type: 'FOLLOW_UP',
@@ -126,12 +125,27 @@ export const interviewMock = {
         resolve({
           evaluations: [
             {
+              questionId: 'q1',
+              score: 15,
+              feedback: '첫 번째 답변은 해결 방안의 구체성이 부족했습니다.',
+            },
+            {
+              questionId: 'q2',
+              score: 25,
+              feedback: '락을 선택하지 않은 근거를 명확하게 설명했습니다.',
+            },
+            {
+              questionId: 'q3',
+              score: 20,
+              feedback: '병목 지점과 대응 순서를 적절하게 설명했습니다.',
+            },
+            {
               questionId: 'q4',
               score: 20,
               feedback: '꼬리질문 방어에 성공했습니다. 트레이드오프를 잘 이해하고 있군요.',
             },
           ],
-          totalScore: 90,
+          totalScore: 80,
           overallFeedback: '꼬리질문 방어에 성공했습니다. 트레이드오프를 잘 이해하고 있군요.',
           passed: true,
           nextTurn: {
