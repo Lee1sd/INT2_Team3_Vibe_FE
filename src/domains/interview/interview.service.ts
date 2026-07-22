@@ -60,16 +60,66 @@ function toInterviewer(item: InterviewerApiItem): Interviewer {
   };
 }
 
-/** 던전 카드용 전신 아바타. Lv.3+는 빈 문자열. */
+/** 면접 세션용 전신 기본 포즈. Lv.3+는 빈 문자열. */
 export function getInterviewerAvatarByLevel(level: number): string {
   return STATIC_CONTENT_BY_LEVEL[level]?.avatar ?? '';
 }
 
-/** 면접 세션용 상반신 확대샷. Lv.3+는 빈 문자열. */
+/** 던전/메인 레벨 카드용 확대샷(누끼). Lv.3+는 빈 문자열. */
 export function getInterviewerBustByLevel(level: number): string {
   if (level === 1) return '/interviewers/lv1-casual-bust.png';
   if (level === 2) return '/interviewers/lv2-strict-bust.png';
   return '';
+}
+
+/** Lv.1 대리님 추가 포즈(인사 이후 질문마다 셔플 순서로 1회씩). */
+export const LV1_CASUAL_POSE_PATHS = [
+  '/interviewers/poses/lv1-casual-pose-01.png',
+  '/interviewers/poses/lv1-casual-pose-02.png',
+  '/interviewers/poses/lv1-casual-pose-03.png',
+  '/interviewers/poses/lv1-casual-pose-04.png',
+] as const;
+
+/** Lv.2 과장님 추가 포즈. */
+export const LV2_STRICT_POSE_PATHS = [
+  '/interviewers/poses/lv2-strict-pose-01.png',
+  '/interviewers/poses/lv2-strict-pose-02.png',
+  '/interviewers/poses/lv2-strict-pose-03.png',
+  '/interviewers/poses/lv2-strict-pose-04.png',
+] as const;
+
+export function getSessionPosePaths(level: number): string[] {
+  if (level === 1) return [...LV1_CASUAL_POSE_PATHS];
+  if (level === 2) return [...LV2_STRICT_POSE_PATHS];
+  return [];
+}
+
+/** 세션 시작 시 1회 셔플 — 질문은 이 순서로만 돌아가며 같은 포즈가 빠지지 않게 한다. */
+export function shufflePoseOrder(level: number): string[] {
+  const poses = getSessionPosePaths(level);
+  for (let i = poses.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const tmp = poses[i];
+    poses[i] = poses[j]!;
+    poses[j] = tmp!;
+  }
+  return poses;
+}
+
+/**
+ * 면접 세션 스프라이트.
+ * - 첫 인사: 기본 전신
+ * - 이후 질문(본문항·꼬리질문): 셔플된 포즈 큐에서 슬롯 순서대로(중복 없이, 부족하면 순환)
+ */
+export function pickSessionSpriteFromOrder(
+  level: number,
+  poseOrder: string[],
+  options: { isOpeningGreeting: boolean; questionSlot: number },
+): string {
+  const base = getInterviewerAvatarByLevel(level);
+  if (!base) return '';
+  if (options.isOpeningGreeting || poseOrder.length === 0) return base;
+  return poseOrder[options.questionSlot % poseOrder.length] ?? base;
 }
 
 /** 면접 세션 최후방 사무실 배경. 파일명: 1단계 프로그래머스 / 2단계 그렙. */

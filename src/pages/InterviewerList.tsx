@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { engineService } from '../domains/interview/interview.service';
+import { engineService, getInterviewerBustByLevel } from '../domains/interview/interview.service';
 import { authService } from '../domains/auth/auth.service';
 import { fileService } from '../domains/resume/resume.service';
 import { Interviewer, User } from '../types';
@@ -170,10 +170,10 @@ export default function InterviewerList() {
                         <div className="flex items-center gap-5">
                           <div className="w-16 h-16 rounded-2xl flex items-center justify-center overflow-hidden bg-blue-grey-800 border border-blue-grey-700">
                             <InterviewerAvatar
-                              avatar={iv.avatar}
+                              avatar={getInterviewerBustByLevel(iv.level) || iv.avatar}
                               name={iv.name}
                               className="w-14 h-14"
-                              imgClassName="w-14 h-14"
+                              imgClassName="w-14 h-14 object-cover object-top"
                             />
                           </div>
                           <div>
