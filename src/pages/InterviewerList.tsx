@@ -246,7 +246,9 @@ export default function InterviewerList() {
                                 navigate('/mypage#resume');
                                 return;
                               }
-                              navigate(`/interview/${iv.id}`, { state: { keyword: selectedKeyword } });
+                              navigate(`/interview/${iv.id}`, {
+                                state: { keyword: selectedKeyword, interviewer: iv },
+                              });
                             }}
                             className="w-full py-3 bg-primary text-white rounded-2xl font-bold text-[16px] leading-[24px] flex items-center justify-center gap-2 hover:bg-[#005bb5] transition-colors shadow-sm disabled:opacity-32 disabled:cursor-not-allowed"
                           >

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { authService } from '../domains/auth/auth.service';
-import { engineService } from '../domains/interview/interview.service';
+import { engineService, getInterviewerAvatarByLevel } from '../domains/interview/interview.service';
 import { pickOpeningGreeting } from '../domains/interview/openingGreetings';
 import { evaluationService } from '../domains/progress/progress.service';
 import { fileService } from '../domains/resume/resume.service';
@@ -9,7 +9,7 @@ import {
   saveFinalInterviewResult,
   toFinalInterviewResult,
 } from '../domains/interview/interview-result.storage';
-import { InterviewResponse, Answer, FinalInterviewResult } from '../types';
+import { InterviewResponse, Answer, FinalInterviewResult, Interviewer } from '../types';
 import { AlertCircle, Loader2, Send, ArrowLeft } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 import { InterviewerAvatar } from '../components/InterviewerAvatar';
@@ -46,17 +46,6 @@ function useTypewriter(text: string, speed = 35) {
   return { displayedText, isComplete, skip };
 }
 
-const getInterviewerDetails = (id: string | undefined) => {
-  const map: Record<string, { name: string; level: number; avatar: string }> = {
-    iv1: { name: '널널한 대리', level: 1, avatar: '/interviewers/lv1-casual.png' },
-    iv2: { name: '깐깐한 과장', level: 2, avatar: '/interviewers/lv2-strict.png' },
-    // Lv.3+ 페르소나 이미지는 아직 없음 — 빈 슬롯.
-    iv3: { name: '압박면접 팀장', level: 3, avatar: '' },
-    iv4: { name: '최종보스 임원', level: 4, avatar: '' },
-  };
-  return map[id || ''] || { name: '알 수 없는 면접관', level: 1, avatar: '' };
-};
-
 const getSessionFeedback = (session: InterviewResponse): string => {
   if (session.overallFeedback) return session.overallFeedback;
 
@@ -67,6 +56,19 @@ const getSessionFeedback = (session: InterviewResponse): string => {
 
   return targetEvaluation?.feedback ?? session.evaluations?.find((evaluation) => evaluation.feedback)?.feedback ?? '';
 };
+
+type InterviewerView = Pick<Interviewer, 'name' | 'level' | 'avatar'>;
+
+function interviewerFromRouteState(state: unknown, interviewerId: string | undefined): InterviewerView | null {
+  const candidate = (state as { interviewer?: Interviewer } | null)?.interviewer;
+  if (!candidate) return null;
+  if (interviewerId && candidate.id !== interviewerId) return null;
+  return {
+    name: candidate.name,
+    level: candidate.level,
+    avatar: candidate.avatar || getInterviewerAvatarByLevel(candidate.level),
+  };
+}
 
 export default function InterviewProcess() {
   const { interviewerId } = useParams();
@@ -85,6 +87,14 @@ export default function InterviewProcess() {
   const [isAbandonModalOpen, setIsAbandonModalOpen] = useState(false);
   const [finalResult, setFinalResult] = useState<FinalInterviewResult | null>(null);
   const [initializationError, setInitializationError] = useState<'MISSING_RESUME' | 'FAILED' | null>(null);
+  const [interviewer, setInterviewer] = useState<InterviewerView>(
+    () =>
+      interviewerFromRouteState(location.state, interviewerId) ?? {
+        name: '면접관',
+        level: 1,
+        avatar: getInterviewerAvatarByLevel(1),
+      }
+  );
 
   // startInterview 응답의 실제 sessionId를 사용한다 (#11: 하드코딩된 'session_123' 제거).
   const [sessionId, setSessionId] = useState('');
@@ -96,6 +106,22 @@ export default function InterviewProcess() {
 
     const initInterview = async () => {
       try {
+        // 라우트 id는 BE 숫자 id(String)다 — 구 mock키(iv1) 하드코딩 맵을 쓰지 않는다.
+        try {
+          const interviewers = await engineService.getInterviewers();
+          if (cancelled) return;
+          const matched = interviewers.find((iv) => iv.id === String(interviewerId));
+          if (matched) {
+            setInterviewer({
+              name: matched.name,
+              level: matched.level,
+              avatar: matched.avatar || getInterviewerAvatarByLevel(matched.level),
+            });
+          }
+        } catch (e) {
+          console.error(e);
+        }
+
         let userName = '지원자';
         try {
           const user = await authService.getCurrentUser();
@@ -113,7 +139,7 @@ export default function InterviewProcess() {
           if (!cancelled) setInitializationError('MISSING_RESUME');
           return;
         }
-        const res = await engineService.startInterview(interviewerId || 'iv1', resumeId, selectedKeyword);
+        const res = await engineService.startInterview(interviewerId || '1', resumeId, selectedKeyword);
         if (cancelled) return;
         setSession(res);
         setSessionId(res.sessionId || '');
@@ -281,8 +307,6 @@ export default function InterviewProcess() {
       </div>
     );
   }
-
-  const interviewer = getInterviewerDetails(interviewerId);
 
   if (!session) return null;
   if (!isInterviewFinished && !session.questions) return null;

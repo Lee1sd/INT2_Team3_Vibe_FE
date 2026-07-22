@@ -60,6 +60,11 @@ function toInterviewer(item: InterviewerApiItem): Interviewer {
   };
 }
 
+/** 레벨 기준 페르소나 이미지 경로. Lv.3+는 빈 문자열(슬롯만 표시). */
+export function getInterviewerAvatarByLevel(level: number): string {
+  return STATIC_CONTENT_BY_LEVEL[level]?.avatar ?? '';
+}
+
 function toStringId(id: number | null | undefined): string | undefined {
   return id == null ? undefined : String(id);
 }
