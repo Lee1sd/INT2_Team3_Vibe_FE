@@ -3,6 +3,28 @@
 import { User } from './auth.types';
 
 let memoryHasResume = false;
+let memoryName = '주니어 머쓱이';
+let memoryPhotoUrl: string | undefined;
+let memoryPhotoObjectUrl: string | undefined;
+
+function currentMockUser(): User {
+  let hasResume = memoryHasResume;
+  try {
+    if (localStorage.getItem('hasResume') === 'true') hasResume = true;
+  } catch (e) {}
+
+  return {
+    id: 'u1',
+    name: memoryName,
+    displayName: memoryName,
+    level: 1,
+    gauge: 30,
+    hasResume,
+    email: 'mock@careerdungeon.local',
+    photoUrl: memoryPhotoUrl,
+    photoURL: memoryPhotoUrl,
+  };
+}
 
 export const authMock = {
   /** mock에는 refresh 쿠키가 없으므로 항상 세션 복구 성공으로 본다. */
@@ -11,47 +33,42 @@ export const authMock = {
   login: async (): Promise<{ user: User }> => {
     return new Promise((resolve) => {
       setTimeout(() => {
-        let hasResume = memoryHasResume;
-        try {
-          if (localStorage.getItem('hasResume') === 'true') hasResume = true;
-        } catch (e) {}
-
-        resolve({
-          user: {
-            id: 'u1',
-            name: '주니어 머쓱이',
-            level: 1,
-            gauge: 30,
-            hasResume,
-          },
-        });
+        resolve({ user: currentMockUser() });
       }, 1000);
     });
   },
 
   getCurrentUser: async (): Promise<User> => {
     return new Promise((resolve) => {
-      setTimeout(() => {
-        let hasResume = memoryHasResume;
-        try {
-          if (localStorage.getItem('hasResume') === 'true') hasResume = true;
-        } catch (e) {}
-
-        resolve({
-          id: 'u1',
-          name: '주니어 머쓱이',
-          level: 1,
-          gauge: 30,
-          hasResume,
-        });
-      }, 500);
+      setTimeout(() => resolve(currentMockUser()), 500);
     });
   },
 
-  updateName: async (name: string): Promise<{ id: number; name: string }> => ({
-    id: 1,
-    name,
-  }),
+  updateName: async (name: string): Promise<{ id: number; name: string }> => {
+    memoryName = name;
+    return { id: 1, name };
+  },
+
+  uploadProfilePhoto: async (file: File): Promise<{ photoUrl: string }> => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        if (memoryPhotoObjectUrl) {
+          URL.revokeObjectURL(memoryPhotoObjectUrl);
+        }
+        memoryPhotoObjectUrl = URL.createObjectURL(file);
+        memoryPhotoUrl = memoryPhotoObjectUrl;
+        resolve({ photoUrl: memoryPhotoUrl });
+      }, 400);
+    });
+  },
+
+  deleteProfilePhoto: async (): Promise<void> => {
+    if (memoryPhotoObjectUrl) {
+      URL.revokeObjectURL(memoryPhotoObjectUrl);
+      memoryPhotoObjectUrl = undefined;
+    }
+    memoryPhotoUrl = undefined;
+  },
 
   setHasResume: (hasResume: boolean) => {
     memoryHasResume = hasResume;

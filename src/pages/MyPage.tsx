@@ -3,7 +3,8 @@ import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { fileService } from '../domains/resume/resume.service';
 import { UploadCloud, FileText, CheckCircle2, Loader2, AlertCircle, ShieldCheck, Lock, LogOut, UserMinus, ArrowLeft, ChevronDown, ChevronUp, Camera, Edit2, ChevronRight } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
-import { authService } from '../domains/auth/auth.service';
+import { authService, validateProfilePhotoFile } from '../domains/auth/auth.service';
+import { PROFILE_PHOTO_ACCEPT } from '../domains/auth/auth.types';
 import { User } from '../types';
 import { InfoTooltip } from '../components/InfoTooltip';
 import { HistoryDrawer, InterviewHistoryItem } from '../components/HistoryDrawer';
@@ -260,6 +261,9 @@ export default function MyPage() {
   const [isEditingName, setIsEditingName] = useState(false);
   const [isSavingName, setIsSavingName] = useState(false);
   const [nameSaveStatus, setNameSaveStatus] = useState<'idle' | 'saved' | 'error'>('idle');
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [photoStatus, setPhotoStatus] = useState<'idle' | 'saved' | 'error'>('idle');
+  const [photoErrorMessage, setPhotoErrorMessage] = useState('');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedHistory, setSelectedHistory] = useState<InterviewHistoryItem | null>(null);
   const [activeTab, setActiveTab] = useState<TabId>('PROFILE');
@@ -267,9 +271,11 @@ export default function MyPage() {
   const [isDeleteAccountModalOpen, setIsDeleteAccountModalOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const photoInputRef = useRef<HTMLInputElement>(null);
   /** 저장이 끝난 뒤에는 늦게 도착한 getCurrentUser가 이름을 덮지 못하게 한다. */
   const nameHydratedFromServer = useRef(false);
   const isSavingNameRef = useRef(false);
+  const isUploadingPhotoRef = useRef(false);
 
   useEffect(() => {
     if (location.hash !== '#resume') return;
@@ -357,6 +363,51 @@ export default function MyPage() {
     setNameSaveStatus('idle');
   };
 
+  const applyPhotoUrl = (photoUrl: string | undefined) => {
+    setUser((prev) =>
+      prev
+        ? { ...prev, photoUrl, photoURL: photoUrl }
+        : prev
+    );
+  };
+
+  const handlePhotoButtonClick = () => {
+    if (isUploadingPhoto || !user) return;
+    photoInputRef.current?.click();
+  };
+
+  const handlePhotoSelected = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file || isUploadingPhotoRef.current) return;
+
+    const validationError = validateProfilePhotoFile(file);
+    if (validationError) {
+      setPhotoStatus('error');
+      setPhotoErrorMessage(validationError);
+      return;
+    }
+
+    isUploadingPhotoRef.current = true;
+    setIsUploadingPhoto(true);
+    setPhotoStatus('idle');
+    setPhotoErrorMessage('');
+    try {
+      const { photoUrl } = await authService.uploadProfilePhoto(file);
+      nameHydratedFromServer.current = true;
+      applyPhotoUrl(photoUrl);
+      setPhotoStatus('saved');
+      window.setTimeout(() => setPhotoStatus('idle'), 2000);
+    } catch (e) {
+      console.error(e);
+      setPhotoStatus('error');
+      setPhotoErrorMessage('프로필 이미지 업로드에 실패했습니다. 다시 시도해 주세요.');
+    } finally {
+      isUploadingPhotoRef.current = false;
+      setIsUploadingPhoto(false);
+    }
+  };
+
   const handleLogout = async () => {
     await authService.logout();
     navigate('/');
@@ -433,15 +484,37 @@ export default function MyPage() {
               <div className="flex flex-col sm:flex-row items-center gap-6 sm:gap-8 bg-blue-grey-10/50 border border-blue-grey-75 p-6 rounded-2xl">
                 <div className="relative group">
                   <div className="w-24 h-24 rounded-full bg-blue-grey-100 overflow-hidden border-4 border-white shadow-sm flex items-center justify-center">
-                    {user?.photoURL ? (
-                      <img src={user.photoURL} alt="Profile" className="w-full h-full object-cover" />
+                    {user?.photoUrl || user?.photoURL ? (
+                      <img
+                        src={user.photoUrl || user.photoURL}
+                        alt="Profile"
+                        className="w-full h-full object-cover"
+                      />
                     ) : (
                       <span className="text-3xl font-bold text-blue-grey-400">
                         {user?.email?.charAt(0).toUpperCase() || 'U'}
                       </span>
                     )}
+                    {isUploadingPhoto && (
+                      <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
+                        <Loader2 className="w-6 h-6 text-primary animate-spin" />
+                      </div>
+                    )}
                   </div>
-                  <button className="absolute bottom-0 right-0 p-2 bg-white rounded-full border border-blue-grey-100 text-blue-grey-600 shadow-sm hover:text-primary transition-colors">
+                  <input
+                    ref={photoInputRef}
+                    type="file"
+                    accept={PROFILE_PHOTO_ACCEPT}
+                    className="hidden"
+                    onChange={(e) => void handlePhotoSelected(e)}
+                  />
+                  <button
+                    type="button"
+                    onClick={handlePhotoButtonClick}
+                    disabled={isUploadingPhoto || !user}
+                    aria-label="프로필 이미지 업로드"
+                    className="absolute bottom-0 right-0 p-2 bg-white rounded-full border border-blue-grey-100 text-blue-grey-600 shadow-sm hover:text-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
                     <Camera className="w-4 h-4" />
                   </button>
                 </div>
@@ -525,6 +598,15 @@ export default function MyPage() {
                               : '이름을 클릭하면 수정할 수 있어요.'}
                   </p>
                   <p className="text-[14px] text-blue-grey-500 font-mono mt-1">{user?.email}</p>
+                  <p className="text-[13px] text-blue-grey-500 font-normal min-h-[20px] mt-1">
+                    {isUploadingPhoto
+                      ? '프로필 이미지를 업로드하고 있어요.'
+                      : photoStatus === 'saved'
+                        ? '프로필 이미지가 저장되었습니다.'
+                        : photoStatus === 'error'
+                          ? photoErrorMessage
+                          : '카메라 아이콘을 눌러 프로필 이미지를 변경할 수 있어요. (JPEG/PNG/WebP, 최대 2MB)'}
+                  </p>
                 </div>
               </div>
             </section>
