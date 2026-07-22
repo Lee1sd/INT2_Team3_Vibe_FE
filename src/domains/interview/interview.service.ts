@@ -72,6 +72,13 @@ export function getInterviewerBustByLevel(level: number): string {
   return '';
 }
 
+/** 면접 세션 최후방 사무실 배경. 파일명: 1단계 프로그래머스 / 2단계 그렙. */
+export function getInterviewBackgroundByLevel(level: number): string {
+  if (level === 1) return '/interviewers/backgrounds/lv1-programmers.png';
+  if (level === 2) return '/interviewers/backgrounds/lv2-grepp.png';
+  return '';
+}
+
 function toStringId(id: number | null | undefined): string | undefined {
   return id == null ? undefined : String(id);
 }

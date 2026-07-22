@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { authService } from '../domains/auth/auth.service';
-import { engineService, getInterviewerBustByLevel } from '../domains/interview/interview.service';
+import { engineService, getInterviewerBustByLevel, getInterviewBackgroundByLevel } from '../domains/interview/interview.service';
 import { pickOpeningGreeting } from '../domains/interview/openingGreetings';
 import { evaluationService } from '../domains/progress/progress.service';
 import { fileService } from '../domains/resume/resume.service';
@@ -312,10 +312,24 @@ export default function InterviewProcess() {
   if (!session) return null;
   if (!isInterviewFinished && !session.questions) return null;
 
+  const sessionBackground = getInterviewBackgroundByLevel(interviewer.level);
+
   return (
     <div className="fixed inset-0 z-50 bg-blue-grey-940 flex flex-col h-screen overflow-hidden font-sans">
-      {/* Background Overlay */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-grey-940 to-blue-grey-999 -z-20"></div>
+      {/* Stage background: 1단계 프로그래머스 / 2단계 그렙 사무실 */}
+      {sessionBackground ? (
+        <>
+          <img
+            src={sessionBackground}
+            alt=""
+            aria-hidden
+            className="absolute inset-0 w-full h-full object-cover -z-30"
+          />
+          <div className="absolute inset-0 bg-blue-grey-999/55 -z-20" />
+        </>
+      ) : (
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-grey-940 to-blue-grey-999 -z-20" />
+      )}
 
       {/* Exit Button */}
       <div className="absolute top-6 left-6 z-50">
