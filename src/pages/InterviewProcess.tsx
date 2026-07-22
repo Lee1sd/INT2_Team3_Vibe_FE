@@ -205,7 +205,7 @@ export default function InterviewProcess() {
   useEffect(() => {
     if (session) {
       if (session.nextTurn.type === 'END') {
-        setPhases([createInterviewClosingMessage(session, getInterviewerTone(interviewer.level))]);
+        setPhases([createInterviewClosingMessage(getInterviewerTone(interviewer.level))]);
         setPhaseIndex(0);
         return;
       }

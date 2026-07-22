@@ -20,27 +20,24 @@ const endSession: InterviewResponse = {
   overallFeedback: '캐싱 정합성 설명이 명확했습니다.',
 };
 
-test('lenient closing message uses overall feedback with casual guidance', () => {
-  const message = createInterviewClosingMessage(endSession, getInterviewerTone(1));
+test('lenient closing message uses persona tone without feedback', () => {
+  const message = createInterviewClosingMessage(getInterviewerTone(1));
 
-  assert.match(message, /수고하셨어요~/);
-  assert.match(message, /캐싱 정합성 설명이 명확했습니다\./);
-  assert.match(message, /확인해보세요!/);
+  assert.equal(message, '수고하셨어요~ 오늘 답변 잘 들었습니다. 자세한 평가는 결과지에서 확인해보세요~');
+  assert.doesNotMatch(message, /캐싱 정합성/);
 });
 
-test('strict closing message uses overall feedback with formal guidance', () => {
-  const message = createInterviewClosingMessage(endSession, getInterviewerTone(2));
+test('strict closing message uses persona tone without feedback', () => {
+  const message = createInterviewClosingMessage(getInterviewerTone(2));
 
-  assert.match(message, /답변 잘 들었습니다\./);
-  assert.match(message, /캐싱 정합성 설명이 명확했습니다\./);
-  assert.match(message, /결과지를 참고하시죠\./);
+  assert.equal(message, '수고하셨습니다. 상세 평가는 결과지를 참고하시기 바랍니다.');
+  assert.doesNotMatch(message, /캐싱 정합성/);
 });
 
 test('level 3 interviewer uses strict closing tone', () => {
-  const message = createInterviewClosingMessage(endSession, getInterviewerTone(3));
+  const message = createInterviewClosingMessage(getInterviewerTone(3));
 
-  assert.match(message, /답변 잘 들었습니다\./);
-  assert.match(message, /결과지를 참고하시죠\./);
+  assert.equal(message, '수고하셨습니다. 상세 평가는 결과지를 참고하시기 바랍니다.');
 });
 
 test('session feedback prefers overall feedback over evaluation feedback', () => {
@@ -56,14 +53,12 @@ test('session feedback falls back to evaluation feedback when overall feedback i
   assert.equal(getSessionFeedback(sessionWithoutOverallFeedback), '개별 문항 피드백입니다.');
 });
 
-test('closing message uses default feedback when no feedback is available', () => {
+test('session feedback returns empty string when no feedback is available', () => {
   const sessionWithoutFeedback: InterviewResponse = {
     passed: true,
     nextTurn: { type: 'END', turn: 2 },
     evaluations: [],
   };
 
-  const message = createInterviewClosingMessage(sessionWithoutFeedback, 'lenient');
-
-  assert.match(message, /면접 내용을 기준으로 평가를 정리했습니다\./);
+  assert.equal(getSessionFeedback(sessionWithoutFeedback), '');
 });
