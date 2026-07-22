@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { engineService } from '../domains/interview/interview.service';
+import { engineService, getInterviewerBustByLevel } from '../domains/interview/interview.service';
 import { authService } from '../domains/auth/auth.service';
 import { fileService } from '../domains/resume/resume.service';
 import { Interviewer, User } from '../types';
 import { Lock, PlayCircle, ShieldCheck, Star } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 import { InfoTooltip } from '../components/InfoTooltip';
+import { InterviewerAvatar } from '../components/InterviewerAvatar';
 
 export default function InterviewerList() {
   const [interviewers, setInterviewers] = useState<Interviewer[]>([]);
@@ -167,8 +168,13 @@ export default function InterviewerList() {
                     )}>
                       <div className="flex items-start justify-between mb-8">
                         <div className="flex items-center gap-5">
-                          <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl bg-blue-grey-800 border border-blue-grey-700">
-                            {iv.avatar}
+                          <div className="w-16 h-16 rounded-2xl flex items-center justify-center overflow-hidden bg-[#1a2332] border border-blue-grey-700">
+                            <InterviewerAvatar
+                              avatar={getInterviewerBustByLevel(iv.level) || iv.avatar}
+                              name={iv.name}
+                              className="w-[58px] h-[58px]"
+                              imgClassName="w-[58px] h-[58px] object-contain opacity-100"
+                            />
                           </div>
                           <div>
                             <div className={twMerge(
@@ -240,7 +246,9 @@ export default function InterviewerList() {
                                 navigate('/mypage#resume');
                                 return;
                               }
-                              navigate(`/interview/${iv.id}`, { state: { keyword: selectedKeyword } });
+                              navigate(`/interview/${iv.id}`, {
+                                state: { keyword: selectedKeyword, interviewer: iv },
+                              });
                             }}
                             className="w-full py-3 bg-primary text-white rounded-2xl font-bold text-[16px] leading-[24px] flex items-center justify-center gap-2 hover:bg-[#005bb5] transition-colors shadow-sm disabled:opacity-32 disabled:cursor-not-allowed"
                           >

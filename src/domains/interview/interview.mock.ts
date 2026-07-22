@@ -14,7 +14,7 @@ export const interviewMock = {
             isUnlocked: true,
             description: '코드 가독성과 기본기를 중요하게 생각합니다.',
             achievement: '기본적인 CS 지식과 이력서 내용의 사실 관계를 설명할 수 있습니다.',
-            avatar: '🐣',
+            avatar: '/interviewers/lv1-casual.png',
           },
           {
             id: 'iv2',
@@ -24,7 +24,7 @@ export const interviewMock = {
             isUnlocked: false,
             description: '아키텍처와 예외 처리를 날카롭게 파고듭니다.',
             achievement: '실무 수준의 트러블슈팅과 기술적 트레이드오프를 논리적으로 방어할 수 있습니다.',
-            avatar: '🦅',
+            avatar: '/interviewers/lv2-strict.png',
           },
           {
             id: 'iv3',
@@ -34,7 +34,7 @@ export const interviewMock = {
             isUnlocked: false,
             description: '극한의 상황에서 멘탈과 문제 해결 능력을 봅니다.',
             achievement: '스트레스 상황에서도 침착하게 근본적인 원인을 분석하고 대안을 제시할 수 있습니다.',
-            avatar: '🦖',
+            avatar: '',
           },
           {
             id: 'iv4',
@@ -44,7 +44,7 @@ export const interviewMock = {
             isUnlocked: false,
             description: '회사의 인재상과 컬처핏을 날카롭게 검증합니다.',
             achievement: '조직의 비전에 부합하며 거시적인 관점에서의 엔지니어링 가치를 증명할 수 있습니다.',
-            avatar: '🐉',
+            avatar: '',
           },
         ]);
       }, 500);
