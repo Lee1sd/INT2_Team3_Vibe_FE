@@ -168,12 +168,12 @@ export default function InterviewerList() {
                     )}>
                       <div className="flex items-start justify-between mb-8">
                         <div className="flex items-center gap-5">
-                          <div className="w-16 h-16 rounded-2xl flex items-center justify-center overflow-hidden bg-blue-grey-800 border border-blue-grey-700">
+                          <div className="w-16 h-16 rounded-2xl flex items-center justify-center overflow-hidden bg-[#1a2332] border border-blue-grey-700">
                             <InterviewerAvatar
                               avatar={getInterviewerBustByLevel(iv.level) || iv.avatar}
                               name={iv.name}
-                              className="w-14 h-14"
-                              imgClassName="w-14 h-14 object-cover object-top"
+                              className="w-[58px] h-[58px]"
+                              imgClassName="w-[58px] h-[58px] object-contain opacity-100"
                             />
                           </div>
                           <div>

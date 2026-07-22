@@ -36,16 +36,14 @@ BG_JOBS = [
 
 
 def near_bg(rgb: np.ndarray) -> np.ndarray:
-    """체커보드·밝은 회색 배경 후보(본체 흰 깃털보다 넓게 잡아 외곽 flood용)."""
+    """체커보드·밝은 회색 배경 후보. (흰 깃털도 포함될 수 있어 outline wall과 함께 쓴다)"""
     r = rgb[..., 0].astype(np.int16)
     g = rgb[..., 1].astype(np.int16)
     b = rgb[..., 2].astype(np.int16)
     chroma = np.maximum(np.maximum(r, g), b) - np.minimum(np.minimum(r, g), b)
     mx = np.maximum(np.maximum(r, g), b)
     mn = np.minimum(np.minimum(r, g), b)
-    # 저채도 + 밝은 회색/흰색 타일
     flat = (chroma <= 28) & (mx >= 168)
-    # 전형적인 체커보드 회색대
     grayish = flat & (mx - mn <= 28) & (mx <= 250)
     near_white_tile = flat & (mx >= 232)
     return grayish | near_white_tile
@@ -73,12 +71,36 @@ def erode4(mask: np.ndarray) -> np.ndarray:
     return ~dilate4(~mask)
 
 
-def border_connected(bg: np.ndarray) -> np.ndarray:
+def outline_wall(rgb: np.ndarray, dilate_iters: int = 3) -> np.ndarray:
+    """검은 외곽선을 두껍게 막아 flood가 흰 본체로 새지 않게 한다."""
+    mx = np.maximum(np.maximum(rgb[..., 0], rgb[..., 1]), rgb[..., 2]).astype(np.int16)
+    chroma = (
+        np.maximum(np.maximum(rgb[..., 0], rgb[..., 1]), rgb[..., 2])
+        - np.minimum(np.minimum(rgb[..., 0], rgb[..., 1]), rgb[..., 2])
+    ).astype(np.int16)
+    wall = (mx <= 95) | ((mx <= 130) & (chroma <= 45))
+    for _ in range(dilate_iters):
+        wall = dilate8(wall)
+    return wall
+
+
+def border_connected(
+    bg: np.ndarray,
+    *,
+    seed_top: bool = True,
+    seed_bottom: bool = True,
+    seed_left: bool = True,
+    seed_right: bool = True,
+) -> np.ndarray:
     seed = np.zeros_like(bg, dtype=bool)
-    seed[0, :] = bg[0, :]
-    seed[-1, :] = bg[-1, :]
-    seed[:, 0] = bg[:, 0]
-    seed[:, -1] = bg[:, -1]
+    if seed_top:
+        seed[0, :] = bg[0, :]
+    if seed_bottom:
+        seed[-1, :] = bg[-1, :]
+    if seed_left:
+        seed[:, 0] = bg[:, 0]
+    if seed_right:
+        seed[:, -1] = bg[:, -1]
     filled = seed
     while True:
         nxt = dilate4(filled) & bg
@@ -88,7 +110,6 @@ def border_connected(bg: np.ndarray) -> np.ndarray:
 
 
 def label_components(mask: np.ndarray) -> tuple[np.ndarray, list[int]]:
-    """4-connected component labels. Returns label map (0=bg) and sizes[label]."""
     h, w = mask.shape
     labels = np.zeros((h, w), dtype=np.int32)
     sizes: list[int] = [0]
@@ -113,22 +134,19 @@ def label_components(mask: np.ndarray) -> tuple[np.ndarray, list[int]]:
 
 
 def keep_largest_opaque(arr: np.ndarray) -> None:
-    """가장 큰 불투명 덩어리(캐릭터)만 남기고 체커보드 섬/잡티 제거."""
     opaque = arr[..., 3] > 0
     if not opaque.any():
         return
     labels, sizes = label_components(opaque)
     if len(sizes) <= 1:
         return
-    # 최대 컴포넌트 + 아주 큰 보조(전체의 8% 이상)만 유지 — 보통 캐릭터 하나
     max_size = max(sizes[1:])
     keep_labels = {i for i, s in enumerate(sizes) if i > 0 and (s == max_size or s >= max_size * 0.08)}
     drop = opaque & ~np.isin(labels, list(keep_labels))
     arr[drop, 3] = 0
 
 
-def scrub_halos(arr: np.ndarray, passes: int = 5) -> None:
-    """투명 경계의 밝은 회색·잔여 타일만 제거. 순백 본체·검은 외곽선은 보존."""
+def scrub_halos(arr: np.ndarray, passes: int = 4) -> None:
     for _ in range(passes):
         alpha = arr[..., 3] > 0
         fringe = dilate8(~alpha) & alpha
@@ -137,32 +155,23 @@ def scrub_halos(arr: np.ndarray, passes: int = 5) -> None:
             np.minimum(rgb[..., 0], rgb[..., 1]), rgb[..., 2]
         )
         mx = np.maximum(np.maximum(rgb[..., 0], rgb[..., 1]), rgb[..., 2])
-        # 외곽의 저채도 밝은 픽셀(체커보드 잔여). 순백(mx>=250)이어도 fringe면 대부분 헤일로
-        # 다만 흰 깃털 가장자리 손상을 줄이기 위해 mx>=252 & 이웃에 진한 외곽선 있으면 보존
         dark = mx <= 60
         near_dark = dilate8(dark) & alpha
-        halo = fringe & (chroma <= 30) & (mx >= 160) & ~((mx >= 248) & near_dark)
-        # 회색 타일(220 전후)은 무조건 제거
-        gray_tile = fringe & (chroma <= 25) & (mx >= 175) & (mx <= 245)
-        arr[halo | gray_tile, 3] = 0
+        gray_tile = fringe & (chroma <= 22) & (mx >= 175) & (mx <= 242)
+        soft_white_halo = fringe & (chroma <= 18) & (mx >= 242) & (mx < 252) & ~near_dark
+        arr[gray_tile | soft_white_halo, 3] = 0
 
 
-def remove_enclosed_bg(arr: np.ndarray) -> None:
-    """다리 사이 등 외곽과 끊긴 체커보드 섬 제거."""
+def remove_small_bg_islands(arr: np.ndarray, wall: np.ndarray, max_island: int = 3000) -> None:
     rgb = arr[..., :3]
-    bg = near_bg(rgb) & (arr[..., 3] > 0)
+    bg = near_bg(rgb) & (arr[..., 3] > 0) & ~wall
     if not bg.any():
         return
-    # 이미 투명인 영역과 맞닿은 near_bg도 배경으로 확장 제거
-    transparent = arr[..., 3] == 0
-    seed = dilate8(transparent) & bg
-    filled = seed
-    while True:
-        nxt = dilate4(filled) & bg
-        if np.array_equal(nxt, filled):
-            break
-        filled = nxt
-    arr[filled, 3] = 0
+    labels, sizes = label_components(bg)
+    drop_labels = {i for i, s in enumerate(sizes) if i > 0 and s <= max_island}
+    if not drop_labels:
+        return
+    arr[np.isin(labels, list(drop_labels)), 3] = 0
 
 
 def solidify_alpha(arr: np.ndarray, threshold: int = 40) -> None:
@@ -171,23 +180,81 @@ def solidify_alpha(arr: np.ndarray, threshold: int = 40) -> None:
     arr[~opaque, 3] = 0
 
 
-def remove_checkerboard(im: Image.Image) -> Image.Image:
+def fill_interior_holes(arr: np.ndarray) -> None:
+    """테두리에 닿지 않은 투명 구멍(먹힌 흰 깃털)은 RGB가 남아 있으므로 알파만 복구."""
+    transparent = arr[..., 3] == 0
+    if not transparent.any():
+        return
+    labels, _sizes = label_components(transparent)
+    touch_border = set(labels[0, :].tolist()) | set(labels[-1, :].tolist())
+    touch_border |= set(labels[:, 0].tolist()) | set(labels[:, -1].tolist())
+    touch_border.discard(0)
+    hole = transparent & ~np.isin(labels, list(touch_border))
+    if hole.any():
+        arr[hole, 3] = 255
+
+
+def border_connected_safe(
+    bg: np.ndarray,
+    *,
+    protect_bottom_seed: bool,
+    protect_side_body: bool,
+) -> np.ndarray:
+    """
+    확대샷: 좌우 전체 시드는 날개/몸통으로 flood가 역류하므로
+    상단 + 좌우 상단 일부만 시드한다.
+    """
+    h, _w = bg.shape
+    if not protect_side_body:
+        return border_connected(
+            bg,
+            seed_top=True,
+            seed_bottom=not protect_bottom_seed,
+            seed_left=True,
+            seed_right=True,
+        )
+    seed = np.zeros_like(bg, dtype=bool)
+    seed[0, :] = bg[0, :]
+    top_band = max(2, int(h * 0.12))
+    seed[:top_band, 0] = bg[:top_band, 0]
+    seed[:top_band, -1] = bg[:top_band, -1]
+    if not protect_bottom_seed:
+        seed[-1, :] = bg[-1, :]
+    filled = seed
+    while True:
+        nxt = dilate4(filled) & bg
+        if np.array_equal(nxt, filled):
+            return filled
+        filled = nxt
+
+
+def remove_checkerboard(im: Image.Image, *, protect_bottom_seed: bool = False) -> Image.Image:
+    """
+    누끼: 외곽선 wall로 본체 보호 후 테두리에서만 배경 flood.
+    확대샷은 하단/측면 시드를 제한하고, 본체 내부 구멍은 다시 메운다.
+    """
     arr = np.array(im.convert("RGBA"))
-    bg = near_bg(arr[..., :3])
-    remove = border_connected(bg)
+    rgb = arr[..., :3]
+    wall = outline_wall(rgb, dilate_iters=4)
+    floodable = near_bg(rgb) & ~wall
+    remove = border_connected_safe(
+        floodable,
+        protect_bottom_seed=protect_bottom_seed,
+        protect_side_body=protect_bottom_seed,
+    )
     arr[remove, 3] = 0
-    remove_enclosed_bg(arr)
-    scrub_halos(arr, passes=5)
-    remove_enclosed_bg(arr)
+    remove_small_bg_islands(arr, wall, max_island=3000)
+    scrub_halos(arr, passes=3)
+    fill_interior_holes(arr)
 
     solid = arr[..., 3] > 0
-    # 작은 구멍/돌기 정리
     solid = dilate4(erode4(solid))
-    solid = erode4(dilate4(solid))
     arr[~solid, 3] = 0
+    fill_interior_holes(arr)
 
     keep_largest_opaque(arr)
-    scrub_halos(arr, passes=3)
+    fill_interior_holes(arr)
+    scrub_halos(arr, passes=2)
     solidify_alpha(arr, threshold=40)
     return Image.fromarray(arr, "RGBA")
 
@@ -223,7 +290,7 @@ def downscale(im: Image.Image, max_side: int) -> Image.Image:
 
 def process_sprite(src: Path, dest: Path, max_side: int, as_bust: bool) -> None:
     raw = downscale(Image.open(src).convert("RGBA"), max_side=1600)
-    cleaned = remove_checkerboard(raw)
+    cleaned = remove_checkerboard(raw, protect_bottom_seed=as_bust)
     cleaned = autocrop(cleaned)
     if as_bust:
         cleaned = bust_crop(cleaned)
@@ -246,7 +313,7 @@ def split_pose_sheet(src: Path, left_name: str, right_name: str) -> None:
     left = im.crop((0, 0, mid, h))
     right = im.crop((mid, 0, w, h))
     for part, name in ((left, left_name), (right, right_name)):
-        cleaned = remove_checkerboard(part)
+        cleaned = remove_checkerboard(part, protect_bottom_seed=False)
         cleaned = autocrop(cleaned)
         cleaned = downscale(cleaned, max_side=720)
         arr = np.array(cleaned)

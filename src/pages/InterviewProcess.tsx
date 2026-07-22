@@ -365,13 +365,13 @@ export default function InterviewProcess() {
         <div className="absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-grey-940 to-blue-grey-999" />
       )}
 
-      {/* 캐릭터: 채팅창 뒤로 하반신이 비치도록 하단 정렬 */}
-      <div className="absolute inset-x-0 bottom-0 top-0 z-10 pointer-events-none flex items-end justify-center">
+      {/* 캐릭터: 화면 하단 고정(VN 앵커) + 크게 — 하반신은 채팅창 뒤로 */}
+      <div className="absolute inset-x-0 bottom-0 z-10 pointer-events-none flex items-end justify-center overflow-hidden h-full">
         <InterviewerAvatar
           avatar={stageSprite || interviewer.avatar}
           name={interviewer.name}
-          className="h-[min(78vh,760px)] w-auto max-w-[min(96vw,560px)] mb-[min(22vh,200px)] opacity-100"
-          imgClassName="h-[min(78vh,760px)] w-auto max-w-[min(96vw,560px)] object-contain opacity-100"
+          className="h-[min(108vh,1000px)] w-auto max-w-[min(100vw,780px)] opacity-100"
+          imgClassName="h-[min(108vh,1000px)] w-auto max-w-[min(100vw,780px)] object-contain object-bottom opacity-100"
         />
       </div>
 
