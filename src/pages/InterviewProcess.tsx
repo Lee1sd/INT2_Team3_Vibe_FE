@@ -15,6 +15,11 @@ import {
   saveFinalInterviewResult,
   toFinalInterviewResult,
 } from '../domains/interview/interview-result.storage';
+import {
+  createInterviewClosingMessage,
+  getInterviewerTone,
+  getSessionFeedback,
+} from '../domains/interview/interview-closing-message';
 import { InterviewResponse, Answer, FinalInterviewResult, Interviewer } from '../types';
 import { AlertCircle, Loader2, Send, ArrowLeft } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
@@ -51,17 +56,6 @@ function useTypewriter(text: string, speed = 35) {
 
   return { displayedText, isComplete, skip };
 }
-
-const getSessionFeedback = (session: InterviewResponse): string => {
-  if (session.overallFeedback) return session.overallFeedback;
-
-  const targetQuestionId = session.weakestQuestionId ?? session.nextTurn.questionId;
-  const targetEvaluation = targetQuestionId
-    ? session.evaluations?.find((evaluation) => evaluation.questionId === targetQuestionId)
-    : undefined;
-
-  return targetEvaluation?.feedback ?? session.evaluations?.find((evaluation) => evaluation.feedback)?.feedback ?? '';
-};
 
 type InterviewerView = Pick<Interviewer, 'name' | 'level' | 'avatar'>;
 
@@ -211,7 +205,7 @@ export default function InterviewProcess() {
   useEffect(() => {
     if (session) {
       if (session.nextTurn.type === 'END') {
-        setPhases(["수고하셨습니다. 전반적으로 이해도는 높으나, 아키텍처 고민이 조금 더 필요해 보이네요.\n상세한 평가는 결과지를 확인해 주세요."]);
+        setPhases([createInterviewClosingMessage(session, getInterviewerTone(interviewer.level))]);
         setPhaseIndex(0);
         return;
       }
@@ -233,7 +227,7 @@ export default function InterviewProcess() {
         setPhaseIndex(0);
       }
     }
-  }, [session, isFollowUp, currentQuestionIndex, openingGreeting]);
+  }, [session, isFollowUp, currentQuestionIndex, openingGreeting, interviewer.level]);
 
   const { displayedText, isComplete: isTypewriterComplete, skip: skipTypewriter } = useTypewriter(phases[phaseIndex] || '', 35);
   
