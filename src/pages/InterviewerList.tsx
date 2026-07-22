@@ -156,16 +156,11 @@ export default function InterviewerList() {
                 return (
                   <div key={iv.id} className={twMerge("flex flex-col md:flex-row items-center gap-8", !isLeft && "md:flex-row-reverse")}>
                     
-                    <div className="hidden md:flex w-1/2 justify-end px-12">
-                      {/* Connection Dot */}
-                      <div className={twMerge(
-                        "absolute left-1/2 -translate-x-1/2 w-4 h-4 rounded-full z-20",
-                        iv.isUnlocked ? "bg-primary shadow-[0_0_10px_var(--color-primary)]" : "bg-blue-grey-800 border-2 border-blue-grey-700"
-                      )}></div>
-                    </div>
+                    {/* 카드 교차 배치를 위한 여백은 유지하고 본문을 가리던 연결점만 제거한다. */}
+                    <div className="hidden md:flex w-1/2 justify-end px-12" aria-hidden="true"></div>
 
                     <div className={twMerge(
-                      "w-full md:w-[420px] flex-shrink-0 bg-blue-grey-900 border border-blue-grey-700 rounded-2xl p-6 md:p-8 transition-transform hover:-translate-y-1 shadow-md",
+                      "relative z-10 w-full md:w-[420px] flex-shrink-0 bg-blue-grey-900 border border-blue-grey-700 rounded-2xl p-6 md:p-8 transition-transform hover:-translate-y-1 shadow-md",
                       iv.isUnlocked 
                         ? "" 
                         : "opacity-60"
