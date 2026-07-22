@@ -256,7 +256,7 @@ const TABS = [
 
 type TabId = typeof TABS[number]['id'];
 
-const PASSING_SCORE = 70;
+const PASSING_SCORE = 80;
 
 function formatHistoryDate(createdAt: string): string {
   const date = new Date(createdAt);
