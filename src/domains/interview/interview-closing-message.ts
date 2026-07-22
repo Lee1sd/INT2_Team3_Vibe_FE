@@ -14,7 +14,7 @@ export function getSessionFeedback(session: InterviewResponse): string {
 }
 
 export function getInterviewerTone(level: number): InterviewerTone {
-  return level === 2 ? 'strict' : 'lenient';
+  return level >= 2 ? 'strict' : 'lenient';
 }
 
 export function createInterviewClosingMessage(session: InterviewResponse, tone: InterviewerTone): string {
