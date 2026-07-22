@@ -240,15 +240,11 @@ export default function InterviewerList() {
                           <button 
                             disabled={!selectedKeyword}
                             onClick={() => {
-                              // TODO: 현재 프론트만 있는 상태라 임시로 업로드 안해도 입장 가능하게 우회 처리함
-                              // 나중에 백엔드 연동 시 아래 주석 해제 및 로직 원복 필요
-                              /*
                               if (!isUploaded) {
+                                alert('이력서를 먼저 업로드해주세요');
                                 navigate('/mypage');
-                              } else {
-                                navigate(`/interview/${iv.id}`, { state: { keyword: selectedKeyword } });
+                                return;
                               }
-                              */
                               navigate(`/interview/${iv.id}`, { state: { keyword: selectedKeyword } });
                             }}
                             className="w-full py-3 bg-primary text-white rounded-2xl font-bold text-[16px] leading-[24px] flex items-center justify-center gap-2 hover:bg-[#005bb5] transition-colors shadow-sm disabled:opacity-32 disabled:cursor-not-allowed"
