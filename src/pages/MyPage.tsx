@@ -91,6 +91,24 @@ function MultiFileUploader({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    fileService.getResumeList().then(list => {
+      const existing = list
+          .filter(r => r.type === resumeType)
+          .map(r => ({
+            id: String(r.resumeId),
+            name: `이력서 #${r.resumeId}`,
+            size: 0,
+            status: (r.parseStatus === 'DONE' ? 'COMPLETED' : r.parseStatus) as UploadedFile['status'],
+          }));
+      setFiles(existing);
+    })
+        .catch(error => {
+          console.error('이력서 목록 조회 실패', error);
+          setFiles([]); // 필요하다면 기본값
+        });
+  }, [resumeType]);
+
   const updateFile = (id: string, patch: Partial<UploadedFile>) => {
     setFiles(prev => prev.map(f => (f.id === id ? { ...f, ...patch } : f)));
   };
