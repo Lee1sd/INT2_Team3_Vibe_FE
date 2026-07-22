@@ -41,7 +41,7 @@ export function HistoryDrawer({
           "fixed inset-0 bg-black/50 z-40 transition-opacity duration-300",
           isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
         )}
-        onClick={onClose}
+        onClick={isLoading ? undefined : onClose}
       />
       
       {/* Drawer */}
@@ -62,7 +62,8 @@ export function HistoryDrawer({
           </div>
           <button 
             onClick={onClose}
-            className="p-2 text-blue-grey-400 hover:text-blue-grey-900 hover:bg-blue-grey-50 rounded-full transition-colors"
+            disabled={isLoading}
+            className="p-2 text-blue-grey-400 hover:text-blue-grey-900 hover:bg-blue-grey-50 rounded-full transition-colors disabled:cursor-wait disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-blue-grey-400"
           >
             <X className="w-6 h-6" />
           </button>

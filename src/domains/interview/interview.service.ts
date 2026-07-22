@@ -9,7 +9,7 @@ interface InterviewService {
   submitAnswers: (sessionId: string, answers: Answer[]) => Promise<InterviewResponse>;
   submitFollowUp: (sessionId: string, answer: Answer) => Promise<InterviewResponse>;
   getHistory: () => Promise<InterviewHistoryApiResponse>;
-  getHistoryDetail: (sessionId: string) => Promise<InterviewDetailApiResponse>;
+  getHistoryDetail: (sessionId: string, signal?: AbortSignal) => Promise<InterviewDetailApiResponse>;
 }
 
 const USE_MOCK = import.meta.env.VITE_USE_MOCK !== 'false';
@@ -163,7 +163,7 @@ const realInterviewService: InterviewService = {
 
   getHistory: () => interviewApi.getHistory(),
 
-  getHistoryDetail: (sessionId) => interviewApi.getHistoryDetail(Number(sessionId)),
+  getHistoryDetail: (sessionId, signal) => interviewApi.getHistoryDetail(Number(sessionId), signal),
 };
 
 export const engineService: InterviewService = USE_MOCK ? interviewMock : realInterviewService;

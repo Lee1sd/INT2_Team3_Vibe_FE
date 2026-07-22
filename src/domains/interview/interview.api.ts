@@ -79,6 +79,6 @@ export const interviewApi = {
 
   getHistory: (): Promise<InterviewHistoryApiResponse> => apiClient.get('/api/interviews/history'),
 
-  getHistoryDetail: (sessionId: number): Promise<InterviewDetailApiResponse> =>
-    apiClient.get(`/api/interviews/${sessionId}/detail`),
+  getHistoryDetail: (sessionId: number, signal?: AbortSignal): Promise<InterviewDetailApiResponse> =>
+    apiClient.get(`/api/interviews/${sessionId}/detail`, { signal }),
 };

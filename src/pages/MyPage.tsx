@@ -331,6 +331,10 @@ function getHistoryDetailErrorMessage(error: unknown): string {
   return '상세 기록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.';
 }
 
+function isAbortError(error: unknown): boolean {
+  return error instanceof Error && error.name === 'AbortError';
+}
+
 export default function MyPage() {
   const [user, setUser] = useState<User | null>(null);
   const [nameInput, setNameInput] = useState('');
@@ -352,6 +356,14 @@ export default function MyPage() {
   const nameHydratedFromServer = useRef(false);
   const isSavingNameRef = useRef(false);
   const historyDetailRequestSeq = useRef(0);
+  const historyDetailAbortController = useRef<AbortController | null>(null);
+  const historyDetailInFlightSessionId = useRef<string | null>(null);
+
+  useEffect(() => {
+    return () => {
+      historyDetailAbortController.current?.abort();
+    };
+  }, []);
   
   useEffect(() => {
     let cancelled = false;
@@ -472,8 +484,17 @@ export default function MyPage() {
   };
 
   const handleHistoryClick = async (history: InterviewHistoryItem) => {
+    if (historyDetailInFlightSessionId.current === history.id) {
+      return;
+    }
+
+    historyDetailAbortController.current?.abort();
+
     const requestSeq = historyDetailRequestSeq.current + 1;
+    const abortController = new AbortController();
     historyDetailRequestSeq.current = requestSeq;
+    historyDetailAbortController.current = abortController;
+    historyDetailInFlightSessionId.current = history.id;
 
     setSelectedHistory(history);
     setIsDrawerOpen(true);
@@ -481,7 +502,7 @@ export default function MyPage() {
     setHistoryDetailError(null);
 
     try {
-      const detail = await engineService.getHistoryDetail(history.id);
+      const detail = await engineService.getHistoryDetail(history.id, abortController.signal);
       if (historyDetailRequestSeq.current !== requestSeq) return;
 
       const applicantName = user?.name || user?.displayName || '회원';
@@ -491,12 +512,15 @@ export default function MyPage() {
         feedback: detail.overallFeedback,
       });
     } catch (error) {
+      if (isAbortError(error)) return;
       if (historyDetailRequestSeq.current !== requestSeq) return;
       console.error(error);
       setHistoryDetailError(getHistoryDetailErrorMessage(error));
       setSelectedHistory(history);
     } finally {
       if (historyDetailRequestSeq.current === requestSeq) {
+        historyDetailAbortController.current = null;
+        historyDetailInFlightSessionId.current = null;
         setIsHistoryDetailLoading(false);
       }
     }
@@ -504,6 +528,9 @@ export default function MyPage() {
 
   const handleHistoryDrawerClose = () => {
     historyDetailRequestSeq.current += 1;
+    historyDetailAbortController.current?.abort();
+    historyDetailAbortController.current = null;
+    historyDetailInFlightSessionId.current = null;
     setIsDrawerOpen(false);
     setIsHistoryDetailLoading(false);
     setHistoryDetailError(null);
@@ -759,11 +786,19 @@ export default function MyPage() {
                     
                     {isExpanded && (
                       <div className="p-5 flex flex-col gap-3 bg-slate-50">
-                        {items.map((history) => (
+                        {items.map((history) => {
+                          const isCurrentHistoryLoading = isHistoryDetailLoading && selectedHistory?.id === history.id;
+
+                          return (
                           <button 
                             key={history.id}
                             onClick={() => void handleHistoryClick(history)}
-                            className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-white border border-slate-100 rounded-xl hover:-translate-y-0.5 hover:shadow-md transition-all text-left group shadow-sm cursor-pointer"
+                            disabled={isCurrentHistoryLoading}
+                            aria-busy={isCurrentHistoryLoading}
+                            className={twMerge(
+                              "flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-white border border-slate-100 rounded-xl hover:-translate-y-0.5 hover:shadow-md transition-all text-left group shadow-sm cursor-pointer disabled:cursor-wait disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:shadow-sm",
+                              isCurrentHistoryLoading && "border-primary/30 bg-primary/5"
+                            )}
                           >
                             <div className="mb-3 sm:mb-0">
                               <div className="flex items-center gap-2 mb-2">
@@ -791,7 +826,8 @@ export default function MyPage() {
                               <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-primary transition-colors" />
                             </div>
                           </button>
-                        ))}
+                          );
+                        })}
                       </div>
                     )}
                   </div>
