@@ -51,12 +51,12 @@ export const authApi = {
     apiClient.patch('/api/users/me', { name }),
 
   /**
-   * 프로필 이미지 업로드 — multipart field name: `file`
-   * BE: S3 PutObject 후 photoUrl(presigned 등) 반환.
+   * UP-004 — 프로필 이미지 업로드. multipart field name: `photo` (BE ADR-020)
+   * BE: S3 PutObject 후 photoUrl(presigned GET) 반환.
    */
   uploadProfilePhoto: (file: File): Promise<ProfilePhotoUploadResponse> => {
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append('photo', file);
     return apiClient.postForm('/api/users/me/photo', formData);
   },
 
