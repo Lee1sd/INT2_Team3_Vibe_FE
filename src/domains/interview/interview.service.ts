@@ -60,9 +60,16 @@ function toInterviewer(item: InterviewerApiItem): Interviewer {
   };
 }
 
-/** 레벨 기준 페르소나 이미지 경로. Lv.3+는 빈 문자열(슬롯만 표시). */
+/** 던전 카드용 전신 아바타. Lv.3+는 빈 문자열. */
 export function getInterviewerAvatarByLevel(level: number): string {
   return STATIC_CONTENT_BY_LEVEL[level]?.avatar ?? '';
+}
+
+/** 면접 세션용 상반신 확대샷. Lv.3+는 빈 문자열. */
+export function getInterviewerBustByLevel(level: number): string {
+  if (level === 1) return '/interviewers/lv1-casual-bust.png';
+  if (level === 2) return '/interviewers/lv2-strict-bust.png';
+  return '';
 }
 
 function toStringId(id: number | null | undefined): string | undefined {

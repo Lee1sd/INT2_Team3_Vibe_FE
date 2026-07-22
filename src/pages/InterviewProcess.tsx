@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { authService } from '../domains/auth/auth.service';
-import { engineService, getInterviewerAvatarByLevel } from '../domains/interview/interview.service';
+import { engineService, getInterviewerBustByLevel } from '../domains/interview/interview.service';
 import { pickOpeningGreeting } from '../domains/interview/openingGreetings';
 import { evaluationService } from '../domains/progress/progress.service';
 import { fileService } from '../domains/resume/resume.service';
@@ -66,7 +66,8 @@ function interviewerFromRouteState(state: unknown, interviewerId: string | undef
   return {
     name: candidate.name,
     level: candidate.level,
-    avatar: candidate.avatar || getInterviewerAvatarByLevel(candidate.level),
+    // 세션은 상반신 확대샷을 쓴다.
+    avatar: getInterviewerBustByLevel(candidate.level),
   };
 }
 
@@ -92,7 +93,7 @@ export default function InterviewProcess() {
       interviewerFromRouteState(location.state, interviewerId) ?? {
         name: '면접관',
         level: 1,
-        avatar: getInterviewerAvatarByLevel(1),
+        avatar: getInterviewerBustByLevel(1),
       }
   );
 
@@ -115,7 +116,7 @@ export default function InterviewProcess() {
             setInterviewer({
               name: matched.name,
               level: matched.level,
-              avatar: matched.avatar || getInterviewerAvatarByLevel(matched.level),
+              avatar: getInterviewerBustByLevel(matched.level),
             });
           }
         } catch (e) {
@@ -360,8 +361,8 @@ export default function InterviewProcess() {
             <InterviewerAvatar
               avatar={interviewer.avatar}
               name={interviewer.name}
-              className="max-h-[min(42vh,360px)] w-auto h-full"
-              imgClassName="max-h-[min(42vh,360px)] max-w-[min(90vw,420px)]"
+              className="max-h-[min(48vh,420px)] w-auto h-full"
+              imgClassName="max-h-[min(48vh,420px)] max-w-[min(92vw,520px)]"
             />
           </div>
         </div>
