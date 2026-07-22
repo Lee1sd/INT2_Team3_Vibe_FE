@@ -8,6 +8,7 @@ interface ResumeService {
   checkParseStatus: (fileId: string) => Promise<UploadResponse>;
   checkResumeStatus: () => Promise<boolean>;
   getResumeList: () => Promise<ResumeApiResponse[]>;
+  getLatestCompletedResumeId: () => Promise<string | null>;
 }
 
 const USE_MOCK = import.meta.env.VITE_USE_MOCK !== 'false';
@@ -31,6 +32,13 @@ const realResumeService: ResumeService = {
   // 목록 조회: 배열 반환 (화면에 3개 뿌릴 때)
   getResumeList: async () => {
     return await resumeApi.getList();
+  },
+
+  /** 최신 파싱 완료 이력서를 면접 입력으로 선택한다. */
+  getLatestCompletedResumeId: async () => {
+    const resumes = await resumeApi.getList();
+    const resume = resumes.find((item) => item.type === 'RESUME' && item.parseStatus === 'DONE');
+    return resume ? String(resume.resumeId) : null;
   },
 };
 

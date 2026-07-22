@@ -7,7 +7,8 @@ export type {
   Question,
   Answer,
   EvaluationDetail,
+  FinalInterviewResult,
   NextTurn,
   InterviewResponse,
 } from './domains/interview/interview.types';
-export type { GaugeUpdate } from './domains/progress/progress.types';
+export type { GaugeUpdate, UserBadge } from './domains/progress/progress.types';
