@@ -1,5 +1,6 @@
 // 백엔드 /api/interviewers, /api/interviews 등이 준비되기 전까지 면접 흐름을 검증하기 위한 목업 구현.
 import { Interviewer, InterviewResponse, Question, Answer } from './interview.types';
+import { staticAssetUrl } from '../../lib/staticAssetUrl';
 
 export const interviewMock = {
   getInterviewers: async (): Promise<Interviewer[]> => {
@@ -14,7 +15,7 @@ export const interviewMock = {
             isUnlocked: true,
             description: '코드 가독성과 기본기를 중요하게 생각합니다.',
             achievement: '기본적인 CS 지식과 이력서 내용의 사실 관계를 설명할 수 있습니다.',
-            avatar: '/interviewers/lv1-casual.png',
+            avatar: staticAssetUrl('/interviewers/lv1-casual.png'),
           },
           {
             id: 'iv2',
@@ -24,7 +25,7 @@ export const interviewMock = {
             isUnlocked: false,
             description: '아키텍처와 예외 처리를 날카롭게 파고듭니다.',
             achievement: '실무 수준의 트러블슈팅과 기술적 트레이드오프를 논리적으로 방어할 수 있습니다.',
-            avatar: '/interviewers/lv2-strict.png',
+            avatar: staticAssetUrl('/interviewers/lv2-strict.png'),
           },
           {
             id: 'iv3',
