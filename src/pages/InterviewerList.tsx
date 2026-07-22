@@ -237,10 +237,10 @@ export default function InterviewerList() {
                             onClick={() => {
                               // 실제 면접 API에는 파싱 완료된 이력서 ID가 필수이므로 업로드 전 진입을 차단한다.
                               if (!isUploaded) {
-                                navigate('/mypage');
-                              } else {
-                                navigate(`/interview/${iv.id}`, { state: { keyword: selectedKeyword } });
+                                navigate('/mypage#resume');
+                                return;
                               }
+                              navigate(`/interview/${iv.id}`, { state: { keyword: selectedKeyword } });
                             }}
                             className="w-full py-3 bg-primary text-white rounded-2xl font-bold text-[16px] leading-[24px] flex items-center justify-center gap-2 hover:bg-[#005bb5] transition-colors shadow-sm disabled:opacity-32 disabled:cursor-not-allowed"
                           >

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { fileService } from '../domains/resume/resume.service';
 import { UploadCloud, FileText, CheckCircle2, Loader2, AlertCircle, ShieldCheck, Lock, LogOut, UserMinus, ArrowLeft, ChevronDown, ChevronUp, Camera, Edit2, ChevronRight } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
@@ -266,9 +266,23 @@ export default function MyPage() {
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const [isDeleteAccountModalOpen, setIsDeleteAccountModalOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   /** 저장이 끝난 뒤에는 늦게 도착한 getCurrentUser가 이름을 덮지 못하게 한다. */
   const nameHydratedFromServer = useRef(false);
   const isSavingNameRef = useRef(false);
+
+  useEffect(() => {
+    if (location.hash !== '#resume') return;
+    setActiveTab('PROFILE');
+  }, [location.hash]);
+
+  useEffect(() => {
+    if (location.hash !== '#resume' || activeTab !== 'PROFILE') return;
+    const timer = window.setTimeout(() => {
+      document.getElementById('resume')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [location.hash, activeTab]);
   
   useEffect(() => {
     let cancelled = false;
@@ -561,8 +575,10 @@ export default function MyPage() {
             </section>
 
             {/* 다중 업로드 영역 */}
-            <MultiFileUploader title="이력서 데이터 풀 (Resume)" required maxFiles={3} resumeType="RESUME" />
-            <MultiFileUploader title="포트폴리오 데이터 풀 (Portfolio)" maxFiles={3} resumeType="PORTFOLIO" />
+            <div id="resume">
+              <MultiFileUploader title="이력서 데이터 풀 (Resume)" required maxFiles={3} resumeType="RESUME" />
+              <MultiFileUploader title="포트폴리오 데이터 풀 (Portfolio)" maxFiles={3} resumeType="PORTFOLIO" />
+            </div>
 
           </div>
         )}
