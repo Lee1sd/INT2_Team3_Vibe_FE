@@ -2,6 +2,17 @@
 import { GaugeUpdate } from './progress.types';
 
 export const progressMock = {
+  /** Mock 화면에서는 Stage1 뱃지를 보유한 가입 직후 상태를 반환한다. */
+  getMyBadges: async () => [
+    {
+      badgeId: 1,
+      stage: 1,
+      name: '프로그래머쓱 LEVEL 1',
+      imageUrl: null,
+      acquiredAt: '2026-07-21T00:00:00Z',
+    },
+  ],
+
   /** Mock 모드에서는 고정 결과를 사용하므로 별도 스냅샷을 저장하지 않는다. */
   captureSnapshot: async (_sessionId: string): Promise<void> => undefined,
 
@@ -19,7 +30,7 @@ export const progressMock = {
             badgeId: 2,
             stage: 2,
             name: '프로그래머쓱 LEVEL 2',
-            imageUrl: '/badges/Level2.png',
+            imageUrl: null,
             acquiredAt: '2026-07-21T00:00:00Z',
           },
         });
