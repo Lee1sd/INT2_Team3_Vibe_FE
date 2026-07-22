@@ -237,8 +237,7 @@ export default function InterviewerList() {
                             onClick={() => {
                               // 실제 면접 API에는 파싱 완료된 이력서 ID가 필수이므로 업로드 전 진입을 차단한다.
                               if (!isUploaded) {
-                                alert('이력서를 먼저 업로드해주세요');
-                                navigate('/mypage');
+                                navigate('/mypage#resume');
                                 return;
                               }
                               navigate(`/interview/${iv.id}`, { state: { keyword: selectedKeyword } });
