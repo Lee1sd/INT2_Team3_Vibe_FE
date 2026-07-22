@@ -3,6 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { authService } from '../domains/auth/auth.service';
 import { engineService } from '../domains/interview/interview.service';
 import { pickOpeningGreeting } from '../domains/interview/openingGreetings';
+import { fileService } from '../domains/resume/resume.service';
 import { InterviewResponse, Answer } from '../types';
 import { Loader2, Send, ArrowLeft } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
@@ -60,6 +61,17 @@ const getSessionFeedback = (session: InterviewResponse): string => {
   return targetEvaluation?.feedback ?? session.evaluations?.find((evaluation) => evaluation.feedback)?.feedback ?? '';
 };
 
+const getLatestResumeId = (resumes: Awaited<ReturnType<typeof fileService.getResumeList>>): number | undefined => {
+  return resumes
+    .filter((resume) => resume.type === 'RESUME')
+    .map((resume, index) => ({
+      resumeId: resume.resumeId,
+      index,
+      uploadedAt: resume.lastUploadedAt ? Date.parse(resume.lastUploadedAt) : 0,
+    }))
+    .sort((a, b) => b.uploadedAt - a.uploadedAt || a.index - b.index)[0]?.resumeId;
+};
+
 export default function InterviewProcess() {
   const { interviewerId } = useParams();
   const navigate = useNavigate();
@@ -97,10 +109,12 @@ export default function InterviewProcess() {
         if (cancelled) return;
         setOpeningGreeting(pickOpeningGreeting(userName));
 
-        // TODO(#6): resumeId('f123')는 여전히 하드코딩되어 있음 — 이력서 보유확인(RS-003)이
-        // 실제 연동되면 현재 사용자의 실제 resumeId로 교체해야 한다. 이 이슈(#11)는 그와 별개로
-        // createSession 인자 순서 오류 + sessionId 하드코딩만 다룬다.
-        const res = await engineService.startInterview(interviewerId || 'iv1', 'f123', selectedKeyword);
+        const resumeId = getLatestResumeId(await fileService.getResumeList());
+        if (!resumeId) {
+          throw new Error('Resume ID is required to start interview.');
+        }
+
+        const res = await engineService.startInterview(interviewerId || 'iv1', String(resumeId), selectedKeyword);
         if (cancelled) return;
         setSession(res);
         setSessionId(res.sessionId || '');
