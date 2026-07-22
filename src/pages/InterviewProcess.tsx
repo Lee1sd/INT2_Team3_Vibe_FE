@@ -81,6 +81,7 @@ export default function InterviewProcess() {
   const [session, setSession] = useState<InterviewResponse | null>(null);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [phases, setPhases] = useState<string[]>([]);
   const [phaseIndex, setPhaseIndex] = useState(0);
@@ -110,8 +111,10 @@ export default function InterviewProcess() {
         setOpeningGreeting(pickOpeningGreeting(userName));
 
         const resumeId = getLatestResumeId(await fileService.getResumeList());
+        if (cancelled) return;
         if (!resumeId) {
-          throw new Error('Resume ID is required to start interview.');
+          setErrorMessage('면접을 시작하려면 이력서를 먼저 업로드해 주세요');
+          return;
         }
 
         const res = await engineService.startInterview(interviewerId || 'iv1', String(resumeId), selectedKeyword);
@@ -120,6 +123,9 @@ export default function InterviewProcess() {
         setSessionId(res.sessionId || '');
       } catch (e) {
         console.error(e);
+        if (!cancelled) {
+          setErrorMessage('면접을 시작하는 중 오류가 발생했습니다.');
+        }
       } finally {
         if (!cancelled) {
           setIsLoading(false);
@@ -242,6 +248,20 @@ export default function InterviewProcess() {
       <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-blue-grey-940">
         <Loader2 className="w-12 h-12 text-primary animate-spin mb-4" />
         <p className="text-blue-grey-500 font-bold">면접관이 지원자의 이력서를 검토하고 있습니다...</p>
+      </div>
+    );
+  }
+
+  if (errorMessage) {
+    return (
+      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-blue-grey-940 px-6 text-center">
+        <p className="mb-6 text-white text-[18px] leading-[28px] font-bold">{errorMessage}</p>
+        <button
+          onClick={() => navigate('/mypage')}
+          className="px-6 py-3 bg-primary text-white rounded-xl font-bold hover:bg-[#005bb5] transition-colors"
+        >
+          마이페이지로 이동
+        </button>
       </div>
     );
   }
