@@ -1,6 +1,6 @@
 // 백엔드 /api/interviewers, /api/interviews 등이 준비되기 전까지 면접 흐름을 검증하기 위한 목업 구현.
 import { Interviewer, InterviewResponse, Question, Answer } from './interview.types';
-import { InterviewHistoryApiResponse } from './interview.api';
+import { InterviewHistoryApiResponse, InterviewDetailApiResponse } from './interview.api';
 
 export const interviewMock = {
   getInterviewers: async (): Promise<Interviewer[]> => {
@@ -162,5 +162,16 @@ export const interviewMock = {
         ],
       },
     ],
+  }),
+
+  getHistoryDetail: async (sessionId: string): Promise<InterviewDetailApiResponse> => ({
+    sessionId: Number(sessionId),
+    messages: [
+      { turn: 1, question: '이력서에서 가장 자신 있는 프로젝트를 설명해 주세요.', answer: '캐싱 전략을 개선해 응답 시간을 줄인 경험이 있습니다.' },
+      { turn: 2, question: '그 과정에서 가장 어려웠던 트레이드오프는 무엇이었나요?', answer: '정합성과 성능 사이의 균형을 맞추는 부분이 가장 어려웠습니다.' },
+      { turn: 3, question: '같은 상황을 다시 맡는다면 무엇을 다르게 하시겠어요?', answer: '초기부터 모니터링 지표를 더 촘촘히 설계하겠습니다.' },
+      { turn: 4, question: '캐시 무효화 정책은 어떻게 보완할 수 있을까요?', answer: null },
+    ],
+    overallFeedback: '전체적으로 문제 상황과 해결 과정을 구체적으로 설명했습니다. 다만 일부 답변은 운영 지표와 실패 대응까지 연결하면 더 설득력이 높아집니다.',
   }),
 };

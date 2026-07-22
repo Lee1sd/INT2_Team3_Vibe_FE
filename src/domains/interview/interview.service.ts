@@ -1,5 +1,5 @@
 // 페이지 컴포넌트가 실제로 import하는 진입점. VITE_USE_MOCK으로 mock/실제 API를 스위칭한다.
-import { interviewApi, InterviewerApiItem, SubmitAnswersApiResponse, InterviewHistoryApiResponse } from './interview.api';
+import { interviewApi, InterviewerApiItem, SubmitAnswersApiResponse, InterviewHistoryApiResponse, InterviewDetailApiResponse } from './interview.api';
 import { interviewMock } from './interview.mock';
 import { Interviewer, InterviewResponse, Question, Answer, NextTurn } from './interview.types';
 
@@ -9,6 +9,7 @@ interface InterviewService {
   submitAnswers: (sessionId: string, answers: Answer[]) => Promise<InterviewResponse>;
   submitFollowUp: (sessionId: string, answer: Answer) => Promise<InterviewResponse>;
   getHistory: () => Promise<InterviewHistoryApiResponse>;
+  getHistoryDetail: (sessionId: string) => Promise<InterviewDetailApiResponse>;
 }
 
 const USE_MOCK = import.meta.env.VITE_USE_MOCK !== 'false';
@@ -161,6 +162,8 @@ const realInterviewService: InterviewService = {
   },
 
   getHistory: () => interviewApi.getHistory(),
+
+  getHistoryDetail: (sessionId) => interviewApi.getHistoryDetail(Number(sessionId)),
 };
 
 export const engineService: InterviewService = USE_MOCK ? interviewMock : realInterviewService;

@@ -3,12 +3,13 @@ import { useNavigate, Link } from 'react-router-dom';
 import { fileService } from '../domains/resume/resume.service';
 import { UploadCloud, FileText, CheckCircle2, Loader2, AlertCircle, ShieldCheck, Lock, LogOut, UserMinus, ArrowLeft, ChevronDown, ChevronUp, Camera, Edit2, ChevronRight } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
+import { ApiError } from '../api/client';
 import { authService } from '../domains/auth/auth.service';
 import { User } from '../types';
 import { InfoTooltip } from '../components/InfoTooltip';
-import { HistoryDrawer, InterviewHistoryItem } from '../components/HistoryDrawer';
+import { ChatLog, HistoryDrawer, InterviewHistoryItem } from '../components/HistoryDrawer';
 import { engineService } from '../domains/interview/interview.service';
-import { InterviewHistoryApiResponse, InterviewHistoryLevelApiItem, InterviewHistorySessionApiItem } from '../domains/interview/interview.api';
+import { InterviewDetailApiResponse, InterviewHistoryApiResponse, InterviewHistoryLevelApiItem, InterviewHistorySessionApiItem } from '../domains/interview/interview.api';
 
 const BADGES = [
   { level: 1, name: '인턴 머쓱', icon: '🐣', description: '면접의 첫 걸음을 내딛다' },
@@ -295,6 +296,41 @@ function toHistoryItems(history: InterviewHistoryApiResponse): InterviewHistoryI
   );
 }
 
+function toDetailLogs(
+  detail: InterviewDetailApiResponse,
+  interviewerName: string,
+  applicantName: string
+): ChatLog[] {
+  return detail.messages.flatMap((message) => [
+    {
+      speaker: 'interviewer' as const,
+      name: interviewerName,
+      message: message.question,
+    },
+    {
+      speaker: 'applicant' as const,
+      name: applicantName,
+      message: message.answer || '답변 기록이 없습니다.',
+    },
+  ]);
+}
+
+function getHistoryDetailErrorMessage(error: unknown): string {
+  if (error instanceof ApiError) {
+    if (error.status === 403) {
+      return '본인의 면접 기록만 조회할 수 있습니다.';
+    }
+    if (error.status === 404) {
+      return '면접 세션을 찾을 수 없습니다.';
+    }
+    if (error.status === 409) {
+      return '완료된 면접만 상세 기록을 확인할 수 있습니다.';
+    }
+  }
+
+  return '상세 기록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.';
+}
+
 export default function MyPage() {
   const [user, setUser] = useState<User | null>(null);
   const [nameInput, setNameInput] = useState('');
@@ -303,6 +339,8 @@ export default function MyPage() {
   const [nameSaveStatus, setNameSaveStatus] = useState<'idle' | 'saved' | 'error'>('idle');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedHistory, setSelectedHistory] = useState<InterviewHistoryItem | null>(null);
+  const [isHistoryDetailLoading, setIsHistoryDetailLoading] = useState(false);
+  const [historyDetailError, setHistoryDetailError] = useState<string | null>(null);
   const [historyItems, setHistoryItems] = useState<InterviewHistoryItem[]>([]);
   const [isHistoryLoading, setIsHistoryLoading] = useState(true);
   const [historyError, setHistoryError] = useState<string | null>(null);
@@ -313,6 +351,7 @@ export default function MyPage() {
   /** 저장이 끝난 뒤에는 늦게 도착한 getCurrentUser가 이름을 덮지 못하게 한다. */
   const nameHydratedFromServer = useRef(false);
   const isSavingNameRef = useRef(false);
+  const historyDetailRequestSeq = useRef(0);
   
   useEffect(() => {
     let cancelled = false;
@@ -430,6 +469,44 @@ export default function MyPage() {
       ...prev,
       [groupName]: !prev[groupName]
     }));
+  };
+
+  const handleHistoryClick = async (history: InterviewHistoryItem) => {
+    const requestSeq = historyDetailRequestSeq.current + 1;
+    historyDetailRequestSeq.current = requestSeq;
+
+    setSelectedHistory(history);
+    setIsDrawerOpen(true);
+    setIsHistoryDetailLoading(true);
+    setHistoryDetailError(null);
+
+    try {
+      const detail = await engineService.getHistoryDetail(history.id);
+      if (historyDetailRequestSeq.current !== requestSeq) return;
+
+      const applicantName = user?.name || user?.displayName || '회원';
+      setSelectedHistory({
+        ...history,
+        logs: toDetailLogs(detail, history.interviewerName, applicantName),
+        feedback: detail.overallFeedback,
+      });
+    } catch (error) {
+      if (historyDetailRequestSeq.current !== requestSeq) return;
+      console.error(error);
+      setHistoryDetailError(getHistoryDetailErrorMessage(error));
+      setSelectedHistory(history);
+    } finally {
+      if (historyDetailRequestSeq.current === requestSeq) {
+        setIsHistoryDetailLoading(false);
+      }
+    }
+  };
+
+  const handleHistoryDrawerClose = () => {
+    historyDetailRequestSeq.current += 1;
+    setIsDrawerOpen(false);
+    setIsHistoryDetailLoading(false);
+    setHistoryDetailError(null);
   };
 
   // Group history by interviewerName
@@ -685,10 +762,7 @@ export default function MyPage() {
                         {items.map((history) => (
                           <button 
                             key={history.id}
-                            onClick={() => {
-                              setSelectedHistory(history);
-                              setIsDrawerOpen(true);
-                            }}
+                            onClick={() => void handleHistoryClick(history)}
                             className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-white border border-slate-100 rounded-xl hover:-translate-y-0.5 hover:shadow-md transition-all text-left group shadow-sm cursor-pointer"
                           >
                             <div className="mb-3 sm:mb-0">
@@ -822,8 +896,10 @@ export default function MyPage() {
 
       <HistoryDrawer 
         isOpen={isDrawerOpen} 
-        onClose={() => setIsDrawerOpen(false)} 
+        onClose={handleHistoryDrawerClose} 
         historyItem={selectedHistory} 
+        isLoading={isHistoryDetailLoading}
+        errorMessage={historyDetailError}
       />
     </div>
   );

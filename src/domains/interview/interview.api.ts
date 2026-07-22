@@ -48,6 +48,18 @@ export interface InterviewHistoryApiResponse {
   levels: InterviewHistoryLevelApiItem[];
 }
 
+export interface InterviewDetailMessageApiItem {
+  turn: number;
+  question: string;
+  answer: string | null;
+}
+
+export interface InterviewDetailApiResponse {
+  sessionId: number;
+  messages: InterviewDetailMessageApiItem[];
+  overallFeedback: string;
+}
+
 export const interviewApi = {
   /** IV-001 */
   getInterviewers: (): Promise<{ interviewers: InterviewerApiItem[] }> => apiClient.get('/api/interviewers'),
@@ -66,4 +78,7 @@ export const interviewApi = {
   ): Promise<SubmitAnswersApiResponse> => apiClient.post(`/api/interviews/${sessionId}/answers`, { answers }),
 
   getHistory: (): Promise<InterviewHistoryApiResponse> => apiClient.get('/api/interviews/history'),
+
+  getHistoryDetail: (sessionId: number): Promise<InterviewDetailApiResponse> =>
+    apiClient.get(`/api/interviews/${sessionId}/detail`),
 };
