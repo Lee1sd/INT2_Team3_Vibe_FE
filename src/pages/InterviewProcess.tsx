@@ -82,6 +82,7 @@ export default function InterviewProcess() {
   const navigate = useNavigate();
   const location = useLocation();
   const selectedKeyword = location.state?.keyword || 'Spring Boot';
+  const interviewStartKey = location.state?.interviewStartKey ?? location.key;
   
   const [session, setSession] = useState<InterviewResponse | null>(null);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -120,6 +121,20 @@ export default function InterviewProcess() {
     let cancelled = false;
 
     const initInterview = async () => {
+      setSession(null);
+      setAnswers({});
+      setIsLoading(true);
+      setIsSubmitting(false);
+      setPhases([]);
+      setPhaseIndex(0);
+      setCurrentQuestionIndex(0);
+      setIsInterviewFinished(false);
+      setIsAbandonModalOpen(false);
+      setFinalResult(null);
+      setInitializationError(null);
+      setSessionId('');
+      setOpeningGreeting('');
+
       try {
         // 라우트 id는 BE 숫자 id(String)다 — 구 mock키(iv1) 하드코딩 맵을 쓰지 않는다.
         try {
@@ -180,7 +195,7 @@ export default function InterviewProcess() {
     return () => {
       cancelled = true;
     };
-  }, [interviewerId, selectedKeyword]);
+  }, [interviewerId, selectedKeyword, interviewStartKey]);
 
   const isFollowUp = session?.nextTurn.turn === 2;
   const isLastQuestion = session?.questions ? currentQuestionIndex === session.questions.length - 1 : true;
