@@ -359,14 +359,20 @@ export default function InterviewProcess() {
         <div className="absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-grey-940 to-blue-grey-999" />
       )}
 
-      {/* 캐릭터: 하단 고정. 발은 화면/overflow로만 잘림(파일 크롭 없음) */}
-      <div className="absolute inset-x-0 bottom-0 z-10 pointer-events-none flex items-end justify-center overflow-hidden h-full">
-        <InterviewerAvatar
-          avatar={stageSprite || interviewer.avatar}
-          name={interviewer.name}
-          className="h-[min(84vh,740px)] w-auto max-w-[min(94vw,560px)] -translate-y-[1%] opacity-100"
-          imgClassName="h-[min(84vh,740px)] w-auto max-w-[min(94vw,560px)] object-contain object-bottom opacity-100"
-        />
+      {/*
+        스테이지 캐릭터 통일 슬롯
+        - 크기: 이미지2 기준 (고정 박스 + object-contain → 포즈별 원본 비율이 달라도 동일 슬롯)
+        - 위치: 이미지3 기준 (수평 중앙, 하단 앵커 — 발 라인은 채팅 UI 위 floor)
+      */}
+      <div className="absolute inset-x-0 bottom-0 z-10 pointer-events-none flex justify-center overflow-hidden h-full">
+        <div className="mb-[min(36vh,320px)] flex h-[min(52vh,500px)] w-[min(42vw,420px)] items-end justify-center">
+          <InterviewerAvatar
+            avatar={stageSprite || interviewer.avatar}
+            name={interviewer.name}
+            className="h-full w-full opacity-100"
+            imgClassName="h-full w-full object-contain object-bottom opacity-100"
+          />
+        </div>
       </div>
 
       {/* Exit Button */}
