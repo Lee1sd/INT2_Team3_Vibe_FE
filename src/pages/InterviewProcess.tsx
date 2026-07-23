@@ -389,10 +389,10 @@ export default function InterviewProcess() {
 
       {/*
         스테이지 캐릭터 통일 슬롯
-        - 크기: 이미지2 기준 고정 박스
-        - 위치: left/bottom 절대좌표로 중앙·하단 앵커 (flex만 쓰면 상단 고착되어 mb가 무시됨)
+        - 에셋: 동일 캔버스(560x640)·동일 실루엣 높이로 정규화됨
+        - 위치: absolute bottom 중앙 앵커
       */}
-      <div className="pointer-events-none absolute left-1/2 z-10 flex h-[min(52vh,500px)] w-[min(42vw,420px)] -translate-x-1/2 items-end justify-center bottom-[min(26vh,220px)]">
+      <div className="pointer-events-none absolute left-1/2 z-10 h-[min(52vh,500px)] w-[min(45.5vw,438px)] -translate-x-1/2 bottom-[min(26vh,220px)]">
         <InterviewerAvatar
           avatar={stageSprite || interviewer.avatar}
           name={interviewer.name}
