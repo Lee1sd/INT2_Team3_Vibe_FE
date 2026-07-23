@@ -389,18 +389,16 @@ export default function InterviewProcess() {
 
       {/*
         스테이지 캐릭터 통일 슬롯
-        - 크기: 이미지2 기준 (고정 박스 + object-contain → 포즈별 원본 비율이 달라도 동일 슬롯)
-        - 위치: 이미지3 기준 (수평 중앙, 하단 앵커 — 발 라인은 채팅 UI 위 floor)
+        - 크기: 이미지2 기준 고정 박스
+        - 위치: left/bottom 절대좌표로 중앙·하단 앵커 (flex만 쓰면 상단 고착되어 mb가 무시됨)
       */}
-      <div className="absolute inset-x-0 bottom-0 z-10 pointer-events-none flex justify-center overflow-hidden h-full">
-        <div className="mb-[min(8vh,64px)] flex h-[min(52vh,500px)] w-[min(42vw,420px)] items-end justify-center">
-          <InterviewerAvatar
-            avatar={stageSprite || interviewer.avatar}
-            name={interviewer.name}
-            className="h-full w-full opacity-100"
-            imgClassName="h-full w-full object-contain object-bottom opacity-100"
-          />
-        </div>
+      <div className="pointer-events-none absolute left-1/2 z-10 flex h-[min(52vh,500px)] w-[min(42vw,420px)] -translate-x-1/2 items-end justify-center bottom-[min(26vh,220px)]">
+        <InterviewerAvatar
+          avatar={stageSprite || interviewer.avatar}
+          name={interviewer.name}
+          className="h-full w-full opacity-100"
+          imgClassName="h-full w-full object-contain object-bottom opacity-100"
+        />
       </div>
 
       {/* Exit Button */}
