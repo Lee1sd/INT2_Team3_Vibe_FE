@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { fileService } from '../domains/resume/resume.service';
-import { UploadCloud, FileText, CheckCircle2, Loader2, AlertCircle, ShieldCheck, Lock, LogOut, UserMinus, ArrowLeft, ChevronDown, ChevronUp, Camera, Edit2, ChevronRight } from 'lucide-react';
+import { UploadCloud, FileText, CheckCircle2, Loader2, AlertCircle, ShieldCheck, Lock, LogOut, UserMinus, ArrowLeft, ChevronDown, ChevronUp, Camera, Edit2, ChevronRight, Trash2 } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 import { authService, validateProfilePhotoFile } from '../domains/auth/auth.service';
 import { PROFILE_PHOTO_ACCEPT } from '../domains/auth/auth.types';
@@ -74,10 +74,27 @@ const MOCK_HISTORY: InterviewHistoryItem[] = [
 
 interface UploadedFile {
   id: string;
+  resumeId?: string;
   name: string;
-  size: number;
-  status: 'UPLOADING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
+  uploadedAt?: string;
+  status: 'UPLOADING' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'EXPIRED';
   errorMsg?: string;
+}
+
+function formatUploadedDate(uploadedAt?: string): string {
+  if (!uploadedAt) return '업로드 날짜 없음';
+
+  const date = new Date(uploadedAt);
+  if (Number.isNaN(date.getTime())) return '업로드 날짜 없음';
+
+  return new Intl.DateTimeFormat('ko-KR', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  })
+    .format(date)
+    .replace(/\.\s?/g, '.')
+    .replace(/\.$/, '');
 }
 
 function MultiFileUploader({
@@ -93,6 +110,7 @@ function MultiFileUploader({
 }) {
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -101,8 +119,9 @@ function MultiFileUploader({
           .filter(r => r.type === resumeType)
           .map(r => ({
             id: String(r.resumeId),
-            name: `이력서 #${r.resumeId}`,
-            size: 0,
+            resumeId: String(r.resumeId),
+            name: `${r.type === 'RESUME' ? '이력서' : '포트폴리오'} #${r.resumeId}`,
+            uploadedAt: r.lastUploadedAt,
             status: (r.parseStatus === 'DONE' ? 'COMPLETED' : r.parseStatus) as UploadedFile['status'],
           }));
       setFiles(existing);
@@ -115,6 +134,23 @@ function MultiFileUploader({
 
   const updateFile = (id: string, patch: Partial<UploadedFile>) => {
     setFiles(prev => prev.map(f => (f.id === id ? { ...f, ...patch } : f)));
+  };
+
+  const handleDelete = async (file: UploadedFile) => {
+    if (!file.resumeId || deletingId) return;
+    if (!window.confirm(`${file.name}을(를) 삭제하시겠습니까?`)) return;
+
+    setDeletingId(file.id);
+    try {
+      await fileService.deleteResume(file.resumeId);
+      setFiles(prev => prev.filter(item => item.id !== file.id));
+      setSelectedId(prev => prev === file.id ? null : prev);
+    } catch (error) {
+      console.error('이력서/포트폴리오 삭제 실패', error);
+      updateFile(file.id, { errorMsg: '파일을 삭제하지 못했습니다. 잠시 후 다시 시도해 주세요.' });
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   // fileService(mock/실제 API 스위칭)를 실제로 호출한다 — setTimeout 시뮬레이션 제거(#12).
@@ -153,7 +189,7 @@ function MultiFileUploader({
       const fileEntry: UploadedFile = {
         id: newId,
         name: newFile.name,
-        size: newFile.size,
+        uploadedAt: new Date().toISOString(),
         status: 'UPLOADING'
       };
 
@@ -162,7 +198,7 @@ function MultiFileUploader({
 
       try {
         const res = await fileService.uploadResume(newFile, resumeType);
-        updateFile(newId, { status: 'PROCESSING' });
+        updateFile(newId, { resumeId: res.fileId, status: 'PROCESSING' });
         await pollUntilDone(newId, res.fileId);
       } catch (err) {
         updateFile(newId, { status: 'FAILED', errorMsg: '업로드 중 오류가 발생했습니다.' });
@@ -232,14 +268,40 @@ function MultiFileUploader({
                     )}
                   </h4>
                   <p className="text-[12px] text-blue-grey-500 font-mono mt-0.5">
-                    {(file.size / 1024 / 1024).toFixed(2)} MB
+                    {formatUploadedDate(file.uploadedAt)}
                   </p>
+                  {file.errorMsg && (
+                    <p className="text-[12px] text-danger mt-1">{file.errorMsg}</p>
+                  )}
                 </div>
                 <div className="flex-shrink-0 flex items-center">
                   {file.status === 'UPLOADING' && <Loader2 className="w-5 h-5 text-blue-grey-400 animate-spin" />}
                   {file.status === 'PROCESSING' && <Loader2 className="w-5 h-5 text-primary animate-spin" />}
                   {file.status === 'COMPLETED' && <CheckCircle2 className="w-5 h-5 text-success" />}
                   {file.status === 'FAILED' && <AlertCircle className="w-5 h-5 text-danger" />}
+                  {file.status === 'EXPIRED' && (
+                    <span className="flex items-center gap-1 text-[11px] font-bold text-warning">
+                      <AlertCircle className="w-4 h-4" />
+                      만료됨
+                    </span>
+                  )}
+                  {file.resumeId && (
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        void handleDelete(file);
+                      }}
+                      disabled={deletingId !== null}
+                      aria-label={`${file.name} 삭제`}
+                      title="삭제"
+                      className="ml-3 p-1.5 rounded-lg text-blue-grey-400 hover:text-danger hover:bg-danger/5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {deletingId === file.id
+                        ? <Loader2 className="w-4 h-4 animate-spin" />
+                        : <Trash2 className="w-4 h-4" />}
+                    </button>
+                  )}
                 </div>
               </div>
             ))}

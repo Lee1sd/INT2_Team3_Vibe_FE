@@ -6,7 +6,7 @@ import { apiClient } from '../../api/client';
 export interface ResumeApiResponse {
   resumeId: number;
   type: 'RESUME' | 'PORTFOLIO';
-  parseStatus: 'PROCESSING' | 'DONE' | 'FAILED';
+  parseStatus: 'PROCESSING' | 'DONE' | 'FAILED' | 'EXPIRED';
   extractedText?: string;
   lastUploadedAt?: string;
 }
@@ -26,5 +26,8 @@ export const resumeApi = {
   /** RS-003 — 이력서 목록 조회 (createdAt 내림차순).
    * [], "ResumeApiResponse(이력서 객체) 여러 개짜리 배열 */
   getList: (): Promise<ResumeApiResponse[]> => apiClient.get('/api/resumes'),
+
+  /** RS-004 — 로그인한 사용자가 소유한 이력서/포트폴리오 삭제. */
+  delete: (resumeId: number): Promise<void> => apiClient.delete(`/api/resumes/${resumeId}`),
 
 };

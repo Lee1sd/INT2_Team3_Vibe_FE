@@ -9,6 +9,7 @@ interface ResumeService {
   checkResumeStatus: () => Promise<boolean>;
   getResumeList: () => Promise<ResumeApiResponse[]>;
   getLatestCompletedResumeId: () => Promise<string | null>;
+  deleteResume: (resumeId: string) => Promise<void>;
 }
 
 const USE_MOCK = import.meta.env.VITE_USE_MOCK !== 'false';
@@ -17,7 +18,11 @@ const USE_MOCK = import.meta.env.VITE_USE_MOCK !== 'false';
 function toUploadResponse(res: ResumeApiResponse): UploadResponse {
   return {
     fileId: String(res.resumeId),
-    status: res.parseStatus === 'DONE' ? 'COMPLETED' : res.parseStatus,
+    status: res.parseStatus === 'DONE'
+      ? 'COMPLETED'
+      : res.parseStatus === 'EXPIRED'
+        ? 'FAILED'
+        : res.parseStatus,
   };
 }
 
@@ -33,12 +38,14 @@ const realResumeService: ResumeService = {
   getResumeList: async () => {
     return await resumeApi.getList();
   },
-
   /** 최신 파싱 완료 이력서를 면접 입력으로 선택한다. */
   getLatestCompletedResumeId: async () => {
     const resumes = await resumeApi.getList();
     const resume = resumes.find((item) => item.type === 'RESUME' && item.parseStatus === 'DONE');
     return resume ? String(resume.resumeId) : null;
+  },
+  deleteResume: async (resumeId) => {
+    await resumeApi.delete(Number(resumeId));
   },
 };
 
