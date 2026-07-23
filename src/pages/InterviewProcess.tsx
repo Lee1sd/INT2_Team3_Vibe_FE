@@ -82,7 +82,7 @@ export default function InterviewProcess() {
   const navigate = useNavigate();
   const location = useLocation();
   const selectedKeyword = location.state?.keyword || 'Spring Boot';
-  const interviewStartKey = location.state?.interviewStartKey ?? location.key;
+  const interviewStartKey = location.key;
   
   const [session, setSession] = useState<InterviewResponse | null>(null);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -116,6 +116,7 @@ export default function InterviewProcess() {
   const [sessionId, setSessionId] = useState('');
   /** 세션 입장 시 1회 고른 오프닝 인사 — phase effect가 다시 돌아도 문구가 바뀌지 않게 고정한다. */
   const [openingGreeting, setOpeningGreeting] = useState('');
+  // effect cleanup은 initInterview 내부 await 흐름을 막고, generation은 submit 같은 effect 밖 비동기 응답까지 막는다.
   const interviewGenerationRef = useRef(0);
 
   useEffect(() => {
