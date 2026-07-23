@@ -8,12 +8,15 @@ import { PROFILE_PHOTO_ACCEPT } from '../domains/auth/auth.types';
 import { User } from '../types';
 import { InfoTooltip } from '../components/InfoTooltip';
 import { HistoryDrawer, InterviewHistoryItem } from '../components/HistoryDrawer';
+import { BadgeImage } from '../components/BadgeImage';
+import { progressService } from '../domains/progress/progress.service';
+import { UserBadge } from '../domains/progress/progress.types';
 
 const BADGES = [
-  { level: 1, name: '인턴 머쓱', icon: '🐣', description: '면접의 첫 걸음을 내딛다' },
-  { level: 2, name: '대리 머쓱', icon: '🐥', description: '꼬리 질문에도 당황하지 않음' },
-  { level: 3, name: '과장 머쓱', icon: '🦅', description: '면접관을 리드하기 시작함' },
-  { level: 4, name: '팀장 머쓱', icon: '🐉', description: '모든 면접관을 제패한 지원자' },
+  { level: 1, name: '프로그래머쓱 LEVEL 1', icon: '🐣', description: '면접의 첫 걸음을 내딛다' },
+  { level: 2, name: '프로그래머쓱 LEVEL 2', icon: '🐥', description: '꼬리 질문에도 당황하지 않음' },
+  { level: 3, name: '프로그래머쓱 LEVEL 3', icon: '🦅', description: '면접관을 리드하기 시작함' },
+  { level: 4, name: '프로그래머쓱 LEVEL 4', icon: '🐉', description: '모든 면접관을 제패한 지원자' },
 ];
 
 const MOCK_HISTORY: InterviewHistoryItem[] = [
@@ -269,6 +272,9 @@ export default function MyPage() {
   const [activeTab, setActiveTab] = useState<TabId>('PROFILE');
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const [isDeleteAccountModalOpen, setIsDeleteAccountModalOpen] = useState(false);
+  const [ownedBadges, setOwnedBadges] = useState<UserBadge[]>([]);
+  const [badgesLoading, setBadgesLoading] = useState(true);
+  const [badgeLoadError, setBadgeLoadError] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const photoInputRef = useRef<HTMLInputElement>(null);
@@ -311,6 +317,29 @@ export default function MyPage() {
       })
       .catch((e) => {
         if (!cancelled) console.error(e);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    // BG-001 실패가 프로필 전체 로딩을 막지 않도록 뱃지 목록을 독립적으로 조회한다.
+    progressService
+      .getMyBadges()
+      .then((badges) => {
+        if (cancelled) return;
+        setOwnedBadges(badges);
+        setBadgeLoadError(false);
+      })
+      .catch(() => {
+        if (!cancelled) setBadgeLoadError(true);
+      })
+      .finally(() => {
+        if (!cancelled) setBadgesLoading(false);
       });
 
     return () => {
@@ -621,10 +650,17 @@ export default function MyPage() {
                     answer="A. 다음 면접관(레벨)을 해금하기 위해 필요한 누적 경험치입니다." 
                   />
                 </div>
+                {badgesLoading && <Loader2 className="w-4 h-4 text-primary animate-spin" />}
               </h3>
+              {badgeLoadError && (
+                <p className="text-[12px] text-blue-grey-500 mb-4">
+                  뱃지 이미지를 불러오지 못해 기본 아이콘으로 표시합니다.
+                </p>
+              )}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {BADGES.map((badge) => {
-                  const isUnlocked = currentLevel >= badge.level;
+                  const ownedBadge = ownedBadges.find((item) => item.stage === badge.level);
+                  const isUnlocked = Boolean(ownedBadge) || currentLevel >= badge.level;
                   return (
                     <div 
                       key={badge.level} 
@@ -638,10 +674,19 @@ export default function MyPage() {
                         isUnlocked ? "bg-blue-grey-25 border border-blue-grey-75" : "bg-blue-grey-50 border border-blue-grey-75 grayscale opacity-50"
                       )}>
                         {isUnlocked && <div className="absolute inset-0 bg-primary/5 rounded-2xl"></div>}
-                        <span className="relative z-10">{badge.icon}</span>
+                        <span className="relative z-10 w-full h-full flex items-center justify-center">
+                          <BadgeImage
+                            src={ownedBadge?.imageUrl}
+                            alt={`${ownedBadge?.name ?? badge.name} 뱃지`}
+                            className="w-full h-full object-contain rounded-2xl"
+                            fallback={<span>{badge.icon}</span>}
+                          />
+                        </span>
                       </div>
                       <div className="text-[12px] font-mono font-bold text-primary mb-1">Lv.{badge.level}</div>
-                      <h4 className="text-[14px] font-bold text-blue-grey-900 mb-2">{badge.name}</h4>
+                      <h4 className="text-[14px] font-bold text-blue-grey-900 mb-2">
+                        {ownedBadge?.name ?? badge.name}
+                      </h4>
                       <p className="text-[12px] text-blue-grey-500 leading-relaxed font-normal">{badge.description}</p>
                       
                       {!isUnlocked && (

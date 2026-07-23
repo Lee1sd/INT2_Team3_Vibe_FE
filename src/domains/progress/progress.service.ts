@@ -1,11 +1,12 @@
 // 페이지 컴포넌트가 실제로 import하는 진입점. VITE_USE_MOCK으로 mock/실제 API를 스위칭한다.
 import { progressMock } from './progress.mock';
 import { progressApi } from './progress.api';
-import { GaugeUpdate } from './progress.types';
+import { GaugeUpdate, UserBadge } from './progress.types';
 
 interface ProgressService {
   captureSnapshot: (sessionId: string) => Promise<void>;
   getGaugeUpdate: (sessionId: string) => Promise<GaugeUpdate>;
+  getMyBadges: () => Promise<UserBadge[]>;
 }
 
 const USE_MOCK = import.meta.env.VITE_USE_MOCK !== 'false';
@@ -41,6 +42,9 @@ function loadSnapshot(sessionId: string): ProgressSnapshot | null {
 }
 
 const realProgressService: ProgressService = {
+  /** 마이페이지가 BG-001의 S3 이미지 URL을 그대로 사용할 수 있도록 목록을 노출한다. */
+  getMyBadges: async () => (await progressApi.getMyBadges()).badges,
+
   captureSnapshot: async (sessionId) => {
     const [progress, badgeList] = await Promise.all([
       progressApi.getProgress(),
@@ -75,4 +79,7 @@ const realProgressService: ProgressService = {
   },
 };
 
-export const evaluationService: ProgressService = USE_MOCK ? progressMock : realProgressService;
+export const progressService: ProgressService = USE_MOCK ? progressMock : realProgressService;
+
+// 기존 결과 화면 import와의 호환성을 유지한다.
+export const evaluationService = progressService;
