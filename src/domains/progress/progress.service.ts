@@ -1,7 +1,7 @@
 // 페이지 컴포넌트가 실제로 import하는 진입점. VITE_USE_MOCK으로 mock/실제 API를 스위칭한다.
 import { progressMock } from './progress.mock';
 import { progressApi } from './progress.api';
-import { selectAcquiredBadges } from './progress.badges';
+import { selectAcquiredBadges, selectBadgeCatalog } from './progress.badges';
 import { GaugeUpdate, UserBadge } from './progress.types';
 
 interface ProgressService {
@@ -48,7 +48,7 @@ const realProgressService: ProgressService = {
   getMyBadges: async () => selectAcquiredBadges((await progressApi.getMyBadges()).badges),
 
   /** 마이페이지 잠금 이미지를 위해 BG-001의 Stage1~4 전체 도감을 노출한다. */
-  getBadgeCatalog: async () => (await progressApi.getMyBadges()).badges,
+  getBadgeCatalog: async () => selectBadgeCatalog(await progressApi.getMyBadges()),
 
   captureSnapshot: async (sessionId) => {
     const [progress, badgeList] = await Promise.all([
