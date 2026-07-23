@@ -177,6 +177,11 @@ export default function InterviewProcess() {
         if (res.sessionId) {
           try {
             await evaluationService.captureSnapshot(res.sessionId);
+            // await 중 unmount/abandon이면 stale 스냅샷이 sessionStorage에 남지 않게 한다.
+            if (isStale()) {
+              sessionStorage.removeItem(`career-dungeon:progress-snapshot:${res.sessionId}`);
+              return;
+            }
           } catch (snapshotError) {
             // 스냅샷 실패가 면접 시작 자체를 막지 않도록 결과 비교 기능만 비활성화한다.
             console.error(snapshotError);
@@ -195,6 +200,8 @@ export default function InterviewProcess() {
 
     return () => {
       cancelled = true;
+      // handleSubmit 등 effect 밖 async도 stale로 무효화한다 (abandoned/unmount 후 저장·setState 방지).
+      interviewGenerationRef.current += 1;
     };
   }, [interviewerId, selectedKeyword, interviewStartKey]);
 
@@ -387,13 +394,17 @@ export default function InterviewProcess() {
         <div className="absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-grey-940 to-blue-grey-999" />
       )}
 
-      {/* 캐릭터: 하단 고정. 발은 화면/overflow로만 잘림(파일 크롭 없음) */}
-      <div className="absolute inset-x-0 bottom-0 z-10 pointer-events-none flex items-end justify-center overflow-hidden h-full">
+      {/*
+        스테이지 캐릭터 통일 슬롯
+        - 에셋: 동일 캔버스(560x640)·동일 실루엣 높이로 정규화됨
+        - 위치: absolute bottom 중앙 앵커
+      */}
+      <div className="pointer-events-none absolute left-1/2 z-10 h-[min(52vh,500px)] w-[min(45.5vw,438px)] -translate-x-1/2 bottom-[min(26vh,220px)]">
         <InterviewerAvatar
           avatar={stageSprite || interviewer.avatar}
           name={interviewer.name}
-          className="h-[min(84vh,740px)] w-auto max-w-[min(94vw,560px)] -translate-y-[1%] opacity-100"
-          imgClassName="h-[min(84vh,740px)] w-auto max-w-[min(94vw,560px)] object-contain object-bottom opacity-100"
+          className="h-full w-full opacity-100"
+          imgClassName="h-full w-full object-contain object-bottom opacity-100"
         />
       </div>
 
