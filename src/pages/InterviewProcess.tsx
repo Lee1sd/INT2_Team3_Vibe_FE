@@ -365,7 +365,7 @@ export default function InterviewProcess() {
         - 위치: 이미지3 기준 (수평 중앙, 하단 앵커 — 발 라인은 채팅 UI 위 floor)
       */}
       <div className="absolute inset-x-0 bottom-0 z-10 pointer-events-none flex justify-center overflow-hidden h-full">
-        <div className="mb-[min(36vh,320px)] flex h-[min(52vh,500px)] w-[min(42vw,420px)] items-end justify-center">
+        <div className="mb-[min(20vh,180px)] flex h-[min(52vh,500px)] w-[min(42vw,420px)] items-end justify-center">
           <InterviewerAvatar
             avatar={stageSprite || interviewer.avatar}
             name={interviewer.name}
