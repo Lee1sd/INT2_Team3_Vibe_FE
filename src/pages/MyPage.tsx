@@ -334,7 +334,7 @@ export default function MyPage() {
   const [activeTab, setActiveTab] = useState<TabId>('PROFILE');
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const [isDeleteAccountModalOpen, setIsDeleteAccountModalOpen] = useState(false);
-  const [ownedBadges, setOwnedBadges] = useState<UserBadge[]>([]);
+  const [badgeCatalog, setBadgeCatalog] = useState<UserBadge[]>([]);
   const [badgesLoading, setBadgesLoading] = useState(true);
   const [badgeLoadError, setBadgeLoadError] = useState(false);
   const navigate = useNavigate();
@@ -391,10 +391,10 @@ export default function MyPage() {
 
     // BG-001 실패가 프로필 전체 로딩을 막지 않도록 뱃지 목록을 독립적으로 조회한다.
     progressService
-      .getMyBadges()
+      .getBadgeCatalog()
       .then((badges) => {
         if (cancelled) return;
-        setOwnedBadges(badges);
+        setBadgeCatalog(badges);
         setBadgeLoadError(false);
       })
       .catch(() => {
@@ -409,7 +409,6 @@ export default function MyPage() {
     };
   }, []);
 
-  const currentLevel = user?.level || 1;
   const savedName = user?.name || '';
   const trimmedName = nameInput.trim();
   const isNameDirty = Boolean(user && trimmedName !== savedName);
@@ -721,8 +720,8 @@ export default function MyPage() {
               )}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {BADGES.map((badge) => {
-                  const ownedBadge = ownedBadges.find((item) => item.stage === badge.level);
-                  const isUnlocked = Boolean(ownedBadge) || currentLevel >= badge.level;
+                  const catalogBadge = badgeCatalog.find((item) => item.stage === badge.level);
+                  const isUnlocked = catalogBadge?.acquired === true;
                   return (
                     <div 
                       key={badge.level} 
@@ -738,8 +737,8 @@ export default function MyPage() {
                         {isUnlocked && <div className="absolute inset-0 bg-primary/5 rounded-2xl"></div>}
                         <span className="relative z-10 w-full h-full flex items-center justify-center">
                           <BadgeImage
-                            src={ownedBadge?.imageUrl}
-                            alt={`${ownedBadge?.name ?? badge.name} 뱃지`}
+                            src={catalogBadge?.imageUrl}
+                            alt={`${catalogBadge?.name ?? badge.name} 뱃지`}
                             className="w-full h-full object-contain rounded-2xl"
                             fallback={<span>{badge.icon}</span>}
                           />
@@ -747,7 +746,7 @@ export default function MyPage() {
                       </div>
                       <div className="text-[12px] font-mono font-bold text-primary mb-1">Lv.{badge.level}</div>
                       <h4 className="text-[14px] font-bold text-blue-grey-900 mb-2">
-                        {ownedBadge?.name ?? badge.name}
+                        {catalogBadge?.name ?? badge.name}
                       </h4>
                       <p className="text-[12px] text-blue-grey-500 leading-relaxed font-normal">{badge.description}</p>
                       
