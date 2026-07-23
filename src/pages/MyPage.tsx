@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { fileService } from '../domains/resume/resume.service';
+import { ApiError } from '../api/client';
 import { UploadCloud, FileText, CheckCircle2, Loader2, AlertCircle, ShieldCheck, Lock, LogOut, UserMinus, ArrowLeft, ChevronDown, ChevronUp, Camera, Edit2, ChevronRight, Trash2 } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 import { authService, validateProfilePhotoFile } from '../domains/auth/auth.service';
@@ -201,7 +202,13 @@ function MultiFileUploader({
         updateFile(newId, { resumeId: res.fileId, status: 'PROCESSING' });
         await pollUntilDone(newId, res.fileId);
       } catch (err) {
-        updateFile(newId, { status: 'FAILED', errorMsg: '업로드 중 오류가 발생했습니다.' });
+        const isConflict = err instanceof ApiError && err.code === 'RESUME_OBJECT_VERSION_CONFLICT';
+        const errorMsg = isConflict
+          ? '파일 정보가 변경되어 업로드가 취소되었습니다. 처음부터 다시 업로드해 주세요.'
+          : err instanceof Error
+            ? err.message
+            : '업로드 중 오류가 발생했습니다.';
+        updateFile(newId, { status: 'FAILED', errorMsg });
       }
     }
   };

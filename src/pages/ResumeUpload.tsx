@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fileService } from '../domains/resume/resume.service';
+import { ApiError } from '../api/client';
 import { UploadCloud, FileText, CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 
@@ -58,7 +59,14 @@ export default function ResumeUpload() {
       pollStatus(res.fileId);
     } catch (e) {
       setStatus('FAILED');
-      setErrorMsg('업로드 중 오류가 발생했습니다.');
+      const isConflict = e instanceof ApiError && e.code === 'RESUME_OBJECT_VERSION_CONFLICT';
+      setErrorMsg(
+        isConflict
+          ? '파일 정보가 변경되어 업로드가 취소되었습니다. 처음부터 다시 업로드해 주세요.'
+          : e instanceof Error
+            ? e.message
+            : '업로드 중 오류가 발생했습니다.'
+      );
     }
   };
 

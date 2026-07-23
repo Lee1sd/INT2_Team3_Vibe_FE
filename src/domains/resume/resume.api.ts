@@ -1,6 +1,5 @@
 // 백엔드 domain.resume 실제 엔드포인트 연동 구현.
 // 근거: INT2_Team3_Vibe_BE/docs/api/api-spec.md RS-001, RS-002.
-// 백엔드 컨트롤러가 아직 구현되지 않았으므로(2026-07-15 기준) 지금 호출하면 404가 난다.
 import { apiClient } from '../../api/client';
 
 export interface ResumeApiResponse {
@@ -11,14 +10,58 @@ export interface ResumeApiResponse {
   lastUploadedAt?: string;
 }
 
+export interface UploadUrlRequest {
+  type: 'RESUME' | 'PORTFOLIO';
+  fileName: string;
+  fileSize: number;
+  contentType: string;
+}
+
+export interface UploadUrlResponse {
+  uploadUrl: string;
+  s3Key: string;
+  expiresInSeconds: number;
+}
+
+export interface UploadCompleteRequest {
+  type: 'RESUME' | 'PORTFOLIO';
+  s3Key: string;
+}
+
+export interface UploadCompleteResponse {
+  resumeId: number;
+  extractedText: string | null;
+}
+
 export const resumeApi = {
-  /** RS-001 — multipart/form-data 업로드. */
-  upload: (file: File, type: 'RESUME' | 'PORTFOLIO' = 'RESUME'): Promise<ResumeApiResponse> => {
-    const formData = new FormData();
-    formData.append('type', type);
-    formData.append('file', file);
-    return apiClient.postForm('/api/resumes', formData);
+  /** RS-001a — presigned PUT URL 발급. */
+  getUploadUrl: (params: UploadUrlRequest): Promise<UploadUrlResponse> =>
+    apiClient.post('/api/resumes/upload-url', params),
+
+  /**
+   * RS-001b — 발급받은 presigned URL로 S3에 직접 PUT한다.
+   * apiClient를 거치면 백엔드 baseURL/Authorization/쿠키가 붙어버리므로 raw fetch로 호출한다.
+   */
+  uploadToS3: async (uploadUrl: string, file: File, contentType: string): Promise<void> => {
+    console.log("uploadUrl:", uploadUrl);
+    console.log("file.type:", file.type);
+    console.log("contentType:", contentType);
+
+    const res = await fetch(uploadUrl, {
+      method: 'PUT',
+      headers: { 'Content-Type': contentType },
+      body: file,
+    });
+
+    console.log("status:", res.status);
+    if (!res.ok) {
+      throw new Error(`S3 업로드에 실패했습니다. (status: ${res.status})`);
+    }
   },
+
+  /** RS-001c — S3 업로드 완료를 백엔드에 통지하고 파싱을 시작시킨다. */
+  completeUpload: (params: UploadCompleteRequest): Promise<UploadCompleteResponse> =>
+    apiClient.post('/api/resumes/upload-complete', params),
 
   /** RS-002 — 파싱 상태 폴링. */
   getStatus: (resumeId: number): Promise<ResumeApiResponse> => apiClient.get(`/api/resumes/${resumeId}`),
@@ -29,5 +72,4 @@ export const resumeApi = {
 
   /** RS-004 — 로그인한 사용자가 소유한 이력서/포트폴리오 삭제. */
   delete: (resumeId: number): Promise<void> => apiClient.delete(`/api/resumes/${resumeId}`),
-
 };
