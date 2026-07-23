@@ -1,16 +1,29 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { engineService } from '../domains/interview/interview.service';
+import { engineService, getInterviewerBustByLevel } from '../domains/interview/interview.service';
 import { authService } from '../domains/auth/auth.service';
 import { fileService } from '../domains/resume/resume.service';
 import { Interviewer, User } from '../types';
 import { Lock, PlayCircle, ShieldCheck, Star } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 import { InfoTooltip } from '../components/InfoTooltip';
+import { BadgeImage } from '../components/BadgeImage';
+import { InterviewerAvatar } from '../components/InterviewerAvatar';
+import { progressService } from '../domains/progress/progress.service';
+import { UserBadge } from '../domains/progress/progress.types';
+
+/** 보유 뱃지 중 Stage가 가장 높은 뱃지를 메인 화면에 표시할 현재 뱃지로 선택한다. */
+function findCurrentBadge(badges: UserBadge[]): UserBadge | null {
+  return badges.reduce<UserBadge | null>(
+    (current, badge) => (!current || badge.stage > current.stage ? badge : current),
+    null,
+  );
+}
 
 export default function InterviewerList() {
   const [interviewers, setInterviewers] = useState<Interviewer[]>([]);
   const [user, setUser] = useState<User | null>(null);
+  const [currentBadge, setCurrentBadge] = useState<UserBadge | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploaded, setIsUploaded] = useState(false);
   const [selectedKeyword, setSelectedKeyword] = useState<string>('');
@@ -21,10 +34,11 @@ export default function InterviewerList() {
       try {
         // getCurrentUser가 아직 미연동이어도 면접관 목록은 뜨게, 요청을 독립적으로 처리한다.
         // (동기 throw 하는 stub도 allSettled가 잡도록 Promise로 감싼다)
-        const [userResult, interviewerResult, uploadResult] = await Promise.allSettled([
+        const [userResult, interviewerResult, uploadResult, badgeResult] = await Promise.allSettled([
           Promise.resolve().then(() => authService.getCurrentUser()),
           engineService.getInterviewers(),
           fileService.checkResumeStatus(),
+          progressService.getMyBadges(),
         ]);
 
         if (userResult.status === 'fulfilled') {
@@ -43,6 +57,12 @@ export default function InterviewerList() {
           setIsUploaded(uploadResult.value);
         } else {
           console.error(uploadResult.reason);
+        }
+
+        if (badgeResult.status === 'fulfilled') {
+          setCurrentBadge(findCurrentBadge(badgeResult.value));
+        } else {
+          console.error('메인 화면 뱃지 조회 실패', badgeResult.reason);
         }
       } finally {
         setIsLoading(false);
@@ -76,7 +96,12 @@ export default function InterviewerList() {
             <div className="relative mb-6">
               <div className="w-32 h-32 bg-white border border-blue-grey-75 shadow-sm rounded-2xl flex items-center justify-center text-6xl">
                 <div className="absolute inset-0 rounded-2xl shadow-[0_0_30px_rgba(0,120,255,0.2)] pointer-events-none"></div>
-                <span className="relative z-10">🐣</span>
+                <BadgeImage
+                  src={currentBadge?.imageUrl}
+                  alt={currentBadge?.name ?? '현재 뱃지'}
+                  className="relative z-10 w-full h-full object-contain rounded-2xl"
+                  fallback={<span className="relative z-10">🐣</span>}
+                />
               </div>
               {user && !isUploaded && (
                 <div className="absolute left-full top-0 -translate-y-4 ml-6 w-max max-w-xs bg-white/90 border border-blue-grey-75 px-6 py-4 rounded-2xl shadow-md z-20 animate-bounce">
@@ -87,7 +112,9 @@ export default function InterviewerList() {
                 </div>
               )}
             </div>
-            <h3 className="text-[20px] leading-[28px] font-bold text-blue-grey-900 mb-3">초보 머쓱이 뱃지</h3>
+            <h3 className="text-[20px] leading-[28px] font-bold text-blue-grey-900 mb-3">
+              {currentBadge?.name ?? '현재 뱃지'}
+            </h3>
             <div className="inline-flex items-center justify-center px-4 py-1.5 bg-white rounded-full text-blue-grey-700 font-mono text-[14px] leading-[20px] font-bold shadow-sm border border-blue-grey-100">
               <Star className="w-4 h-4 mr-2 text-warning fill-warning" />
               현재 레벨: Lv.{user?.level}
@@ -156,24 +183,24 @@ export default function InterviewerList() {
                 return (
                   <div key={iv.id} className={twMerge("flex flex-col md:flex-row items-center gap-8", !isLeft && "md:flex-row-reverse")}>
                     
-                    <div className="hidden md:flex w-1/2 justify-end px-12">
-                      {/* Connection Dot */}
-                      <div className={twMerge(
-                        "absolute left-1/2 -translate-x-1/2 w-4 h-4 rounded-full z-20",
-                        iv.isUnlocked ? "bg-primary shadow-[0_0_10px_var(--color-primary)]" : "bg-blue-grey-800 border-2 border-blue-grey-700"
-                      )}></div>
-                    </div>
+                    {/* 카드 교차 배치를 위한 여백은 유지하고 본문을 가리던 연결점만 제거한다. */}
+                    <div className="hidden md:flex w-1/2 justify-end px-12" aria-hidden="true"></div>
 
                     <div className={twMerge(
-                      "w-full md:w-[420px] flex-shrink-0 bg-blue-grey-900 border border-blue-grey-700 rounded-2xl p-6 md:p-8 transition-transform hover:-translate-y-1 shadow-md",
+                      "relative z-10 w-full md:w-[420px] flex-shrink-0 bg-blue-grey-900 border border-blue-grey-700 rounded-2xl p-6 md:p-8 transition-transform hover:-translate-y-1 shadow-md",
                       iv.isUnlocked 
                         ? "" 
                         : "opacity-60"
                     )}>
                       <div className="flex items-start justify-between mb-8">
                         <div className="flex items-center gap-5">
-                          <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl bg-blue-grey-800 border border-blue-grey-700">
-                            {iv.avatar}
+                          <div className="w-16 h-16 rounded-2xl flex items-center justify-center overflow-hidden bg-[#1a2332] border border-blue-grey-700">
+                            <InterviewerAvatar
+                              avatar={getInterviewerBustByLevel(iv.level) || iv.avatar}
+                              name={iv.name}
+                              className="w-[58px] h-[58px]"
+                              imgClassName="w-[58px] h-[58px] object-contain opacity-100"
+                            />
                           </div>
                           <div>
                             <div className={twMerge(
@@ -240,16 +267,14 @@ export default function InterviewerList() {
                           <button 
                             disabled={!selectedKeyword}
                             onClick={() => {
-                              // TODO: 현재 프론트만 있는 상태라 임시로 업로드 안해도 입장 가능하게 우회 처리함
-                              // 나중에 백엔드 연동 시 아래 주석 해제 및 로직 원복 필요
-                              /*
+                              // 실제 면접 API에는 파싱 완료된 이력서 ID가 필수이므로 업로드 전 진입을 차단한다.
                               if (!isUploaded) {
-                                navigate('/mypage');
-                              } else {
-                                navigate(`/interview/${iv.id}`, { state: { keyword: selectedKeyword } });
+                                navigate('/mypage#resume');
+                                return;
                               }
-                              */
-                              navigate(`/interview/${iv.id}`, { state: { keyword: selectedKeyword } });
+                              navigate(`/interview/${iv.id}`, {
+                                state: { keyword: selectedKeyword, interviewer: iv },
+                              });
                             }}
                             className="w-full py-3 bg-primary text-white rounded-2xl font-bold text-[16px] leading-[24px] flex items-center justify-center gap-2 hover:bg-[#005bb5] transition-colors shadow-sm disabled:opacity-32 disabled:cursor-not-allowed"
                           >

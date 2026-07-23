@@ -9,7 +9,8 @@ export interface Interviewer {
   isUnlocked: boolean;
   description: string;
   achievement?: string;
-  avatar: string; // URL or emoji
+  /** 정적 매핑: 이미지 경로(`/interviewers/...`) 또는 이모지. 비우면 슬롯만 표시. */
+  avatar: string;
 }
 
 export interface Question {
@@ -23,14 +24,19 @@ export interface Answer {
   content: string;
 }
 
-/**
- * IS-002/IS-002b question-level evaluation.
- * Backend does not expose intent/accuracy/reasoning/tradeoff sub-scores.
- */
+/** IS-002/IS-002b에서 공개하는 문항별 점수와 피드백이다. */
 export interface EvaluationDetail {
   questionId: string;
   score: number;
   feedback?: string;
+}
+
+/** 결과 화면에서 소비하는 IS-002b 최종 판정의 필수 필드만 표현한다. */
+export interface FinalInterviewResult {
+  evaluations: EvaluationDetail[];
+  totalScore: number;
+  passed: boolean;
+  overallFeedback: string;
 }
 
 export interface NextTurn {

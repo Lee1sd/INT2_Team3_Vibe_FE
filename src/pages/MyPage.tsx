@@ -1,21 +1,25 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { fileService } from '../domains/resume/resume.service';
-import { UploadCloud, FileText, CheckCircle2, Loader2, AlertCircle, ShieldCheck, Lock, LogOut, UserMinus, ArrowLeft, ChevronDown, ChevronUp, Camera, Edit2, ChevronRight } from 'lucide-react';
+import { UploadCloud, FileText, CheckCircle2, Loader2, AlertCircle, ShieldCheck, Lock, LogOut, UserMinus, ArrowLeft, ChevronDown, ChevronUp, Camera, Edit2, ChevronRight, Trash2 } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 import { ApiError } from '../api/client';
-import { authService } from '../domains/auth/auth.service';
+import { authService, validateProfilePhotoFile } from '../domains/auth/auth.service';
+import { PROFILE_PHOTO_ACCEPT } from '../domains/auth/auth.types';
 import { User } from '../types';
 import { InfoTooltip } from '../components/InfoTooltip';
 import { ChatLog, HistoryDrawer, InterviewHistoryItem } from '../components/HistoryDrawer';
+import { BadgeImage } from '../components/BadgeImage';
+import { progressService } from '../domains/progress/progress.service';
+import { UserBadge } from '../domains/progress/progress.types';
 import { engineService } from '../domains/interview/interview.service';
 import { InterviewDetailApiResponse, InterviewHistoryApiResponse, InterviewHistoryLevelApiItem, InterviewHistorySessionApiItem } from '../domains/interview/interview.api';
 
 const BADGES = [
-  { level: 1, name: '인턴 머쓱', icon: '🐣', description: '면접의 첫 걸음을 내딛다' },
-  { level: 2, name: '대리 머쓱', icon: '🐥', description: '꼬리 질문에도 당황하지 않음' },
-  { level: 3, name: '과장 머쓱', icon: '🦅', description: '면접관을 리드하기 시작함' },
-  { level: 4, name: '팀장 머쓱', icon: '🐉', description: '모든 면접관을 제패한 지원자' },
+  { level: 1, name: '프로그래머쓱 LEVEL 1', icon: '🐣', description: '면접의 첫 걸음을 내딛다' },
+  { level: 2, name: '프로그래머쓱 LEVEL 2', icon: '🐥', description: '꼬리 질문에도 당황하지 않음' },
+  { level: 3, name: '프로그래머쓱 LEVEL 3', icon: '🦅', description: '면접관을 리드하기 시작함' },
+  { level: 4, name: '프로그래머쓱 LEVEL 4', icon: '🐉', description: '모든 면접관을 제패한 지원자' },
 ];
 
 const MOCK_HISTORY: InterviewHistoryItem[] = [
@@ -73,10 +77,27 @@ const MOCK_HISTORY: InterviewHistoryItem[] = [
 
 interface UploadedFile {
   id: string;
+  resumeId?: string;
   name: string;
-  size: number;
-  status: 'UPLOADING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
+  uploadedAt?: string;
+  status: 'UPLOADING' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'EXPIRED';
   errorMsg?: string;
+}
+
+function formatUploadedDate(uploadedAt?: string): string {
+  if (!uploadedAt) return '업로드 날짜 없음';
+
+  const date = new Date(uploadedAt);
+  if (Number.isNaN(date.getTime())) return '업로드 날짜 없음';
+
+  return new Intl.DateTimeFormat('ko-KR', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  })
+    .format(date)
+    .replace(/\.\s?/g, '.')
+    .replace(/\.$/, '');
 }
 
 function MultiFileUploader({
@@ -92,6 +113,7 @@ function MultiFileUploader({
 }) {
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -100,8 +122,9 @@ function MultiFileUploader({
           .filter(r => r.type === resumeType)
           .map(r => ({
             id: String(r.resumeId),
-            name: `이력서 #${r.resumeId}`,
-            size: 0,
+            resumeId: String(r.resumeId),
+            name: `${r.type === 'RESUME' ? '이력서' : '포트폴리오'} #${r.resumeId}`,
+            uploadedAt: r.lastUploadedAt,
             status: (r.parseStatus === 'DONE' ? 'COMPLETED' : r.parseStatus) as UploadedFile['status'],
           }));
       setFiles(existing);
@@ -114,6 +137,23 @@ function MultiFileUploader({
 
   const updateFile = (id: string, patch: Partial<UploadedFile>) => {
     setFiles(prev => prev.map(f => (f.id === id ? { ...f, ...patch } : f)));
+  };
+
+  const handleDelete = async (file: UploadedFile) => {
+    if (!file.resumeId || deletingId) return;
+    if (!window.confirm(`${file.name}을(를) 삭제하시겠습니까?`)) return;
+
+    setDeletingId(file.id);
+    try {
+      await fileService.deleteResume(file.resumeId);
+      setFiles(prev => prev.filter(item => item.id !== file.id));
+      setSelectedId(prev => prev === file.id ? null : prev);
+    } catch (error) {
+      console.error('이력서/포트폴리오 삭제 실패', error);
+      updateFile(file.id, { errorMsg: '파일을 삭제하지 못했습니다. 잠시 후 다시 시도해 주세요.' });
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   // fileService(mock/실제 API 스위칭)를 실제로 호출한다 — setTimeout 시뮬레이션 제거(#12).
@@ -152,7 +192,7 @@ function MultiFileUploader({
       const fileEntry: UploadedFile = {
         id: newId,
         name: newFile.name,
-        size: newFile.size,
+        uploadedAt: new Date().toISOString(),
         status: 'UPLOADING'
       };
 
@@ -161,7 +201,7 @@ function MultiFileUploader({
 
       try {
         const res = await fileService.uploadResume(newFile, resumeType);
-        updateFile(newId, { status: 'PROCESSING' });
+        updateFile(newId, { resumeId: res.fileId, status: 'PROCESSING' });
         await pollUntilDone(newId, res.fileId);
       } catch (err) {
         updateFile(newId, { status: 'FAILED', errorMsg: '업로드 중 오류가 발생했습니다.' });
@@ -231,14 +271,40 @@ function MultiFileUploader({
                     )}
                   </h4>
                   <p className="text-[12px] text-blue-grey-500 font-mono mt-0.5">
-                    {(file.size / 1024 / 1024).toFixed(2)} MB
+                    {formatUploadedDate(file.uploadedAt)}
                   </p>
+                  {file.errorMsg && (
+                    <p className="text-[12px] text-danger mt-1">{file.errorMsg}</p>
+                  )}
                 </div>
                 <div className="flex-shrink-0 flex items-center">
                   {file.status === 'UPLOADING' && <Loader2 className="w-5 h-5 text-blue-grey-400 animate-spin" />}
                   {file.status === 'PROCESSING' && <Loader2 className="w-5 h-5 text-primary animate-spin" />}
                   {file.status === 'COMPLETED' && <CheckCircle2 className="w-5 h-5 text-success" />}
                   {file.status === 'FAILED' && <AlertCircle className="w-5 h-5 text-danger" />}
+                  {file.status === 'EXPIRED' && (
+                    <span className="flex items-center gap-1 text-[11px] font-bold text-warning">
+                      <AlertCircle className="w-4 h-4" />
+                      만료됨
+                    </span>
+                  )}
+                  {file.resumeId && (
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        void handleDelete(file);
+                      }}
+                      disabled={deletingId !== null}
+                      aria-label={`${file.name} 삭제`}
+                      title="삭제"
+                      className="ml-3 p-1.5 rounded-lg text-blue-grey-400 hover:text-danger hover:bg-danger/5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {deletingId === file.id
+                        ? <Loader2 className="w-4 h-4 animate-spin" />
+                        : <Trash2 className="w-4 h-4" />}
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
@@ -341,6 +407,9 @@ export default function MyPage() {
   const [isEditingName, setIsEditingName] = useState(false);
   const [isSavingName, setIsSavingName] = useState(false);
   const [nameSaveStatus, setNameSaveStatus] = useState<'idle' | 'saved' | 'error'>('idle');
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [photoStatus, setPhotoStatus] = useState<'idle' | 'saved' | 'error'>('idle');
+  const [photoErrorMessage, setPhotoErrorMessage] = useState('');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedHistory, setSelectedHistory] = useState<InterviewHistoryItem | null>(null);
   const [isHistoryDetailLoading, setIsHistoryDetailLoading] = useState(false);
@@ -351,10 +420,16 @@ export default function MyPage() {
   const [activeTab, setActiveTab] = useState<TabId>('PROFILE');
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const [isDeleteAccountModalOpen, setIsDeleteAccountModalOpen] = useState(false);
+  const [badgeCatalog, setBadgeCatalog] = useState<UserBadge[]>([]);
+  const [badgesLoading, setBadgesLoading] = useState(true);
+  const [badgeLoadError, setBadgeLoadError] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const photoInputRef = useRef<HTMLInputElement>(null);
   /** 저장이 끝난 뒤에는 늦게 도착한 getCurrentUser가 이름을 덮지 못하게 한다. */
   const nameHydratedFromServer = useRef(false);
   const isSavingNameRef = useRef(false);
+  const isUploadingPhotoRef = useRef(false);
   const historyDetailRequestSeq = useRef(0);
   const historyDetailAbortController = useRef<AbortController | null>(null);
   const historyDetailInFlightSessionId = useRef<string | null>(null);
@@ -364,6 +439,19 @@ export default function MyPage() {
       historyDetailAbortController.current?.abort();
     };
   }, []);
+
+  useEffect(() => {
+    if (location.hash !== '#resume') return;
+    setActiveTab('PROFILE');
+  }, [location.hash]);
+
+  useEffect(() => {
+    if (location.hash !== '#resume' || activeTab !== 'PROFILE') return;
+    const timer = window.setTimeout(() => {
+      document.getElementById('resume')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [location.hash, activeTab]);
   
   useEffect(() => {
     let cancelled = false;
@@ -421,7 +509,29 @@ export default function MyPage() {
     };
   }, []);
 
-  const currentLevel = user?.level || 1;
+  useEffect(() => {
+    let cancelled = false;
+
+    // BG-001 실패가 프로필 전체 로딩을 막지 않도록 뱃지 목록을 독립적으로 조회한다.
+    progressService
+      .getBadgeCatalog()
+      .then((badges) => {
+        if (cancelled) return;
+        setBadgeCatalog(badges);
+        setBadgeLoadError(false);
+      })
+      .catch(() => {
+        if (!cancelled) setBadgeLoadError(true);
+      })
+      .finally(() => {
+        if (!cancelled) setBadgesLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const savedName = user?.name || '';
   const trimmedName = nameInput.trim();
   const isNameDirty = Boolean(user && trimmedName !== savedName);
@@ -464,6 +574,51 @@ export default function MyPage() {
     setNameInput(savedName);
     setIsEditingName(false);
     setNameSaveStatus('idle');
+  };
+
+  const applyPhotoUrl = (photoUrl: string | undefined) => {
+    setUser((prev) =>
+      prev
+        ? { ...prev, photoUrl, photoURL: photoUrl }
+        : prev
+    );
+  };
+
+  const handlePhotoButtonClick = () => {
+    if (isUploadingPhoto || !user) return;
+    photoInputRef.current?.click();
+  };
+
+  const handlePhotoSelected = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file || isUploadingPhotoRef.current) return;
+
+    const validationError = validateProfilePhotoFile(file);
+    if (validationError) {
+      setPhotoStatus('error');
+      setPhotoErrorMessage(validationError);
+      return;
+    }
+
+    isUploadingPhotoRef.current = true;
+    setIsUploadingPhoto(true);
+    setPhotoStatus('idle');
+    setPhotoErrorMessage('');
+    try {
+      const { photoUrl } = await authService.uploadProfilePhoto(file);
+      nameHydratedFromServer.current = true;
+      applyPhotoUrl(photoUrl);
+      setPhotoStatus('saved');
+      window.setTimeout(() => setPhotoStatus('idle'), 2000);
+    } catch (e) {
+      console.error(e);
+      setPhotoStatus('error');
+      setPhotoErrorMessage('프로필 이미지 업로드에 실패했습니다. 다시 시도해 주세요.');
+    } finally {
+      isUploadingPhotoRef.current = false;
+      setIsUploadingPhoto(false);
+    }
   };
 
   const handleLogout = async () => {
@@ -596,15 +751,37 @@ export default function MyPage() {
               <div className="flex flex-col sm:flex-row items-center gap-6 sm:gap-8 bg-blue-grey-10/50 border border-blue-grey-75 p-6 rounded-2xl">
                 <div className="relative group">
                   <div className="w-24 h-24 rounded-full bg-blue-grey-100 overflow-hidden border-4 border-white shadow-sm flex items-center justify-center">
-                    {user?.photoURL ? (
-                      <img src={user.photoURL} alt="Profile" className="w-full h-full object-cover" />
+                    {user?.photoUrl || user?.photoURL ? (
+                      <img
+                        src={user.photoUrl || user.photoURL}
+                        alt="Profile"
+                        className="w-full h-full object-cover"
+                      />
                     ) : (
                       <span className="text-3xl font-bold text-blue-grey-400">
                         {user?.email?.charAt(0).toUpperCase() || 'U'}
                       </span>
                     )}
+                    {isUploadingPhoto && (
+                      <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
+                        <Loader2 className="w-6 h-6 text-primary animate-spin" />
+                      </div>
+                    )}
                   </div>
-                  <button className="absolute bottom-0 right-0 p-2 bg-white rounded-full border border-blue-grey-100 text-blue-grey-600 shadow-sm hover:text-primary transition-colors">
+                  <input
+                    ref={photoInputRef}
+                    type="file"
+                    accept={PROFILE_PHOTO_ACCEPT}
+                    className="hidden"
+                    onChange={(e) => void handlePhotoSelected(e)}
+                  />
+                  <button
+                    type="button"
+                    onClick={handlePhotoButtonClick}
+                    disabled={isUploadingPhoto || !user}
+                    aria-label="프로필 이미지 업로드"
+                    className="absolute bottom-0 right-0 p-2 bg-white rounded-full border border-blue-grey-100 text-blue-grey-600 shadow-sm hover:text-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
                     <Camera className="w-4 h-4" />
                   </button>
                 </div>
@@ -688,6 +865,15 @@ export default function MyPage() {
                               : '이름을 클릭하면 수정할 수 있어요.'}
                   </p>
                   <p className="text-[14px] text-blue-grey-500 font-mono mt-1">{user?.email}</p>
+                  <p className="text-[13px] text-blue-grey-500 font-normal min-h-[20px] mt-1">
+                    {isUploadingPhoto
+                      ? '프로필 이미지를 업로드하고 있어요.'
+                      : photoStatus === 'saved'
+                        ? '프로필 이미지가 저장되었습니다.'
+                        : photoStatus === 'error'
+                          ? photoErrorMessage
+                          : '카메라 아이콘을 눌러 프로필 이미지를 변경할 수 있어요. (JPEG/PNG/WebP, 최대 2MB)'}
+                  </p>
                 </div>
               </div>
             </section>
@@ -702,10 +888,17 @@ export default function MyPage() {
                     answer="A. 다음 면접관(레벨)을 해금하기 위해 필요한 누적 경험치입니다." 
                   />
                 </div>
+                {badgesLoading && <Loader2 className="w-4 h-4 text-primary animate-spin" />}
               </h3>
+              {badgeLoadError && (
+                <p className="text-[12px] text-blue-grey-500 mb-4">
+                  뱃지 이미지를 불러오지 못해 기본 아이콘으로 표시합니다.
+                </p>
+              )}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {BADGES.map((badge) => {
-                  const isUnlocked = currentLevel >= badge.level;
+                  const catalogBadge = badgeCatalog.find((item) => item.stage === badge.level);
+                  const isUnlocked = catalogBadge?.acquired === true;
                   return (
                     <div 
                       key={badge.level} 
@@ -719,10 +912,19 @@ export default function MyPage() {
                         isUnlocked ? "bg-blue-grey-25 border border-blue-grey-75" : "bg-blue-grey-50 border border-blue-grey-75 grayscale opacity-50"
                       )}>
                         {isUnlocked && <div className="absolute inset-0 bg-primary/5 rounded-2xl"></div>}
-                        <span className="relative z-10">{badge.icon}</span>
+                        <span className="relative z-10 w-full h-full flex items-center justify-center">
+                          <BadgeImage
+                            src={catalogBadge?.imageUrl}
+                            alt={`${catalogBadge?.name ?? badge.name} 뱃지`}
+                            className="w-full h-full object-contain rounded-2xl"
+                            fallback={<span>{badge.icon}</span>}
+                          />
+                        </span>
                       </div>
                       <div className="text-[12px] font-mono font-bold text-primary mb-1">Lv.{badge.level}</div>
-                      <h4 className="text-[14px] font-bold text-blue-grey-900 mb-2">{badge.name}</h4>
+                      <h4 className="text-[14px] font-bold text-blue-grey-900 mb-2">
+                        {catalogBadge?.name ?? badge.name}
+                      </h4>
                       <p className="text-[12px] text-blue-grey-500 leading-relaxed font-normal">{badge.description}</p>
                       
                       {!isUnlocked && (
@@ -738,8 +940,10 @@ export default function MyPage() {
             </section>
 
             {/* 다중 업로드 영역 */}
-            <MultiFileUploader title="이력서 데이터 풀 (Resume)" required maxFiles={3} resumeType="RESUME" />
-            <MultiFileUploader title="포트폴리오 데이터 풀 (Portfolio)" maxFiles={3} resumeType="PORTFOLIO" />
+            <div id="resume">
+              <MultiFileUploader title="이력서 데이터 풀 (Resume)" required maxFiles={3} resumeType="RESUME" />
+              <MultiFileUploader title="포트폴리오 데이터 풀 (Portfolio)" maxFiles={3} resumeType="PORTFOLIO" />
+            </div>
 
           </div>
         )}

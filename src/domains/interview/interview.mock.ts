@@ -15,7 +15,7 @@ export const interviewMock = {
             isUnlocked: true,
             description: '코드 가독성과 기본기를 중요하게 생각합니다.',
             achievement: '기본적인 CS 지식과 이력서 내용의 사실 관계를 설명할 수 있습니다.',
-            avatar: '🐣',
+            avatar: '/interviewers/lv1-casual.png',
           },
           {
             id: 'iv2',
@@ -25,7 +25,7 @@ export const interviewMock = {
             isUnlocked: false,
             description: '아키텍처와 예외 처리를 날카롭게 파고듭니다.',
             achievement: '실무 수준의 트러블슈팅과 기술적 트레이드오프를 논리적으로 방어할 수 있습니다.',
-            avatar: '🦅',
+            avatar: '/interviewers/lv2-strict.png',
           },
           {
             id: 'iv3',
@@ -35,7 +35,7 @@ export const interviewMock = {
             isUnlocked: false,
             description: '극한의 상황에서 멘탈과 문제 해결 능력을 봅니다.',
             achievement: '스트레스 상황에서도 침착하게 근본적인 원인을 분석하고 대안을 제시할 수 있습니다.',
-            avatar: '🦖',
+            avatar: '',
           },
           {
             id: 'iv4',
@@ -45,7 +45,7 @@ export const interviewMock = {
             isUnlocked: false,
             description: '회사의 인재상과 컬처핏을 날카롭게 검증합니다.',
             achievement: '조직의 비전에 부합하며 거시적인 관점에서의 엔지니어링 가치를 증명할 수 있습니다.',
-            avatar: '🐉',
+            avatar: '',
           },
         ]);
       }, 500);
@@ -99,9 +99,8 @@ export const interviewMock = {
               feedback: '병목 지점은 짚었지만 트래픽 증가 상황의 대응 순서가 조금 더 필요합니다.',
             },
           ],
-          totalScore: 70,
+          totalScore: 60,
           weakestQuestionId: 'q1',
-          overallFeedback: '첫 번째 답변(Q1)에 대한 설명이 가장 부족합니다. 구체적인 해결 방안이 없네요.',
           passed: false,
           nextTurn: {
             type: 'FOLLOW_UP',
@@ -127,12 +126,27 @@ export const interviewMock = {
         resolve({
           evaluations: [
             {
+              questionId: 'q1',
+              score: 15,
+              feedback: '첫 번째 답변은 해결 방안의 구체성이 부족했습니다.',
+            },
+            {
+              questionId: 'q2',
+              score: 25,
+              feedback: '락을 선택하지 않은 근거를 명확하게 설명했습니다.',
+            },
+            {
+              questionId: 'q3',
+              score: 20,
+              feedback: '병목 지점과 대응 순서를 적절하게 설명했습니다.',
+            },
+            {
               questionId: 'q4',
               score: 20,
               feedback: '꼬리질문 방어에 성공했습니다. 트레이드오프를 잘 이해하고 있군요.',
             },
           ],
-          totalScore: 90,
+          totalScore: 80,
           overallFeedback: '꼬리질문 방어에 성공했습니다. 트레이드오프를 잘 이해하고 있군요.',
           passed: true,
           nextTurn: {

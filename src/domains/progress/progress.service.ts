@@ -1,24 +1,91 @@
 // 페이지 컴포넌트가 실제로 import하는 진입점. VITE_USE_MOCK으로 mock/실제 API를 스위칭한다.
 import { progressMock } from './progress.mock';
-import { GaugeUpdate } from './progress.types';
+import { progressApi } from './progress.api';
+import { selectAcquiredBadges, selectBadgeCatalog } from './progress.badges';
+import { GaugeUpdate, UserBadge } from './progress.types';
 
 interface ProgressService {
+  captureSnapshot: (sessionId: string) => Promise<void>;
   getGaugeUpdate: (sessionId: string) => Promise<GaugeUpdate>;
+  getMyBadges: () => Promise<UserBadge[]>;
+  getBadgeCatalog: () => Promise<UserBadge[]>;
 }
 
 const USE_MOCK = import.meta.env.VITE_USE_MOCK !== 'false';
+const SNAPSHOT_STORAGE_PREFIX = 'career-dungeon:progress-snapshot:';
+
+interface ProgressSnapshot {
+  unlockedLevel: number;
+  progressGauge: number;
+  badgeIds: number[];
+}
+
+/** 면접 시작 시점의 진행도와 보유 뱃지를 세션별로 기록한다. */
+function saveSnapshot(sessionId: string, snapshot: ProgressSnapshot): void {
+  sessionStorage.setItem(`${SNAPSHOT_STORAGE_PREFIX}${sessionId}`, JSON.stringify(snapshot));
+}
+
+/** 결과 조회 시 비교할 면접 시작 시점의 스냅샷을 복원한다. */
+function loadSnapshot(sessionId: string): ProgressSnapshot | null {
+  try {
+    const serialized = sessionStorage.getItem(`${SNAPSHOT_STORAGE_PREFIX}${sessionId}`);
+    if (!serialized) return null;
+
+    const parsed = JSON.parse(serialized) as Partial<ProgressSnapshot>;
+    if (!Number.isInteger(parsed.unlockedLevel) || !Number.isInteger(parsed.progressGauge)) return null;
+    if (parsed.unlockedLevel! < 1 || parsed.unlockedLevel! > 4) return null;
+    if (parsed.progressGauge! < 0 || parsed.progressGauge! > 100) return null;
+    if (!Array.isArray(parsed.badgeIds) || !parsed.badgeIds.every(Number.isInteger)) return null;
+
+    return parsed as ProgressSnapshot;
+  } catch {
+    return null;
+  }
+}
 
 const realProgressService: ProgressService = {
-  getGaugeUpdate: async () => {
-    // UM-001은 "현재" 절대 게이지 값만 준다. "이전 값과 비교해 얼마나 올랐는지"는
-    // IS-002b(면접 제출) 응답의 passed/totalScore와, 면접 시작 전에 프론트가 미리
-    // 기억해둔 이전 게이지 값을 조합해서 계산해야 한다. 최용성(③)과 화면 흐름을
-    // 다시 설계해야 이 함수를 구현할 수 있다.
-    throw new Error(
-      'sessionId 기준으로 게이지 변화량을 알려주는 API가 없습니다(UM-001은 현재 절대값만 반환). ' +
-        '백엔드팀(최용성)과 화면 흐름을 다시 설계하세요.'
-    );
+  /** 현재 뱃지와 신규 획득 비교에는 BG-001 도감 중 실제 보유 뱃지만 노출한다. */
+  getMyBadges: async () => selectAcquiredBadges((await progressApi.getMyBadges()).badges),
+
+  /** 마이페이지 잠금 이미지를 위해 BG-001의 Stage1~4 전체 도감을 노출한다. */
+  getBadgeCatalog: async () => selectBadgeCatalog(await progressApi.getMyBadges()),
+
+  captureSnapshot: async (sessionId) => {
+    const [progress, badgeList] = await Promise.all([
+      progressApi.getProgress(),
+      progressApi.getMyBadges(),
+    ]);
+
+    saveSnapshot(sessionId, {
+      unlockedLevel: progress.unlockedLevel,
+      progressGauge: progress.progressGauge,
+      badgeIds: selectAcquiredBadges(badgeList.badges).map((badge) => badge.badgeId),
+    });
+  },
+
+  getGaugeUpdate: async (sessionId) => {
+    const [progress, badgeList] = await Promise.all([
+      progressApi.getProgress(),
+      progressApi.getMyBadges(),
+    ]);
+    const snapshot = loadSnapshot(sessionId);
+    const acquiredBadges = selectAcquiredBadges(badgeList.badges);
+    const previousBadgeIds = new Set(snapshot?.badgeIds ?? acquiredBadges.map((badge) => badge.badgeId));
+    const newlyAcquiredBadge = acquiredBadges
+      .filter((badge) => !previousBadgeIds.has(badge.badgeId))
+      .sort((left, right) => right.stage - left.stage)[0];
+
+    return {
+      previousGauge: snapshot?.progressGauge ?? progress.progressGauge,
+      newGauge: progress.progressGauge,
+      levelUp: snapshot ? progress.unlockedLevel > snapshot.unlockedLevel : false,
+      unlockedLevel: progress.unlockedLevel,
+      newlyAcquiredBadge,
+    };
   },
 };
 
-export const evaluationService: ProgressService = USE_MOCK ? progressMock : realProgressService;
+export const progressService: ProgressService = USE_MOCK ? progressMock : realProgressService;
+
+// 기존 결과 화면 import와의 호환성을 유지한다.
+export const evaluationService = progressService;

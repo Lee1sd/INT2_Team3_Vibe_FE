@@ -28,25 +28,26 @@ const STATIC_CONTENT_BY_LEVEL: Record<
     requiredGauge: 0,
     description: '코드 가독성과 기본기를 중요하게 생각합니다.',
     achievement: '기본적인 CS 지식과 이력서 내용의 사실 관계를 설명할 수 있습니다.',
-    avatar: '🐣',
+    avatar: '/interviewers/lv1-casual.png',
   },
   2: {
     requiredGauge: 30,
     description: '아키텍처와 예외 처리를 날카롭게 파고듭니다.',
     achievement: '실무 수준의 트러블슈팅과 기술적 트레이드오프를 논리적으로 방어할 수 있습니다.',
-    avatar: '🦅',
+    avatar: '/interviewers/lv2-strict.png',
   },
   3: {
     requiredGauge: 60,
     description: '극한의 상황에서 멘탈과 문제 해결 능력을 봅니다.',
     achievement: '스트레스 상황에서도 침착하게 근본적인 원인을 분석하고 대안을 제시할 수 있습니다.',
-    avatar: '🦖',
+    // Lv.3 페르소나 이미지는 아직 미제작 — 빈 슬롯으로 둔다.
+    avatar: '',
   },
   4: {
     requiredGauge: 100,
     description: '회사의 인재상과 컬처핏을 날카롭게 검증합니다.',
     achievement: '조직의 비전에 부합하며 거시적인 관점에서의 엔지니어링 가치를 증명할 수 있습니다.',
-    avatar: '🐉',
+    avatar: '',
   },
 };
 
@@ -59,6 +60,75 @@ function toInterviewer(item: InterviewerApiItem): Interviewer {
     isUnlocked: item.unlocked,
     ...staticContent,
   };
+}
+
+/** 면접 세션용 전신 기본 포즈. Lv.3+는 빈 문자열. */
+export function getInterviewerAvatarByLevel(level: number): string {
+  return STATIC_CONTENT_BY_LEVEL[level]?.avatar ?? '';
+}
+
+/** 던전/메인 레벨 카드용 확대샷(누끼). Lv.3+는 빈 문자열. */
+export function getInterviewerBustByLevel(level: number): string {
+  if (level === 1) return '/interviewers/lv1-casual-bust.png';
+  if (level === 2) return '/interviewers/lv2-strict-bust.png';
+  return '';
+}
+
+/** Lv.1 대리님 추가 포즈(인사 이후 질문마다 셔플 순서로 1회씩). */
+export const LV1_CASUAL_POSE_PATHS = [
+  '/interviewers/poses/lv1-casual-pose-01.png',
+  '/interviewers/poses/lv1-casual-pose-02.png',
+  '/interviewers/poses/lv1-casual-pose-03.png',
+  '/interviewers/poses/lv1-casual-pose-04.png',
+] as const;
+
+/** Lv.2 과장님 추가 포즈. */
+export const LV2_STRICT_POSE_PATHS = [
+  '/interviewers/poses/lv2-strict-pose-01.png',
+  '/interviewers/poses/lv2-strict-pose-02.png',
+  '/interviewers/poses/lv2-strict-pose-03.png',
+  '/interviewers/poses/lv2-strict-pose-04.png',
+] as const;
+
+export function getSessionPosePaths(level: number): string[] {
+  if (level === 1) return [...LV1_CASUAL_POSE_PATHS];
+  if (level === 2) return [...LV2_STRICT_POSE_PATHS];
+  return [];
+}
+
+/** 세션 시작 시 1회 셔플 — 질문은 이 순서로만 돌아가며 같은 포즈가 빠지지 않게 한다. */
+export function shufflePoseOrder(level: number): string[] {
+  const poses = getSessionPosePaths(level);
+  for (let i = poses.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const tmp = poses[i];
+    poses[i] = poses[j]!;
+    poses[j] = tmp!;
+  }
+  return poses;
+}
+
+/**
+ * 면접 세션 스프라이트.
+ * - 첫 인사: 기본 전신
+ * - 이후 질문(본문항·꼬리질문): 셔플된 포즈 큐에서 슬롯 순서대로(중복 없이, 부족하면 순환)
+ */
+export function pickSessionSpriteFromOrder(
+  level: number,
+  poseOrder: string[],
+  options: { isOpeningGreeting: boolean; questionSlot: number },
+): string {
+  const base = getInterviewerAvatarByLevel(level);
+  if (!base) return '';
+  if (options.isOpeningGreeting || poseOrder.length === 0) return base;
+  return poseOrder[options.questionSlot % poseOrder.length] ?? base;
+}
+
+/** 면접 세션 최후방 사무실 배경. 파일명: 1단계 프로그래머스 / 2단계 그렙. */
+export function getInterviewBackgroundByLevel(level: number): string {
+  if (level === 1) return '/interviewers/backgrounds/lv1-programmers.png';
+  if (level === 2) return '/interviewers/backgrounds/lv2-grepp.png';
+  return '';
 }
 
 function toStringId(id: number | null | undefined): string | undefined {
@@ -102,7 +172,6 @@ function toNextTurn(res: SubmitAnswersApiResponse, turn: number): NextTurn {
 function toInterviewResponse(res: SubmitAnswersApiResponse, turn: number): InterviewResponse {
   const nextTurn = toNextTurn(res, turn);
   const weakestQuestionId = toStringId(res.weakestQuestionId);
-  const followUpQuestionId = nextTurn.questionId ?? weakestQuestionId;
 
   return {
     evaluations: res.evaluations.map((evaluation) => ({
@@ -116,10 +185,11 @@ function toInterviewResponse(res: SubmitAnswersApiResponse, turn: number): Inter
     passed: res.passed,
     nextTurn,
     questions:
-      nextTurn.type === 'FOLLOW_UP' && followUpQuestionId
+      nextTurn.type === 'FOLLOW_UP' && nextTurn.question
         ? [
             {
-              id: followUpQuestionId,
+              // targetQuestionId는 최저점 원문항이고, 새 꼬리질문의 외부 questionId는 항상 turn 4다.
+              id: '4',
               content: nextTurn.question,
               type: 'FOLLOW_UP',
             },

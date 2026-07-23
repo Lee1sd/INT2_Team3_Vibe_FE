@@ -51,4 +51,16 @@ export const resumeMock = {
   getResumeList: async (): Promise<ResumeApiResponse[]> => {
     return [];
   },
+  /** 실제 서비스와 동일하게 면접에 사용할 최신 완료 이력서 ID를 반환한다. */
+  getLatestCompletedResumeId: async (): Promise<string | null> => {
+    const hasResume = await resumeMock.checkResumeStatus();
+    return hasResume ? 'f123' : null;
+  },
+  deleteResume: async (_resumeId: string): Promise<void> => {
+    memoryMockUploaded = false;
+    try {
+      localStorage.removeItem('mock_resume_uploaded');
+      localStorage.removeItem('hasResume');
+    } catch (e) {}
+  },
 };

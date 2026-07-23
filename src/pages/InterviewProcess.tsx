@@ -1,11 +1,29 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { authService } from '../domains/auth/auth.service';
-import { engineService } from '../domains/interview/interview.service';
+import {
+  engineService,
+  getInterviewerAvatarByLevel,
+  getInterviewBackgroundByLevel,
+  pickSessionSpriteFromOrder,
+  shufflePoseOrder,
+} from '../domains/interview/interview.service';
 import { pickOpeningGreeting } from '../domains/interview/openingGreetings';
-import { InterviewResponse, Answer } from '../types';
-import { Loader2, Send, ArrowLeft } from 'lucide-react';
+import { evaluationService } from '../domains/progress/progress.service';
+import { fileService } from '../domains/resume/resume.service';
+import {
+  saveFinalInterviewResult,
+  toFinalInterviewResult,
+} from '../domains/interview/interview-result.storage';
+import {
+  createInterviewClosingMessage,
+  getInterviewerTone,
+  getSessionFeedback,
+} from '../domains/interview/interview-closing-message';
+import { InterviewResponse, Answer, FinalInterviewResult, Interviewer } from '../types';
+import { AlertCircle, Loader2, Send, ArrowLeft } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
+import { InterviewerAvatar } from '../components/InterviewerAvatar';
 
 function useTypewriter(text: string, speed = 35) {
   const [displayedText, setDisplayedText] = useState('');
@@ -39,32 +57,26 @@ function useTypewriter(text: string, speed = 35) {
   return { displayedText, isComplete, skip };
 }
 
-const getInterviewerDetails = (id: string | undefined) => {
-  const map: Record<string, {name: string, level: number, avatar: string}> = {
-    'iv1': { name: '널널한 대리', level: 1, avatar: '🐣' },
-    'iv2': { name: '깐깐한 과장', level: 2, avatar: '🐥' },
-    'iv3': { name: '압박면접 팀장', level: 3, avatar: '🦅' },
-    'iv4': { name: '최종보스 임원', level: 4, avatar: '👑' },
+type InterviewerView = Pick<Interviewer, 'name' | 'level' | 'avatar'>;
+
+function interviewerFromRouteState(state: unknown, interviewerId: string | undefined): InterviewerView | null {
+  const candidate = (state as { interviewer?: Interviewer } | null)?.interviewer;
+  if (!candidate) return null;
+  if (interviewerId && candidate.id !== interviewerId) return null;
+  return {
+    name: candidate.name,
+    level: candidate.level,
+    // 세션은 전신 스프라이트를 쓴다(확대샷은 던전 카드 전용).
+    avatar: getInterviewerAvatarByLevel(candidate.level),
   };
-  return map[id || ''] || { name: '알 수 없는 면접관', level: 1, avatar: '👤' };
-};
-
-const getSessionFeedback = (session: InterviewResponse): string => {
-  if (session.overallFeedback) return session.overallFeedback;
-
-  const targetQuestionId = session.weakestQuestionId ?? session.nextTurn.questionId;
-  const targetEvaluation = targetQuestionId
-    ? session.evaluations?.find((evaluation) => evaluation.questionId === targetQuestionId)
-    : undefined;
-
-  return targetEvaluation?.feedback ?? session.evaluations?.find((evaluation) => evaluation.feedback)?.feedback ?? '';
-};
+}
 
 export default function InterviewProcess() {
   const { interviewerId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const selectedKeyword = location.state?.keyword || 'Spring Boot';
+  const interviewStartKey = location.key;
   
   const [session, setSession] = useState<InterviewResponse | null>(null);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -75,39 +87,111 @@ export default function InterviewProcess() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [isInterviewFinished, setIsInterviewFinished] = useState(false);
   const [isAbandonModalOpen, setIsAbandonModalOpen] = useState(false);
+  const [finalResult, setFinalResult] = useState<FinalInterviewResult | null>(null);
+  const [initializationError, setInitializationError] = useState<'MISSING_RESUME' | 'FAILED' | null>(null);
+  const [interviewer, setInterviewer] = useState<InterviewerView>(
+    () =>
+      interviewerFromRouteState(location.state, interviewerId) ?? {
+        name: '면접관',
+        level: 1,
+        avatar: getInterviewerAvatarByLevel(1),
+      }
+  );
+  /** 세션 스테이지에 그리는 전신 스프라이트(질문마다 셔플 큐 순서로 갱신). */
+  const [stageSprite, setStageSprite] = useState(
+    () => interviewerFromRouteState(location.state, interviewerId)?.avatar || getInterviewerAvatarByLevel(1)
+  );
+  /** 세션당 1회 셔플한 포즈 큐 — 질문마다 앞에서부터 소진(빠진 포즈 없이). */
+  const [poseOrder, setPoseOrder] = useState<string[]>([]);
+  /** 본문항 개수(꼬리질문 슬롯 오프셋용). */
+  const [mainQuestionCount, setMainQuestionCount] = useState(0);
 
   // startInterview 응답의 실제 sessionId를 사용한다 (#11: 하드코딩된 'session_123' 제거).
   const [sessionId, setSessionId] = useState('');
   /** 세션 입장 시 1회 고른 오프닝 인사 — phase effect가 다시 돌아도 문구가 바뀌지 않게 고정한다. */
   const [openingGreeting, setOpeningGreeting] = useState('');
+  // effect cleanup은 initInterview 내부 await 흐름을 막고, generation은 submit 같은 effect 밖 비동기 응답까지 막는다.
+  const interviewGenerationRef = useRef(0);
 
   useEffect(() => {
     let cancelled = false;
 
     const initInterview = async () => {
+      const generation = interviewGenerationRef.current + 1;
+      interviewGenerationRef.current = generation;
+      const isStale = () => cancelled || interviewGenerationRef.current !== generation;
+
+      setSession(null);
+      setAnswers({});
+      setIsLoading(true);
+      setIsSubmitting(false);
+      setPhases([]);
+      setPhaseIndex(0);
+      setCurrentQuestionIndex(0);
+      setIsInterviewFinished(false);
+      setIsAbandonModalOpen(false);
+      setFinalResult(null);
+      setInitializationError(null);
+      setSessionId('');
+      setOpeningGreeting('');
+
       try {
+        // 라우트 id는 BE 숫자 id(String)다 — 구 mock키(iv1) 하드코딩 맵을 쓰지 않는다.
+        try {
+          const interviewers = await engineService.getInterviewers();
+          if (isStale()) return;
+          const matched = interviewers.find((iv) => iv.id === String(interviewerId));
+          if (matched) {
+            setInterviewer({
+              name: matched.name,
+              level: matched.level,
+              avatar: getInterviewerAvatarByLevel(matched.level),
+            });
+          }
+        } catch (e) {
+          console.error(e);
+        }
+
         let userName = '지원자';
         try {
           const user = await authService.getCurrentUser();
-          if (cancelled) return;
+          if (isStale()) return;
           userName = user.displayName || user.name || '지원자';
         } catch (e) {
           console.error(e);
         }
-        if (cancelled) return;
+        if (isStale()) return;
         setOpeningGreeting(pickOpeningGreeting(userName));
 
-        // TODO(#6): resumeId('f123')는 여전히 하드코딩되어 있음 — 이력서 보유확인(RS-003)이
-        // 실제 연동되면 현재 사용자의 실제 resumeId로 교체해야 한다. 이 이슈(#11)는 그와 별개로
-        // createSession 인자 순서 오류 + sessionId 하드코딩만 다룬다.
-        const res = await engineService.startInterview(interviewerId || 'iv1', 'f123', selectedKeyword);
-        if (cancelled) return;
+        // 최신 파싱 완료 이력서를 사용해 mock 전용 ID가 실제 API로 전달되지 않게 한다.
+        const resumeId = await fileService.getLatestCompletedResumeId();
+        if (isStale()) return;
+        if (!resumeId) {
+          setInitializationError('MISSING_RESUME');
+          return;
+        }
+        const res = await engineService.startInterview(interviewerId || '1', resumeId, selectedKeyword);
+        if (isStale()) return;
         setSession(res);
         setSessionId(res.sessionId || '');
+        if (res.sessionId) {
+          try {
+            await evaluationService.captureSnapshot(res.sessionId);
+            // await 중 unmount/abandon이면 stale 스냅샷이 sessionStorage에 남지 않게 한다.
+            if (isStale()) {
+              sessionStorage.removeItem(`career-dungeon:progress-snapshot:${res.sessionId}`);
+              return;
+            }
+          } catch (snapshotError) {
+            // 스냅샷 실패가 면접 시작 자체를 막지 않도록 결과 비교 기능만 비활성화한다.
+            console.error(snapshotError);
+          }
+        }
       } catch (e) {
         console.error(e);
+        if (!isStale()) setInitializationError('FAILED');
       } finally {
-        if (!cancelled) {
+        if (!isStale()) {
           setIsLoading(false);
         }
       }
@@ -116,16 +200,41 @@ export default function InterviewProcess() {
 
     return () => {
       cancelled = true;
+      // handleSubmit 등 effect 밖 async도 stale로 무효화한다 (abandoned/unmount 후 저장·setState 방지).
+      interviewGenerationRef.current += 1;
     };
-  }, [interviewerId, selectedKeyword]);
+  }, [interviewerId, selectedKeyword, interviewStartKey]);
 
   const isFollowUp = session?.nextTurn.turn === 2;
   const isLastQuestion = session?.questions ? currentQuestionIndex === session.questions.length - 1 : true;
+  // 첫 인사(오프닝 문구)만 기본 포즈 — 질문 본문부터 셔플 큐 사용
+  const isOpeningGreeting = !isFollowUp && currentQuestionIndex === 0 && phaseIndex === 0;
+  const questionSlot = isFollowUp ? mainQuestionCount + currentQuestionIndex : currentQuestionIndex;
+
+  // 면접관/세션이 정해지면 포즈 큐를 한 번 셔플한다.
+  useEffect(() => {
+    setPoseOrder(shufflePoseOrder(interviewer.level));
+  }, [interviewer.level, sessionId]);
+
+  useEffect(() => {
+    if (session?.questions && !isFollowUp) {
+      setMainQuestionCount(session.questions.length);
+    }
+  }, [session, isFollowUp]);
+
+  useEffect(() => {
+    setStageSprite(
+      pickSessionSpriteFromOrder(interviewer.level, poseOrder, {
+        isOpeningGreeting,
+        questionSlot,
+      }),
+    );
+  }, [interviewer.level, poseOrder, isOpeningGreeting, questionSlot]);
 
   useEffect(() => {
     if (session) {
       if (session.nextTurn.type === 'END') {
-        setPhases(["수고하셨습니다. 전반적으로 이해도는 높으나, 아키텍처 고민이 조금 더 필요해 보이네요.\n상세한 평가는 결과지를 확인해 주세요."]);
+        setPhases([createInterviewClosingMessage(getInterviewerTone(interviewer.level))]);
         setPhaseIndex(0);
         return;
       }
@@ -147,7 +256,7 @@ export default function InterviewProcess() {
         setPhaseIndex(0);
       }
     }
-  }, [session, isFollowUp, currentQuestionIndex, openingGreeting]);
+  }, [session, isFollowUp, currentQuestionIndex, openingGreeting, interviewer.level]);
 
   const { displayedText, isComplete: isTypewriterComplete, skip: skipTypewriter } = useTypewriter(phases[phaseIndex] || '', 35);
   
@@ -188,6 +297,10 @@ export default function InterviewProcess() {
   const handleSubmit = async () => {
     if (!session || !session.questions) return;
 
+    const generation = interviewGenerationRef.current;
+    const activeSessionId = sessionId;
+    const isStale = () => interviewGenerationRef.current !== generation;
+
     setIsSubmitting(true);
     try {
       if (!isFollowUp) {
@@ -196,7 +309,8 @@ export default function InterviewProcess() {
           questionId: q.id,
           content: answers[q.id]
         }));
-        const res = await engineService.submitAnswers(sessionId, payload);
+        const res = await engineService.submitAnswers(activeSessionId, payload);
+        if (isStale()) return;
         
         // Clear answers for the next turn
         setAnswers({});
@@ -205,21 +319,26 @@ export default function InterviewProcess() {
       } else {
         // Follow-up turn
         const q = session.questions[0]; 
-        const res = await engineService.submitFollowUp(sessionId, {
+        const res = await engineService.submitFollowUp(activeSessionId, {
           questionId: q.id,
           content: answers[q.id]
         });
+        if (isStale()) return;
         
-        setSession(res);
         if (res.nextTurn.type === 'END') {
+          // 최종 응답을 먼저 검증·저장한 뒤 종료 상태를 한 번에 반영해 불완전한 END 화면을 방지한다.
+          const completedResult = toFinalInterviewResult(res);
+          saveFinalInterviewResult(activeSessionId, completedResult);
+          setFinalResult(completedResult);
           setIsInterviewFinished(true);
         }
+        setSession(res);
       }
     } catch (e) {
       console.error(e);
-      alert('답변 제출 중 오류가 발생했습니다.');
+      if (!isStale()) alert('답변 제출 중 오류가 발생했습니다.');
     } finally {
-      setIsSubmitting(false);
+      if (!isStale()) setIsSubmitting(false);
     }
   };
 
@@ -232,21 +351,68 @@ export default function InterviewProcess() {
     );
   }
 
-  const interviewer = getInterviewerDetails(interviewerId);
+  if (initializationError) {
+    const isMissingResume = initializationError === 'MISSING_RESUME';
+
+    return (
+      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-blue-grey-940 px-6 text-center">
+        <AlertCircle className="w-12 h-12 text-warning mb-4" />
+        <h2 className="text-[20px] leading-[28px] font-bold text-white mb-3">
+          {isMissingResume ? '면접에 사용할 이력서가 없습니다.' : '면접을 시작하지 못했습니다.'}
+        </h2>
+        <p className="text-blue-grey-300 text-[14px] leading-[20px] font-normal mb-8">
+          {isMissingResume
+            ? '파싱이 완료된 이력서를 등록한 뒤 다시 면접을 시작해 주세요.'
+            : '잠시 후 던전 맵에서 다시 시도해 주세요.'}
+        </p>
+        <button
+          onClick={() => navigate(isMissingResume ? '/mypage' : '/dungeon', { replace: true })}
+          className="px-6 py-3 bg-primary text-white rounded-2xl text-[14px] leading-[20px] font-bold hover:bg-[#005bb5] transition-colors shadow-sm"
+        >
+          {isMissingResume ? '이력서 등록하러 가기' : '던전 맵으로 돌아가기'}
+        </button>
+      </div>
+    );
+  }
 
   if (!session) return null;
   if (!isInterviewFinished && !session.questions) return null;
 
+  const sessionBackground = getInterviewBackgroundByLevel(interviewer.level);
+
   return (
     <div className="fixed inset-0 z-50 bg-blue-grey-940 flex flex-col h-screen overflow-hidden font-sans">
-      {/* Background Overlay */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-grey-940 to-blue-grey-999 -z-20"></div>
+      {/* z: 배경 → 캐릭터(전신·불투명) → 채팅 UI(반투명) */}
+      {sessionBackground ? (
+        <img
+          src={sessionBackground}
+          alt=""
+          aria-hidden
+          className="absolute inset-0 w-full h-full object-cover z-0 brightness-[1.08] contrast-[1.02]"
+        />
+      ) : (
+        <div className="absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-grey-940 to-blue-grey-999" />
+      )}
+
+      {/*
+        스테이지 캐릭터 통일 슬롯
+        - 에셋: 동일 캔버스(560x640)·동일 실루엣 높이로 정규화됨
+        - 위치: absolute bottom 중앙 앵커
+      */}
+      <div className="pointer-events-none absolute left-1/2 z-10 h-[min(52vh,500px)] w-[min(45.5vw,438px)] -translate-x-1/2 bottom-[min(26vh,220px)]">
+        <InterviewerAvatar
+          avatar={stageSprite || interviewer.avatar}
+          name={interviewer.name}
+          className="h-full w-full opacity-100"
+          imgClassName="h-full w-full object-contain object-bottom opacity-100"
+        />
+      </div>
 
       {/* Exit Button */}
-      <div className="absolute top-6 left-6 z-50">
+      <div className="absolute top-6 left-6 z-40">
         <button 
           onClick={() => setIsAbandonModalOpen(true)} 
-          className="flex items-center px-4 py-2 bg-blue-grey-900/60 hover:bg-blue-grey-900 border border-blue-grey-700 text-blue-grey-300 hover:text-white rounded-lg transition-colors text-[14px] leading-[20px] font-bold backdrop-blur-md"
+          className="flex items-center px-4 py-2 bg-blue-grey-900/50 hover:bg-blue-grey-900/80 border border-white/20 text-white/90 hover:text-white rounded-lg transition-colors text-[14px] leading-[20px] font-bold backdrop-blur-sm"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           면접 포기하기
@@ -279,41 +445,37 @@ export default function InterviewProcess() {
         </div>
       )}
 
-      {/* Top Section: Interviewer */}
-      <div className="flex-1 min-h-0 w-full flex flex-col items-center justify-center py-6 pt-16 relative z-10">
-        <div className="animate-float flex flex-col items-center justify-center h-full w-full">
-          <div className="text-[110px] md:text-[130px] leading-none drop-shadow-[0_0_80px_rgba(0,120,255,0.15)] select-none shrink object-contain max-h-full h-full w-full flex items-center justify-center">
-            {interviewer.avatar}
-          </div>
-        </div>
-      </div>
-
-      {/* Bottom Section: Dialog & Input */}
-      <div className="w-full max-w-4xl mx-auto px-6 pb-6 md:pb-8 flex flex-col gap-4 z-40 shrink-0 min-h-[38vh]">
+      {/* 하단 UI: 반투명 채팅박스가 캐릭터 하반신 위에 올라감 */}
+      <div className="relative z-20 mt-auto w-full max-w-4xl mx-auto px-6 pb-6 md:pb-8 flex flex-col gap-4 shrink-0 min-h-[38vh] pt-4">
         
         <div className="flex items-center gap-2 px-1 shrink-0">
           <span className="bg-primary/20 text-primary text-[14px] leading-[20px] font-bold font-mono px-2 py-1 rounded-md">
             Lv.{interviewer.level}
           </span>
-          <span className="text-white text-[14px] leading-[20px] font-bold tracking-wide">
+          <span className="text-white text-[14px] leading-[20px] font-bold tracking-wide drop-shadow-md">
             {interviewer.name}
           </span>
         </div>
 
-        {/* Dialog Box */}
+        {/* Dialog Box — 반투명이라 뒤 캐릭터 하반신이 비침 */}
         <div 
-          className="flex-1 bg-blue-grey-920/80 backdrop-blur-md border border-blue-grey-800 rounded-2xl p-6 md:p-8 pb-10 shadow-[0_0_30px_rgba(0,120,255,0.1)] flex flex-col relative cursor-pointer"
+          className="flex-1 bg-blue-grey-920/65 backdrop-blur-[2px] border border-white/15 rounded-2xl p-6 md:p-8 pb-10 shadow-[0_8px_40px_rgba(0,0,0,0.25)] flex flex-col relative cursor-pointer"
           onClick={handleDialogClick}
         >
           {isSubmitting && (
-            <div className="absolute inset-0 bg-blue-grey-920/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center rounded-2xl">
-              <div className="text-5xl mb-4 animate-bounce">🐣</div>
+            <div className="absolute inset-0 bg-blue-grey-920/85 backdrop-blur-sm z-50 flex flex-col items-center justify-center rounded-2xl">
+              <InterviewerAvatar
+                avatar={stageSprite || interviewer.avatar}
+                name={interviewer.name}
+                className="w-20 h-20 mb-4 animate-bounce"
+                imgClassName="w-20 h-20"
+              />
               <p className="text-white font-bold animate-pulse">면접관이 답변을 날카롭게 검토하고 있습니다...</p>
             </div>
           )}
 
           <div className="flex-1 min-h-[120px] flex items-start">
-            <p className="text-white text-[16px] leading-[28px] font-normal md:text-[20px] md:leading-[28px] md:font-bold leading-relaxed whitespace-pre-wrap font-medium">
+            <p className="text-white text-[16px] leading-[28px] font-normal md:text-[20px] md:leading-[28px] md:font-bold leading-relaxed whitespace-pre-wrap font-medium drop-shadow-sm">
               {displayedText}
               {!isTypewriterComplete && <span className="animate-pulse">|</span>}
             </p>
@@ -336,7 +498,7 @@ export default function InterviewProcess() {
           isTypewriterComplete && (
             <div className="shrink-0 flex justify-center mt-4">
               <button
-                onClick={() => navigate(`/result/${sessionId}`)}
+                onClick={() => navigate(`/result/${sessionId}`, { state: { finalResult } })}
                 className="px-8 py-4 bg-primary text-white rounded-2xl font-bold hover:bg-[#005bb5] transition-colors flex items-center justify-center gap-2 shadow-[0_0_30px_rgba(0,120,255,0.4)] text-[16px] md:text-[18px]"
                 style={{ animation: 'fadeIn 0.5s ease-in-out' }}
               >
@@ -347,7 +509,7 @@ export default function InterviewProcess() {
         ) : (
           isUserTurn && (
             <div 
-              className="shrink-0 h-[140px] md:h-[150px] bg-blue-grey-920/80 backdrop-blur-md border border-blue-grey-800 rounded-2xl p-3 md:p-4 flex gap-3 md:gap-4 shadow-[0_0_30px_rgba(0,120,255,0.1)]"
+              className="shrink-0 h-[140px] md:h-[150px] bg-blue-grey-920/70 backdrop-blur-[2px] border border-white/15 rounded-2xl p-3 md:p-4 flex gap-3 md:gap-4 shadow-[0_8px_40px_rgba(0,0,0,0.2)]"
               style={{ animation: 'fadeIn 0.3s ease-in-out' }}
             >
               <textarea
