@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { authService } from '../domains/auth/auth.service';
 import {
@@ -76,6 +76,7 @@ export default function InterviewProcess() {
   const navigate = useNavigate();
   const location = useLocation();
   const selectedKeyword = location.state?.keyword || 'Spring Boot';
+  const interviewStartKey = location.key;
   
   const [session, setSession] = useState<InterviewResponse | null>(null);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -109,16 +110,36 @@ export default function InterviewProcess() {
   const [sessionId, setSessionId] = useState('');
   /** 세션 입장 시 1회 고른 오프닝 인사 — phase effect가 다시 돌아도 문구가 바뀌지 않게 고정한다. */
   const [openingGreeting, setOpeningGreeting] = useState('');
+  // effect cleanup은 initInterview 내부 await 흐름을 막고, generation은 submit 같은 effect 밖 비동기 응답까지 막는다.
+  const interviewGenerationRef = useRef(0);
 
   useEffect(() => {
     let cancelled = false;
 
     const initInterview = async () => {
+      const generation = interviewGenerationRef.current + 1;
+      interviewGenerationRef.current = generation;
+      const isStale = () => cancelled || interviewGenerationRef.current !== generation;
+
+      setSession(null);
+      setAnswers({});
+      setIsLoading(true);
+      setIsSubmitting(false);
+      setPhases([]);
+      setPhaseIndex(0);
+      setCurrentQuestionIndex(0);
+      setIsInterviewFinished(false);
+      setIsAbandonModalOpen(false);
+      setFinalResult(null);
+      setInitializationError(null);
+      setSessionId('');
+      setOpeningGreeting('');
+
       try {
         // 라우트 id는 BE 숫자 id(String)다 — 구 mock키(iv1) 하드코딩 맵을 쓰지 않는다.
         try {
           const interviewers = await engineService.getInterviewers();
-          if (cancelled) return;
+          if (isStale()) return;
           const matched = interviewers.find((iv) => iv.id === String(interviewerId));
           if (matched) {
             setInterviewer({
@@ -134,22 +155,23 @@ export default function InterviewProcess() {
         let userName = '지원자';
         try {
           const user = await authService.getCurrentUser();
-          if (cancelled) return;
+          if (isStale()) return;
           userName = user.displayName || user.name || '지원자';
         } catch (e) {
           console.error(e);
         }
-        if (cancelled) return;
+        if (isStale()) return;
         setOpeningGreeting(pickOpeningGreeting(userName));
 
         // 최신 파싱 완료 이력서를 사용해 mock 전용 ID가 실제 API로 전달되지 않게 한다.
         const resumeId = await fileService.getLatestCompletedResumeId();
+        if (isStale()) return;
         if (!resumeId) {
-          if (!cancelled) setInitializationError('MISSING_RESUME');
+          setInitializationError('MISSING_RESUME');
           return;
         }
         const res = await engineService.startInterview(interviewerId || '1', resumeId, selectedKeyword);
-        if (cancelled) return;
+        if (isStale()) return;
         setSession(res);
         setSessionId(res.sessionId || '');
         if (res.sessionId) {
@@ -162,9 +184,9 @@ export default function InterviewProcess() {
         }
       } catch (e) {
         console.error(e);
-        if (!cancelled) setInitializationError('FAILED');
+        if (!isStale()) setInitializationError('FAILED');
       } finally {
-        if (!cancelled) {
+        if (!isStale()) {
           setIsLoading(false);
         }
       }
@@ -174,7 +196,7 @@ export default function InterviewProcess() {
     return () => {
       cancelled = true;
     };
-  }, [interviewerId, selectedKeyword]);
+  }, [interviewerId, selectedKeyword, interviewStartKey]);
 
   const isFollowUp = session?.nextTurn.turn === 2;
   const isLastQuestion = session?.questions ? currentQuestionIndex === session.questions.length - 1 : true;
@@ -268,6 +290,10 @@ export default function InterviewProcess() {
   const handleSubmit = async () => {
     if (!session || !session.questions) return;
 
+    const generation = interviewGenerationRef.current;
+    const activeSessionId = sessionId;
+    const isStale = () => interviewGenerationRef.current !== generation;
+
     setIsSubmitting(true);
     try {
       if (!isFollowUp) {
@@ -276,7 +302,8 @@ export default function InterviewProcess() {
           questionId: q.id,
           content: answers[q.id]
         }));
-        const res = await engineService.submitAnswers(sessionId, payload);
+        const res = await engineService.submitAnswers(activeSessionId, payload);
+        if (isStale()) return;
         
         // Clear answers for the next turn
         setAnswers({});
@@ -285,15 +312,16 @@ export default function InterviewProcess() {
       } else {
         // Follow-up turn
         const q = session.questions[0]; 
-        const res = await engineService.submitFollowUp(sessionId, {
+        const res = await engineService.submitFollowUp(activeSessionId, {
           questionId: q.id,
           content: answers[q.id]
         });
+        if (isStale()) return;
         
         if (res.nextTurn.type === 'END') {
           // 최종 응답을 먼저 검증·저장한 뒤 종료 상태를 한 번에 반영해 불완전한 END 화면을 방지한다.
           const completedResult = toFinalInterviewResult(res);
-          saveFinalInterviewResult(sessionId, completedResult);
+          saveFinalInterviewResult(activeSessionId, completedResult);
           setFinalResult(completedResult);
           setIsInterviewFinished(true);
         }
@@ -301,9 +329,9 @@ export default function InterviewProcess() {
       }
     } catch (e) {
       console.error(e);
-      alert('답변 제출 중 오류가 발생했습니다.');
+      if (!isStale()) alert('답변 제출 중 오류가 발생했습니다.');
     } finally {
-      setIsSubmitting(false);
+      if (!isStale()) setIsSubmitting(false);
     }
   };
 
