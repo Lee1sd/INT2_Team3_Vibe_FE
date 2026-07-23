@@ -1,42 +1,76 @@
-"""Normalize interviewer full-body/pose sprites to identical canvas + silhouette height."""
+"""Normalize stage sprites to identical body silhouette height (excludes speech bubbles/stars)."""
 from __future__ import annotations
 
 from pathlib import Path
 
 import numpy as np
 from PIL import Image
+from scipy import ndimage
 
 ROOT = Path(__file__).resolve().parents[1] / "public" / "interviewers"
 CANVAS_W, CANVAS_H = 560, 640
-TARGET_H = 580
+TARGET_BODY_H = 580
 PAD_BOTTOM = 12
+STRUCT = ndimage.generate_binary_structure(2, 2)
 
 
-def content_bbox(im: Image.Image) -> tuple[int, int, int, int]:
-    arr = np.array(im)
-    alpha = arr[..., 3] > 0
-    ys, xs = np.where(alpha)
-    return int(xs.min()), int(ys.min()), int(xs.max()) + 1, int(ys.max()) + 1
+def body_mask(arr: np.ndarray) -> np.ndarray:
+    opaque = arr[..., 3] > 0
+    labels, n = ndimage.label(opaque, structure=STRUCT)
+    if n == 0:
+        return opaque
+    sizes = ndimage.sum(opaque, labels, index=np.arange(1, n + 1))
+    main_id = int(np.argmax(sizes)) + 1
+    main = labels == main_id
+    main_size = float(sizes[main_id - 1])
+    main_top = int(np.where(main)[0].min())
+    main_h = int(np.where(main)[0].max() - main_top + 1)
+    body = main.copy()
+    dilated = ndimage.binary_dilation(main, structure=STRUCT, iterations=18)
+    for i in range(1, n + 1):
+        if i == main_id:
+            continue
+        m = labels == i
+        ys = np.where(m)[0]
+        top = int(ys.min())
+        size = float(sizes[i - 1])
+        if size < main_size * 0.18 and (top < main_top or float(ys.mean()) < main_top + main_h * 0.18):
+            continue
+        if (m & dilated).any() or int(ys.max()) >= main_top:
+            body |= m
+    return body
 
 
 def normalize(path: Path) -> None:
     im = Image.open(path).convert("RGBA")
-    l, t, r, b = content_bbox(im)
-    crop = im.crop((l, t, r, b))
-    cw, ch = crop.size
-    scale = TARGET_H / ch
-    new_w = max(1, int(round(cw * scale)))
-    resized = crop.resize((new_w, TARGET_H), Image.Resampling.LANCZOS)
-    canvas = Image.new("RGBA", (CANVAS_W, CANVAS_H), (0, 0, 0, 0))
+    arr = np.array(im)
+    body = body_mask(arr)
+    ys = np.where(body)[0]
+    bt, bb = int(ys.min()), int(ys.max())
+    body_h = bb - bt + 1
+    full = arr[..., 3] > 0
+    fys, fxs = np.where(full)
+    ft, fb, fl, fr = int(fys.min()), int(fys.max()), int(fxs.min()), int(fxs.max())
+    crop = im.crop((fl, ft, fr + 1, fb + 1))
+    body_top_in_crop = bt - ft
+    scale = TARGET_BODY_H / body_h
+    new_w = max(1, int(round(crop.width * scale)))
+    new_h = max(1, int(round(crop.height * scale)))
+    resized = crop.resize((new_w, new_h), Image.Resampling.LANCZOS)
+    body_bottom_scaled = int(round((body_top_in_crop + body_h) * scale))
+    y = (CANVAS_H - PAD_BOTTOM) - body_bottom_scaled
     x = (CANVAS_W - new_w) // 2
-    y = CANVAS_H - PAD_BOTTOM - TARGET_H
     if new_w > CANVAS_W:
         left = (new_w - CANVAS_W) // 2
-        resized = resized.crop((left, 0, left + CANVAS_W, TARGET_H))
+        resized = resized.crop((left, 0, left + CANVAS_W, new_h))
         x = 0
+    if y < 0:
+        resized = resized.crop((0, -y, resized.width, resized.height))
+        y = 0
+    canvas = Image.new("RGBA", (CANVAS_W, CANVAS_H), (0, 0, 0, 0))
     canvas.alpha_composite(resized, (x, y))
     canvas.save(path, "PNG", optimize=True)
-    print(f"OK {path.name} -> {CANVAS_W}x{CANVAS_H} silhouette_h={TARGET_H}", flush=True)
+    print(f"OK {path.name} body_h={body_h} scale={scale:.3f}", flush=True)
 
 
 def main() -> None:
@@ -49,8 +83,6 @@ def main() -> None:
     for f in files:
         if f.exists():
             normalize(f)
-        else:
-            print(f"MISSING {f}", flush=True)
 
 
 if __name__ == "__main__":
