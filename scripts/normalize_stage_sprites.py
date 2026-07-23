@@ -64,13 +64,13 @@ def normalize(path: Path) -> None:
     body_bottom_scaled = int(round((body_top_in_crop + body_h) * scale))
     body_cx_scaled = body_cx_in_crop * scale
     y = (CANVAS_H - PAD_BOTTOM) - body_bottom_scaled
-    # 전체 crop이 아니라 몸통 x-중심으로 정렬해 말풍선 비대칭으로 몸이 밀리지 않게 한다.
+    # 몸통 x-중심으로 배치. 캔버스 밖이면 최근심하지 말고 오버플로만 잘라 본체 좌표를 유지한다.
     x = int(round(CANVAS_W / 2 - body_cx_scaled))
-    if new_w > CANVAS_W or x < 0 or x + new_w > CANVAS_W:
-        left = max(0, int(round(body_cx_scaled - CANVAS_W / 2)))
-        left = min(left, max(0, new_w - CANVAS_W))
-        resized = resized.crop((left, 0, left + min(CANVAS_W, new_w), new_h))
-        x = max(0, (CANVAS_W - resized.width) // 2)
+    if x < 0:
+        resized = resized.crop((-x, 0, resized.width, resized.height))
+        x = 0
+    if x + resized.width > CANVAS_W:
+        resized = resized.crop((0, 0, CANVAS_W - x, resized.height))
     if y < 0:
         resized = resized.crop((0, -y, resized.width, resized.height))
         y = 0

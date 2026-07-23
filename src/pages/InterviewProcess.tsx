@@ -177,6 +177,11 @@ export default function InterviewProcess() {
         if (res.sessionId) {
           try {
             await evaluationService.captureSnapshot(res.sessionId);
+            // await 중 unmount/abandon이면 stale 스냅샷이 sessionStorage에 남지 않게 한다.
+            if (isStale()) {
+              sessionStorage.removeItem(`career-dungeon:progress-snapshot:${res.sessionId}`);
+              return;
+            }
           } catch (snapshotError) {
             // 스냅샷 실패가 면접 시작 자체를 막지 않도록 결과 비교 기능만 비활성화한다.
             console.error(snapshotError);
