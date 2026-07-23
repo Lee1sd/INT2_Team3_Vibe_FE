@@ -195,6 +195,8 @@ export default function InterviewProcess() {
 
     return () => {
       cancelled = true;
+      // handleSubmit 등 effect 밖 async도 stale로 무효화한다 (abandoned/unmount 후 저장·setState 방지).
+      interviewGenerationRef.current += 1;
     };
   }, [interviewerId, selectedKeyword, interviewStartKey]);
 
