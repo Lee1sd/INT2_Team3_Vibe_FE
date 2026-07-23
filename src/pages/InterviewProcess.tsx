@@ -1,7 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { authService } from '../domains/auth/auth.service';
-import { engineService } from '../domains/interview/interview.service';
+import {
+  engineService,
+  getInterviewerAvatarByLevel,
+  getInterviewBackgroundByLevel,
+  pickSessionSpriteFromOrder,
+  shufflePoseOrder,
+} from '../domains/interview/interview.service';
 import { pickOpeningGreeting } from '../domains/interview/openingGreetings';
 import { evaluationService } from '../domains/progress/progress.service';
 import { fileService } from '../domains/resume/resume.service';
@@ -9,9 +15,10 @@ import {
   saveFinalInterviewResult,
   toFinalInterviewResult,
 } from '../domains/interview/interview-result.storage';
-import { InterviewResponse, Answer, FinalInterviewResult } from '../types';
+import { InterviewResponse, Answer, FinalInterviewResult, Interviewer } from '../types';
 import { AlertCircle, Loader2, Send, ArrowLeft } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
+import { InterviewerAvatar } from '../components/InterviewerAvatar';
 
 function useTypewriter(text: string, speed = 35) {
   const [displayedText, setDisplayedText] = useState('');
@@ -45,16 +52,6 @@ function useTypewriter(text: string, speed = 35) {
   return { displayedText, isComplete, skip };
 }
 
-const getInterviewerDetails = (id: string | undefined) => {
-  const map: Record<string, {name: string, level: number, avatar: string}> = {
-    'iv1': { name: '널널한 대리', level: 1, avatar: '🐣' },
-    'iv2': { name: '깐깐한 과장', level: 2, avatar: '🐥' },
-    'iv3': { name: '압박면접 팀장', level: 3, avatar: '🦅' },
-    'iv4': { name: '최종보스 임원', level: 4, avatar: '👑' },
-  };
-  return map[id || ''] || { name: '알 수 없는 면접관', level: 1, avatar: '👤' };
-};
-
 const getSessionFeedback = (session: InterviewResponse): string => {
   if (session.overallFeedback) return session.overallFeedback;
 
@@ -65,6 +62,20 @@ const getSessionFeedback = (session: InterviewResponse): string => {
 
   return targetEvaluation?.feedback ?? session.evaluations?.find((evaluation) => evaluation.feedback)?.feedback ?? '';
 };
+
+type InterviewerView = Pick<Interviewer, 'name' | 'level' | 'avatar'>;
+
+function interviewerFromRouteState(state: unknown, interviewerId: string | undefined): InterviewerView | null {
+  const candidate = (state as { interviewer?: Interviewer } | null)?.interviewer;
+  if (!candidate) return null;
+  if (interviewerId && candidate.id !== interviewerId) return null;
+  return {
+    name: candidate.name,
+    level: candidate.level,
+    // 세션은 전신 스프라이트를 쓴다(확대샷은 던전 카드 전용).
+    avatar: getInterviewerAvatarByLevel(candidate.level),
+  };
+}
 
 export default function InterviewProcess() {
   const { interviewerId } = useParams();
@@ -83,6 +94,22 @@ export default function InterviewProcess() {
   const [isAbandonModalOpen, setIsAbandonModalOpen] = useState(false);
   const [finalResult, setFinalResult] = useState<FinalInterviewResult | null>(null);
   const [initializationError, setInitializationError] = useState<'MISSING_RESUME' | 'FAILED' | null>(null);
+  const [interviewer, setInterviewer] = useState<InterviewerView>(
+    () =>
+      interviewerFromRouteState(location.state, interviewerId) ?? {
+        name: '면접관',
+        level: 1,
+        avatar: getInterviewerAvatarByLevel(1),
+      }
+  );
+  /** 세션 스테이지에 그리는 전신 스프라이트(질문마다 셔플 큐 순서로 갱신). */
+  const [stageSprite, setStageSprite] = useState(
+    () => interviewerFromRouteState(location.state, interviewerId)?.avatar || getInterviewerAvatarByLevel(1)
+  );
+  /** 세션당 1회 셔플한 포즈 큐 — 질문마다 앞에서부터 소진(빠진 포즈 없이). */
+  const [poseOrder, setPoseOrder] = useState<string[]>([]);
+  /** 본문항 개수(꼬리질문 슬롯 오프셋용). */
+  const [mainQuestionCount, setMainQuestionCount] = useState(0);
 
   // startInterview 응답의 실제 sessionId를 사용한다 (#11: 하드코딩된 'session_123' 제거).
   const [sessionId, setSessionId] = useState('');
@@ -94,6 +121,22 @@ export default function InterviewProcess() {
 
     const initInterview = async () => {
       try {
+        // 라우트 id는 BE 숫자 id(String)다 — 구 mock키(iv1) 하드코딩 맵을 쓰지 않는다.
+        try {
+          const interviewers = await engineService.getInterviewers();
+          if (cancelled) return;
+          const matched = interviewers.find((iv) => iv.id === String(interviewerId));
+          if (matched) {
+            setInterviewer({
+              name: matched.name,
+              level: matched.level,
+              avatar: getInterviewerAvatarByLevel(matched.level),
+            });
+          }
+        } catch (e) {
+          console.error(e);
+        }
+
         let userName = '지원자';
         try {
           const user = await authService.getCurrentUser();
@@ -111,7 +154,7 @@ export default function InterviewProcess() {
           if (!cancelled) setInitializationError('MISSING_RESUME');
           return;
         }
-        const res = await engineService.startInterview(interviewerId || 'iv1', resumeId, selectedKeyword);
+        const res = await engineService.startInterview(interviewerId || '1', resumeId, selectedKeyword);
         if (cancelled) return;
         setSession(res);
         setSessionId(res.sessionId || '');
@@ -141,6 +184,29 @@ export default function InterviewProcess() {
 
   const isFollowUp = session?.nextTurn.turn === 2;
   const isLastQuestion = session?.questions ? currentQuestionIndex === session.questions.length - 1 : true;
+  // 첫 인사(오프닝 문구)만 기본 포즈 — 질문 본문부터 셔플 큐 사용
+  const isOpeningGreeting = !isFollowUp && currentQuestionIndex === 0 && phaseIndex === 0;
+  const questionSlot = isFollowUp ? mainQuestionCount + currentQuestionIndex : currentQuestionIndex;
+
+  // 면접관/세션이 정해지면 포즈 큐를 한 번 셔플한다.
+  useEffect(() => {
+    setPoseOrder(shufflePoseOrder(interviewer.level));
+  }, [interviewer.level, sessionId]);
+
+  useEffect(() => {
+    if (session?.questions && !isFollowUp) {
+      setMainQuestionCount(session.questions.length);
+    }
+  }, [session, isFollowUp]);
+
+  useEffect(() => {
+    setStageSprite(
+      pickSessionSpriteFromOrder(interviewer.level, poseOrder, {
+        isOpeningGreeting,
+        questionSlot,
+      }),
+    );
+  }, [interviewer.level, poseOrder, isOpeningGreeting, questionSlot]);
 
   useEffect(() => {
     if (session) {
@@ -280,21 +346,40 @@ export default function InterviewProcess() {
     );
   }
 
-  const interviewer = getInterviewerDetails(interviewerId);
-
   if (!session) return null;
   if (!isInterviewFinished && !session.questions) return null;
 
+  const sessionBackground = getInterviewBackgroundByLevel(interviewer.level);
+
   return (
     <div className="fixed inset-0 z-50 bg-blue-grey-940 flex flex-col h-screen overflow-hidden font-sans">
-      {/* Background Overlay */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-grey-940 to-blue-grey-999 -z-20"></div>
+      {/* z: 배경 → 캐릭터(전신·불투명) → 채팅 UI(반투명) */}
+      {sessionBackground ? (
+        <img
+          src={sessionBackground}
+          alt=""
+          aria-hidden
+          className="absolute inset-0 w-full h-full object-cover z-0 brightness-[1.08] contrast-[1.02]"
+        />
+      ) : (
+        <div className="absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-grey-940 to-blue-grey-999" />
+      )}
+
+      {/* 캐릭터: 하단 고정. 발은 화면/overflow로만 잘림(파일 크롭 없음) */}
+      <div className="absolute inset-x-0 bottom-0 z-10 pointer-events-none flex items-end justify-center overflow-hidden h-full">
+        <InterviewerAvatar
+          avatar={stageSprite || interviewer.avatar}
+          name={interviewer.name}
+          className="h-[min(84vh,740px)] w-auto max-w-[min(94vw,560px)] -translate-y-[1%] opacity-100"
+          imgClassName="h-[min(84vh,740px)] w-auto max-w-[min(94vw,560px)] object-contain object-bottom opacity-100"
+        />
+      </div>
 
       {/* Exit Button */}
-      <div className="absolute top-6 left-6 z-50">
+      <div className="absolute top-6 left-6 z-40">
         <button 
           onClick={() => setIsAbandonModalOpen(true)} 
-          className="flex items-center px-4 py-2 bg-blue-grey-900/60 hover:bg-blue-grey-900 border border-blue-grey-700 text-blue-grey-300 hover:text-white rounded-lg transition-colors text-[14px] leading-[20px] font-bold backdrop-blur-md"
+          className="flex items-center px-4 py-2 bg-blue-grey-900/50 hover:bg-blue-grey-900/80 border border-white/20 text-white/90 hover:text-white rounded-lg transition-colors text-[14px] leading-[20px] font-bold backdrop-blur-sm"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           면접 포기하기
@@ -327,41 +412,37 @@ export default function InterviewProcess() {
         </div>
       )}
 
-      {/* Top Section: Interviewer */}
-      <div className="flex-1 min-h-0 w-full flex flex-col items-center justify-center py-6 pt-16 relative z-10">
-        <div className="animate-float flex flex-col items-center justify-center h-full w-full">
-          <div className="text-[110px] md:text-[130px] leading-none drop-shadow-[0_0_80px_rgba(0,120,255,0.15)] select-none shrink object-contain max-h-full h-full w-full flex items-center justify-center">
-            {interviewer.avatar}
-          </div>
-        </div>
-      </div>
-
-      {/* Bottom Section: Dialog & Input */}
-      <div className="w-full max-w-4xl mx-auto px-6 pb-6 md:pb-8 flex flex-col gap-4 z-40 shrink-0 min-h-[38vh]">
+      {/* 하단 UI: 반투명 채팅박스가 캐릭터 하반신 위에 올라감 */}
+      <div className="relative z-20 mt-auto w-full max-w-4xl mx-auto px-6 pb-6 md:pb-8 flex flex-col gap-4 shrink-0 min-h-[38vh] pt-4">
         
         <div className="flex items-center gap-2 px-1 shrink-0">
           <span className="bg-primary/20 text-primary text-[14px] leading-[20px] font-bold font-mono px-2 py-1 rounded-md">
             Lv.{interviewer.level}
           </span>
-          <span className="text-white text-[14px] leading-[20px] font-bold tracking-wide">
+          <span className="text-white text-[14px] leading-[20px] font-bold tracking-wide drop-shadow-md">
             {interviewer.name}
           </span>
         </div>
 
-        {/* Dialog Box */}
+        {/* Dialog Box — 반투명이라 뒤 캐릭터 하반신이 비침 */}
         <div 
-          className="flex-1 bg-blue-grey-920/80 backdrop-blur-md border border-blue-grey-800 rounded-2xl p-6 md:p-8 pb-10 shadow-[0_0_30px_rgba(0,120,255,0.1)] flex flex-col relative cursor-pointer"
+          className="flex-1 bg-blue-grey-920/65 backdrop-blur-[2px] border border-white/15 rounded-2xl p-6 md:p-8 pb-10 shadow-[0_8px_40px_rgba(0,0,0,0.25)] flex flex-col relative cursor-pointer"
           onClick={handleDialogClick}
         >
           {isSubmitting && (
-            <div className="absolute inset-0 bg-blue-grey-920/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center rounded-2xl">
-              <div className="text-5xl mb-4 animate-bounce">🐣</div>
+            <div className="absolute inset-0 bg-blue-grey-920/85 backdrop-blur-sm z-50 flex flex-col items-center justify-center rounded-2xl">
+              <InterviewerAvatar
+                avatar={stageSprite || interviewer.avatar}
+                name={interviewer.name}
+                className="w-20 h-20 mb-4 animate-bounce"
+                imgClassName="w-20 h-20"
+              />
               <p className="text-white font-bold animate-pulse">면접관이 답변을 날카롭게 검토하고 있습니다...</p>
             </div>
           )}
 
           <div className="flex-1 min-h-[120px] flex items-start">
-            <p className="text-white text-[16px] leading-[28px] font-normal md:text-[20px] md:leading-[28px] md:font-bold leading-relaxed whitespace-pre-wrap font-medium">
+            <p className="text-white text-[16px] leading-[28px] font-normal md:text-[20px] md:leading-[28px] md:font-bold leading-relaxed whitespace-pre-wrap font-medium drop-shadow-sm">
               {displayedText}
               {!isTypewriterComplete && <span className="animate-pulse">|</span>}
             </p>
@@ -395,7 +476,7 @@ export default function InterviewProcess() {
         ) : (
           isUserTurn && (
             <div 
-              className="shrink-0 h-[140px] md:h-[150px] bg-blue-grey-920/80 backdrop-blur-md border border-blue-grey-800 rounded-2xl p-3 md:p-4 flex gap-3 md:gap-4 shadow-[0_0_30px_rgba(0,120,255,0.1)]"
+              className="shrink-0 h-[140px] md:h-[150px] bg-blue-grey-920/70 backdrop-blur-[2px] border border-white/15 rounded-2xl p-3 md:p-4 flex gap-3 md:gap-4 shadow-[0_8px_40px_rgba(0,0,0,0.2)]"
               style={{ animation: 'fadeIn 0.3s ease-in-out' }}
             >
               <textarea

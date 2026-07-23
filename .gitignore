@@ -9,3 +9,8 @@ coverage/
 .idea/
 *.iml
 .codex/
+.venv-nukki/
+scripts/__pycache__/
+public/interviewers/_check_*
+public/interviewers/_prev*
+public/interviewers/_preview*
