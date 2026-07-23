@@ -1,12 +1,14 @@
 // 페이지 컴포넌트가 실제로 import하는 진입점. VITE_USE_MOCK으로 mock/실제 API를 스위칭한다.
 import { progressMock } from './progress.mock';
 import { progressApi } from './progress.api';
+import { selectAcquiredBadges } from './progress.badges';
 import { GaugeUpdate, UserBadge } from './progress.types';
 
 interface ProgressService {
   captureSnapshot: (sessionId: string) => Promise<void>;
   getGaugeUpdate: (sessionId: string) => Promise<GaugeUpdate>;
   getMyBadges: () => Promise<UserBadge[]>;
+  getBadgeCatalog: () => Promise<UserBadge[]>;
 }
 
 const USE_MOCK = import.meta.env.VITE_USE_MOCK !== 'false';
@@ -42,8 +44,11 @@ function loadSnapshot(sessionId: string): ProgressSnapshot | null {
 }
 
 const realProgressService: ProgressService = {
-  /** 마이페이지가 BG-001의 S3 이미지 URL을 그대로 사용할 수 있도록 목록을 노출한다. */
-  getMyBadges: async () => (await progressApi.getMyBadges()).badges,
+  /** 현재 뱃지와 신규 획득 비교에는 BG-001 도감 중 실제 보유 뱃지만 노출한다. */
+  getMyBadges: async () => selectAcquiredBadges((await progressApi.getMyBadges()).badges),
+
+  /** 마이페이지 잠금 이미지를 위해 BG-001의 Stage1~4 전체 도감을 노출한다. */
+  getBadgeCatalog: async () => (await progressApi.getMyBadges()).badges,
 
   captureSnapshot: async (sessionId) => {
     const [progress, badgeList] = await Promise.all([
@@ -54,7 +59,7 @@ const realProgressService: ProgressService = {
     saveSnapshot(sessionId, {
       unlockedLevel: progress.unlockedLevel,
       progressGauge: progress.progressGauge,
-      badgeIds: badgeList.badges.map((badge) => badge.badgeId),
+      badgeIds: selectAcquiredBadges(badgeList.badges).map((badge) => badge.badgeId),
     });
   },
 
@@ -64,8 +69,9 @@ const realProgressService: ProgressService = {
       progressApi.getMyBadges(),
     ]);
     const snapshot = loadSnapshot(sessionId);
-    const previousBadgeIds = new Set(snapshot?.badgeIds ?? badgeList.badges.map((badge) => badge.badgeId));
-    const newlyAcquiredBadge = badgeList.badges
+    const acquiredBadges = selectAcquiredBadges(badgeList.badges);
+    const previousBadgeIds = new Set(snapshot?.badgeIds ?? acquiredBadges.map((badge) => badge.badgeId));
+    const newlyAcquiredBadge = acquiredBadges
       .filter((badge) => !previousBadgeIds.has(badge.badgeId))
       .sort((left, right) => right.stage - left.stage)[0];
 

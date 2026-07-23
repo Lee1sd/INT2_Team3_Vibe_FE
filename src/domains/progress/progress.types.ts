@@ -6,7 +6,8 @@ export interface UserBadge {
   stage: number;
   name: string;
   imageUrl: string | null;
-  acquiredAt: string;
+  acquired: boolean;
+  acquiredAt: string | null;
 }
 
 export interface GaugeUpdate {
