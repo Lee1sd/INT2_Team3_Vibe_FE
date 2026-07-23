@@ -7,11 +7,23 @@ import { Interviewer, User } from '../types';
 import { Lock, PlayCircle, ShieldCheck, Star } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 import { InfoTooltip } from '../components/InfoTooltip';
+import { BadgeImage } from '../components/BadgeImage';
 import { InterviewerAvatar } from '../components/InterviewerAvatar';
+import { progressService } from '../domains/progress/progress.service';
+import { UserBadge } from '../domains/progress/progress.types';
+
+/** 보유 뱃지 중 Stage가 가장 높은 뱃지를 메인 화면에 표시할 현재 뱃지로 선택한다. */
+function findCurrentBadge(badges: UserBadge[]): UserBadge | null {
+  return badges.reduce<UserBadge | null>(
+    (current, badge) => (!current || badge.stage > current.stage ? badge : current),
+    null,
+  );
+}
 
 export default function InterviewerList() {
   const [interviewers, setInterviewers] = useState<Interviewer[]>([]);
   const [user, setUser] = useState<User | null>(null);
+  const [currentBadge, setCurrentBadge] = useState<UserBadge | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploaded, setIsUploaded] = useState(false);
   const [selectedKeyword, setSelectedKeyword] = useState<string>('');
@@ -22,10 +34,11 @@ export default function InterviewerList() {
       try {
         // getCurrentUser가 아직 미연동이어도 면접관 목록은 뜨게, 요청을 독립적으로 처리한다.
         // (동기 throw 하는 stub도 allSettled가 잡도록 Promise로 감싼다)
-        const [userResult, interviewerResult, uploadResult] = await Promise.allSettled([
+        const [userResult, interviewerResult, uploadResult, badgeResult] = await Promise.allSettled([
           Promise.resolve().then(() => authService.getCurrentUser()),
           engineService.getInterviewers(),
           fileService.checkResumeStatus(),
+          progressService.getMyBadges(),
         ]);
 
         if (userResult.status === 'fulfilled') {
@@ -44,6 +57,12 @@ export default function InterviewerList() {
           setIsUploaded(uploadResult.value);
         } else {
           console.error(uploadResult.reason);
+        }
+
+        if (badgeResult.status === 'fulfilled') {
+          setCurrentBadge(findCurrentBadge(badgeResult.value));
+        } else {
+          console.error('메인 화면 뱃지 조회 실패', badgeResult.reason);
         }
       } finally {
         setIsLoading(false);
@@ -77,7 +96,12 @@ export default function InterviewerList() {
             <div className="relative mb-6">
               <div className="w-32 h-32 bg-white border border-blue-grey-75 shadow-sm rounded-2xl flex items-center justify-center text-6xl">
                 <div className="absolute inset-0 rounded-2xl shadow-[0_0_30px_rgba(0,120,255,0.2)] pointer-events-none"></div>
-                <span className="relative z-10">🐣</span>
+                <BadgeImage
+                  src={currentBadge?.imageUrl}
+                  alt={currentBadge?.name ?? '현재 뱃지'}
+                  className="relative z-10 w-full h-full object-contain rounded-2xl"
+                  fallback={<span className="relative z-10">🐣</span>}
+                />
               </div>
               {user && !isUploaded && (
                 <div className="absolute left-full top-0 -translate-y-4 ml-6 w-max max-w-xs bg-white/90 border border-blue-grey-75 px-6 py-4 rounded-2xl shadow-md z-20 animate-bounce">
@@ -88,7 +112,9 @@ export default function InterviewerList() {
                 </div>
               )}
             </div>
-            <h3 className="text-[20px] leading-[28px] font-bold text-blue-grey-900 mb-3">초보 머쓱이 뱃지</h3>
+            <h3 className="text-[20px] leading-[28px] font-bold text-blue-grey-900 mb-3">
+              {currentBadge?.name ?? '현재 뱃지'}
+            </h3>
             <div className="inline-flex items-center justify-center px-4 py-1.5 bg-white rounded-full text-blue-grey-700 font-mono text-[14px] leading-[20px] font-bold shadow-sm border border-blue-grey-100">
               <Star className="w-4 h-4 mr-2 text-warning fill-warning" />
               현재 레벨: Lv.{user?.level}

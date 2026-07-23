@@ -5,7 +5,7 @@ export interface UserBadge {
   badgeId: number;
   stage: number;
   name: string;
-  imageUrl: string;
+  imageUrl: string | null;
   acquiredAt: string;
 }
 

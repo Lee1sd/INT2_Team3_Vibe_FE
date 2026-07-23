@@ -10,6 +10,7 @@ import {
 import { GaugeUpdate, User, Interviewer, FinalInterviewResult } from '../types';
 import { Award, ChevronRight, Zap, MessageSquare, AlertCircle } from 'lucide-react';
 import { InfoTooltip } from '../components/InfoTooltip';
+import { BadgeImage } from '../components/BadgeImage';
 
 export default function Result() {
   const { sessionId } = useParams();
@@ -182,7 +183,12 @@ export default function Result() {
             
             <div className="relative z-10 flex flex-col items-center">
               <div className="w-24 h-24 bg-white rounded-3xl mx-auto flex items-center justify-center shadow-lg mb-6 border border-blue-grey-50 animate-badge-3d hover:scale-110 transition-transform duration-500">
-                <Award className="w-12 h-12 text-warning fill-warning" />
+                <BadgeImage
+                  src={result.newlyAcquiredBadge?.imageUrl}
+                  alt={`${result.newlyAcquiredBadge?.name ?? '새로 획득한'} 뱃지`}
+                  className="w-full h-full object-contain rounded-3xl"
+                  fallback={<Award className="w-12 h-12 text-warning fill-warning" />}
+                />
               </div>
               <h3 className="text-[26px] leading-[32px] font-bold text-blue-grey-900 mb-2">새로운 뱃지 획득!</h3>
               <p className="text-blue-grey-900 text-[14px] leading-[20px] font-normal mb-6">
