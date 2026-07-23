@@ -38,7 +38,7 @@ const STATIC_CONTENT_BY_LEVEL: Record<
     requiredGauge: 60,
     description: '극한의 상황에서 멘탈과 문제 해결 능력을 봅니다.',
     achievement: '스트레스 상황에서도 침착하게 근본적인 원인을 분석하고 대안을 제시할 수 있습니다.',
-    // Lv.3 페르소나 이미지는 아직 미제작 — 빈 슬롯으로 둔다.
+    // Lv.3 세션 전신/포즈는 미제작 — 메인 카드는 bust 경로를 쓴다.
     avatar: '',
   },
   4: {
@@ -65,10 +65,11 @@ export function getInterviewerAvatarByLevel(level: number): string {
   return STATIC_CONTENT_BY_LEVEL[level]?.avatar ?? '';
 }
 
-/** 던전/메인 레벨 카드용 확대샷(누끼). Lv.3+는 빈 문자열. */
+/** 던전/메인 레벨 카드용 확대샷(누끼). Lv.4는 빈 문자열. */
 export function getInterviewerBustByLevel(level: number): string {
   if (level === 1) return '/interviewers/lv1-casual-bust.png';
   if (level === 2) return '/interviewers/lv2-strict-bust.png';
+  if (level === 3) return '/interviewers/lv3-pressure-bust.png';
   return '';
 }
 
