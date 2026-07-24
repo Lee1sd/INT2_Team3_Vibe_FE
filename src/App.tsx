@@ -4,7 +4,7 @@
  */
 
 import { useEffect, useState, type ReactNode } from 'react';
-import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { authService } from './domains/auth/auth.service';
 import { PROFILE_UPDATED_EVENT } from './domains/auth/profile-events';
 import Login from './pages/Login';
@@ -30,22 +30,22 @@ function AuthBootstrap({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let cancelled = false;
-    const bootController = new AbortController();
 
     const markReady = () => {
       if (!cancelled) setReady(true);
     };
 
+    // 안전 상한은 UI만 풀어 준다. restoreSession fetch 자체를 abort하지 않는다.
+    // (abort 시 BE는 refresh 쿠키를 revoke했는데 FE는 새 토큰을 못 받아 세션이 끊긴다.)
     const safetyTimer = window.setTimeout(() => {
       console.warn(
         `[AuthBootstrap] restoreSession이 ${AUTH_BOOT_SAFETY_MS}ms 내 끝나지 않아 부트를 강제 완료합니다.`,
       );
-      bootController.abort();
       markReady();
     }, AUTH_BOOT_SAFETY_MS);
 
     authService
-      .restoreSession(bootController.signal)
+      .restoreSession()
       .catch((error) => {
         console.error('[AuthBootstrap] restoreSession failed', error);
       })
@@ -56,7 +56,6 @@ function AuthBootstrap({ children }: { children: ReactNode }) {
 
     return () => {
       cancelled = true;
-      bootController.abort();
       window.clearTimeout(safetyTimer);
     };
   }, []);
@@ -74,7 +73,6 @@ function AuthBootstrap({ children }: { children: ReactNode }) {
 
 /** 마이페이지와 동일: 사진 있으면 사진, 없으면 이메일 이니셜. */
 function HeaderProfileLink() {
-  const location = useLocation();
   const [photoUrl, setPhotoUrl] = useState<string | undefined>();
   const [initial, setInitial] = useState('U');
 
@@ -118,7 +116,7 @@ function HeaderProfileLink() {
       cancelled = true;
       window.removeEventListener(PROFILE_UPDATED_EVENT, onProfileUpdated);
     };
-  }, [location.pathname]);
+  }, []);
 
   return (
     <Link
