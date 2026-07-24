@@ -79,8 +79,10 @@ type TutorialStep = {
   id: 'gauge' | 'dialog' | 'flow';
   title: string;
   body: string;
-  /** 하이라이트 영역 — 뷰포트 기준 % */
+  /** 하이라이트 영역 — 뷰포트 기준 */
   hole: CSSProperties;
+  /** 설명 박스 위치 — 스포트라이트와 겹치지 않게 */
+  panel: CSSProperties;
 };
 
 const TUTORIAL_STEPS: TutorialStep[] = [
@@ -88,19 +90,31 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     id: 'gauge',
     title: '성과 게이지',
     body: '답변할 때마다 즉시 채점되어 게이지가 오르내립니다. 탈락선(25) 이하 또는 합격선(80) 이상이면 그 즉시 면접이 종료됩니다.',
-    hole: { top: '1.25rem', right: '1.25rem', width: 'min(92vw, 320px)', height: '7.5rem' },
+    hole: { top: '1.25rem', right: '1.25rem', width: 'min(92vw, 320px)', height: '7.75rem' },
+    // 게이지는 우상단 → 설명은 좌측 중앙
+    panel: { left: '1.25rem', top: '50%', transform: 'translateY(-50%)', width: 'min(92vw, 380px)' },
   },
   {
     id: 'dialog',
     title: '턴바이턴 대화',
     body: '질문이 하나씩 주어집니다. 대화창을 클릭하거나 Space로 대사를 넘기고, 답변을 입력한 뒤 제출하세요. 꼬리질문은 연속 최대 3회입니다.',
-    hole: { left: '50%', bottom: '1.5rem', width: 'min(100% - 3rem, 56rem)', height: 'min(42vh, 420px)', transform: 'translateX(-50%)' },
+    hole: { left: '50%', bottom: '1.5rem', width: 'min(100% - 3rem, 56rem)', height: 'min(38vh, 360px)', transform: 'translateX(-50%)' },
+    // 대화창은 하단 → 설명은 상단 중앙
+    panel: { left: '50%', top: '1.5rem', transform: 'translateX(-50%)', width: 'min(92vw, 420px)' },
   },
   {
     id: 'flow',
     title: '진행 방식 (목업)',
     body: '전체 발화는 최대 20회입니다. 채점은 프론트 목업이며 던전 신뢰도/뱃지에는 반영되지 않습니다. 결과가 좋으면 밝은 임원, 나쁘면 bad2 연출이 나옵니다.',
-    hole: { left: '50%', top: '28%', width: 'min(70vw, 280px)', height: 'min(42vh, 360px)', transform: 'translateX(-50%)' },
+    hole: {
+      left: '50%',
+      bottom: 'min(26vh, 220px)',
+      width: 'min(45.5vw, 438px)',
+      height: 'min(52vh, 500px)',
+      transform: 'translateX(-50%)',
+    },
+    // 캐릭터는 중앙 → 설명은 우측
+    panel: { right: '1.25rem', top: '50%', transform: 'translateY(-50%)', width: 'min(92vw, 360px)' },
   },
 ];
 
@@ -118,17 +132,26 @@ function FocusMaskTutorial({
 
   return (
     <div className="fixed inset-0 z-[60]" role="dialog" aria-modal="true" aria-labelledby="lv4-tutorial-title">
-      <div className="absolute inset-0 bg-black/75" />
+      {/*
+        전체 dim 레이어를 따로 깔지 않는다.
+        스포트라이트 구멍만 box-shadow로 주변을 어둡게 해, 하이라이트 영역은 원본 밝기 그대로 보이게 한다.
+      */}
       <div
         className="absolute z-[61] rounded-2xl pointer-events-none"
         style={{
           ...step.hole,
-          boxShadow: '0 0 0 9999px rgba(0,0,0,0.75)',
-          border: '2px dashed rgba(56, 189, 248, 0.95)',
+          boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.72), 0 0 28px 6px rgba(56, 189, 248, 0.55)',
+          border: '2px dashed rgba(125, 211, 252, 1)',
           background: 'transparent',
+          outline: '3px solid rgba(255, 255, 255, 0.35)',
+          outlineOffset: '2px',
         }}
       />
-      <div className="absolute z-[62] left-1/2 -translate-x-1/2 bottom-8 w-[min(92vw,420px)] bg-blue-grey-920 border border-sky-400/40 rounded-2xl p-5 shadow-2xl">
+
+      <div
+        className="absolute z-[62] bg-blue-grey-920/95 backdrop-blur-md border border-sky-400/50 rounded-2xl p-5 shadow-2xl"
+        style={step.panel}
+      >
         <div className="flex items-center justify-between mb-2">
           <p className="text-[11px] font-mono text-sky-300">
             STEP {stepIndex + 1}/{TUTORIAL_STEPS.length}
@@ -140,7 +163,7 @@ function FocusMaskTutorial({
         <h3 id="lv4-tutorial-title" className="text-[18px] font-bold text-white mb-2">
           {step.title}
         </h3>
-        <p className="text-[14px] leading-relaxed text-blue-grey-200 mb-5">{step.body}</p>
+        <p className="text-[14px] leading-relaxed text-blue-grey-100 mb-5">{step.body}</p>
         <button
           type="button"
           onClick={onNext}

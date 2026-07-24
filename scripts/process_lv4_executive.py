@@ -1,4 +1,4 @@
-"""Lv.4 임원 에셋: 검정 배경 제거 + 상반신 bust + 포즈/배경 저장 (PIL only)."""
+"""Lv.4 에셋 재생성: 추가 누끼 없이 원본 알파 유지 + 560x640 정규화."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -19,87 +19,107 @@ SRC = {
     "bg": ASSETS / "c__Users_dkwlr_AppData_Roaming_Cursor_User_workspaceStorage_d979ec530feb21639ab0a730a7f80630_images__________-16e84837-4e7f-41e0-9d84-6d04e1ac289c.png",
 }
 
-
-def downscale(im: Image.Image, max_side: int) -> Image.Image:
-    w, h = im.size
-    scale = min(1.0, max_side / max(w, h))
-    if scale >= 1.0:
-        return im
-    return im.resize((int(w * scale), int(h * scale)), Image.Resampling.LANCZOS)
+CANVAS_W, CANVAS_H = 560, 640
+TARGET_BODY_H = 580
+PAD_BOTTOM = 12
 
 
-def remove_black_bg(im: Image.Image) -> Image.Image:
-    rgba = im.convert("RGBA")
-    pixels = rgba.load()
-    w, h = rgba.size
-    for y in range(h):
-        for x in range(w):
-            r, g, b, a = pixels[x, y]
-            if r <= 28 and g <= 28 and b <= 28:
-                pixels[x, y] = (r, g, b, 0)
-    return rgba
-
-
-def autocrop(im: Image.Image, pad: int = 8) -> Image.Image:
-    bbox = im.getbbox()
+def autocrop(im: Image.Image, pad: int = 4) -> Image.Image:
+    bbox = im.split()[-1].getbbox() if im.mode == "RGBA" else im.getbbox()
     if not bbox:
         return im
     l, t, r, b = bbox
-    l = max(0, l - pad)
-    t = max(0, t - pad)
-    r = min(im.width, r + pad)
-    b = min(im.height, b + pad)
-    return im.crop((l, t, r, b))
+    return im.crop((max(0, l - pad), max(0, t - pad), min(im.width, r + pad), min(im.height, b + pad)))
 
 
-def bust_crop(im: Image.Image) -> Image.Image:
-    bbox = im.getbbox()
+def place_on_canvas(im: Image.Image) -> Image.Image:
+    """Lv1/2와 동일: 본체 높이 TARGET_BODY_H, 하단 PAD_BOTTOM, 가로 중앙."""
+    im = autocrop(im.convert("RGBA"), pad=2)
+    alpha = im.split()[-1]
+    bbox = alpha.getbbox()
     if not bbox:
-        return im
+        return Image.new("RGBA", (CANVAS_W, CANVAS_H), (0, 0, 0, 0))
+    l, t, r, b = bbox
+    crop = im.crop((l, t, r, b))
+    body_h = crop.height
+    scale = TARGET_BODY_H / max(1, body_h)
+    new_w = max(1, int(round(crop.width * scale)))
+    new_h = max(1, int(round(crop.height * scale)))
+    resized = crop.resize((new_w, new_h), Image.Resampling.LANCZOS)
+
+    x = int(round(CANVAS_W / 2 - resized.width / 2))
+    y = CANVAS_H - PAD_BOTTOM - resized.height
+    if x < 0:
+        resized = resized.crop((-x, 0, resized.width, resized.height))
+        x = 0
+    if x + resized.width > CANVAS_W:
+        resized = resized.crop((0, 0, CANVAS_W - x, resized.height))
+    if y < 0:
+        resized = resized.crop((0, -y, resized.width, resized.height))
+        y = 0
+
+    canvas = Image.new("RGBA", (CANVAS_W, CANVAS_H), (0, 0, 0, 0))
+    canvas.alpha_composite(resized, (x, y))
+    return canvas
+
+
+def make_bust(full_canvas: Image.Image) -> Image.Image:
+    """정규화된 전신에서 상반신만 — 다른 레벨 bust처럼 머리~가슴 중심."""
+    alpha = full_canvas.split()[-1]
+    bbox = alpha.getbbox()
+    if not bbox:
+        return full_canvas
     l, t, r, b = bbox
     h = b - t
-    nb = t + max(1, int(h * 0.58))
-    return autocrop(im.crop((l, t, r, nb)), pad=10)
+    # 상단 ~55% (얼굴·배지·상반신 제스처)
+    nb = t + max(1, int(h * 0.55))
+    bust = autocrop(full_canvas.crop((l, t, r, nb)), pad=8)
+    # 메인 카드용으로 넉넉히
+    max_side = 720
+    w, h = bust.size
+    scale = min(1.0, max_side / max(w, h))
+    if scale < 1:
+        bust = bust.resize((int(w * scale), int(h * scale)), Image.Resampling.LANCZOS)
+    return bust
 
 
-def save_sprite(src: Path, dest: Path, *, max_side: int, bust: bool) -> None:
-    if not src.exists():
-        raise FileNotFoundError(src)
-    raw = downscale(Image.open(src).convert("RGBA"), 1100)
-    cut = remove_black_bg(raw)
-    cut = autocrop(cut)
-    if bust:
-        cut = bust_crop(cut)
-    out = downscale(cut, max_side)
-    out = autocrop(out)
+def export_sprite(src: Path, dest: Path) -> Image.Image:
+    raw = Image.open(src).convert("RGBA")
+    # 추가 누끼 금지 — 원본 알파/아웃라인 유지
+    canvas = place_on_canvas(raw)
     dest.parent.mkdir(parents=True, exist_ok=True)
-    out.save(dest, "PNG", optimize=True)
-    print(f"OK {dest.name} {out.size[0]}x{out.size[1]}", flush=True)
+    canvas.save(dest, "PNG", optimize=True)
+    print(f"OK {dest.name} {canvas.size}", flush=True)
+    return canvas
 
 
 def save_bg(src: Path, dest: Path) -> None:
     im = Image.open(src).convert("RGB")
     im = ImageEnhance.Brightness(im).enhance(1.08)
     im = ImageEnhance.Contrast(im).enhance(1.03)
-    im = downscale(im, 1920)
+    w, h = im.size
+    scale = min(1.0, 1920 / max(w, h))
+    if scale < 1:
+        im = im.resize((int(w * scale), int(h * scale)), Image.Resampling.LANCZOS)
     dest.parent.mkdir(parents=True, exist_ok=True)
     im.save(dest, "PNG", optimize=True)
     print(f"OK bg {dest.name} {im.size}", flush=True)
 
 
 def main() -> None:
-    for key, path in SRC.items():
-        print(f"src {key}: exists={path.exists()}", flush=True)
+    main_canvas = export_sprite(SRC["main"], OUT / "lv4-executive.png")
+    bust = make_bust(main_canvas)
+    bust_path = OUT / "lv4-executive-bust.png"
+    bust.save(bust_path, "PNG", optimize=True)
+    print(f"OK {bust_path.name} {bust.size}", flush=True)
 
-    save_sprite(SRC["main"], OUT / "lv4-executive-bust.png", max_side=960, bust=True)
-    save_sprite(SRC["main"], OUT / "lv4-executive.png", max_side=720, bust=False)
-    save_sprite(SRC["pose2"], POSE / "lv4-executive-pose-02.png", max_side=720, bust=False)
-    save_sprite(SRC["pose3"], POSE / "lv4-executive-pose-03.png", max_side=720, bust=False)
-    save_sprite(SRC["bad1"], POSE / "lv4-executive-pose-bad1.png", max_side=720, bust=False)
-    save_sprite(SRC["bad2"], POSE / "lv4-executive-pose-bad2.png", max_side=720, bust=False)
-    save_sprite(SRC["main"], POSE / "lv4-executive-pose-good-01.png", max_side=720, bust=False)
-    save_sprite(SRC["pose2"], POSE / "lv4-executive-pose-good-02.png", max_side=720, bust=False)
-    save_sprite(SRC["pose3"], POSE / "lv4-executive-pose-good-03.png", max_side=720, bust=False)
+    export_sprite(SRC["pose2"], POSE / "lv4-executive-pose-02.png")
+    export_sprite(SRC["pose3"], POSE / "lv4-executive-pose-03.png")
+    export_sprite(SRC["bad1"], POSE / "lv4-executive-pose-bad1.png")
+    export_sprite(SRC["bad2"], POSE / "lv4-executive-pose-bad2.png")
+    export_sprite(SRC["main"], POSE / "lv4-executive-pose-good-01.png")
+    export_sprite(SRC["pose2"], POSE / "lv4-executive-pose-good-02.png")
+    export_sprite(SRC["pose3"], POSE / "lv4-executive-pose-good-03.png")
     save_bg(SRC["bg"], BG / "lv4-grepp-hq.png")
     print("done", flush=True)
 
