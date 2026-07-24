@@ -339,11 +339,7 @@ export const level4ChallengeMock = {
     }
     if (state.utteranceCount >= MAX_UTTERANCES) {
       state.ended = true;
-      state.endReason = state.gauge >= PASS_THRESHOLD ? 'PASS' : 'FAIL';
-      // 상한 도달 시 임계 미달이면 FAIL로 본다 (게이지가 애매하면 MAX 멘트로 구분).
-      if (state.gauge > FAIL_THRESHOLD && state.gauge < PASS_THRESHOLD) {
-        state.endReason = 'MAX_UTTERANCES';
-      }
+      state.endReason = 'MAX_UTTERANCES';
       return toResponse(state, {
         lastDelta: scored.delta,
         interviewerLine: scored.feedback,

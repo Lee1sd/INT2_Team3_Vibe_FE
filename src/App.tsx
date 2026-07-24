@@ -27,6 +27,7 @@ function AuthBootstrap({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let cancelled = false;
+    const bootController = new AbortController();
 
     const markReady = () => {
       if (!cancelled) setReady(true);
@@ -36,11 +37,12 @@ function AuthBootstrap({ children }: { children: ReactNode }) {
       console.warn(
         `[AuthBootstrap] restoreSession이 ${AUTH_BOOT_SAFETY_MS}ms 내 끝나지 않아 부트를 강제 완료합니다.`,
       );
+      bootController.abort();
       markReady();
     }, AUTH_BOOT_SAFETY_MS);
 
     authService
-      .restoreSession()
+      .restoreSession(bootController.signal)
       .catch((error) => {
         console.error('[AuthBootstrap] restoreSession failed', error);
       })
@@ -51,6 +53,7 @@ function AuthBootstrap({ children }: { children: ReactNode }) {
 
     return () => {
       cancelled = true;
+      bootController.abort();
       window.clearTimeout(safetyTimer);
     };
   }, []);

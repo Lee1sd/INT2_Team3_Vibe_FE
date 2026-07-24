@@ -36,6 +36,8 @@ export const interviewMock = {
             achievement: '스트레스 상황에서도 침착하게 근본적인 원인을 분석하고 대안을 제시할 수 있습니다.',
             avatar: '',
           },
+          // iv4는 withLevel4ChallengeInterviewer가 항상 canonical stub으로 덮어쓴다.
+          // 여기 항목은 목 목록 길이/레벨 슬롯 참고용이며, 실제 UI 카피는 stub/STATIC_CONTENT를 따른다.
           {
             id: 'iv4',
             name: '이중인격 임원',

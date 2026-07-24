@@ -6,7 +6,7 @@ import {
   isLevel4ChallengeInterviewerId,
   level4ChallengeMock,
 } from './level4-challenge.mock';
-import { Interviewer, InterviewResponse, Question, Answer, NextTurn } from './interview.types';
+import { Interviewer, InterviewResponse, Question, Answer, NextTurn, ChallengeFinalResult } from './interview.types';
 
 interface InterviewService {
   getInterviewers: () => Promise<Interviewer[]>;
@@ -15,6 +15,14 @@ interface InterviewService {
   submitFollowUp: (sessionId: string, answer: Answer) => Promise<InterviewResponse>;
   /** Lv.4 챌린지 전용 — 답변 1건마다 채점·게이지 갱신. */
   submitChallengeTurn: (sessionId: string, answer: Answer) => Promise<InterviewResponse>;
+  buildChallengeFinalResult: (response: InterviewResponse) => ChallengeFinalResult;
+  getChallengeGaugeUpdate: (final: ChallengeFinalResult) => {
+    previousGauge: number;
+    newGauge: number;
+    levelUp: boolean;
+    unlockedLevel: number;
+    newlyAcquiredBadge: undefined;
+  };
 }
 
 const USE_MOCK = import.meta.env.VITE_USE_MOCK !== 'false';
@@ -306,6 +314,10 @@ export const engineService: InterviewService = {
   submitFollowUp: (sessionId, answer) => baseService.submitFollowUp(sessionId, answer),
 
   submitChallengeTurn: (sessionId, answer) => level4ChallengeMock.submitTurn(sessionId, answer),
+
+  buildChallengeFinalResult: (response) => level4ChallengeMock.buildFinalResult(response),
+
+  getChallengeGaugeUpdate: (final) => level4ChallengeMock.getMockGaugeUpdate(final),
 };
 
 export { isLevel4ChallengeInterviewerId, LEVEL4_INTERVIEWER_ID } from './level4-challenge.mock';

@@ -11,7 +11,6 @@ import {
   isLevel4ChallengeSessionId,
   loadChallengeFinalResult,
 } from '../domains/interview/level4-challenge.storage';
-import { level4ChallengeMock } from '../domains/interview/level4-challenge.mock';
 import { GaugeUpdate, Interviewer, FinalInterviewResult, ChallengeFinalResult } from '../types';
 import { Award, ChevronRight, Zap, MessageSquare, AlertCircle } from 'lucide-react';
 import { InfoTooltip } from '../components/InfoTooltip';
@@ -60,7 +59,7 @@ export default function Result() {
             passed: finalChallenge.passed,
             overallFeedback: finalChallenge.overallFeedback,
           });
-          setResult(level4ChallengeMock.getMockGaugeUpdate(finalChallenge));
+          setResult(engineService.getChallengeGaugeUpdate(finalChallenge));
           setDisplayedScore(0);
           setUnlockedInterviewer(null);
           setShowBadgeModal(false);

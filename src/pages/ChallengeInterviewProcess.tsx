@@ -11,7 +11,6 @@ import {
 } from '../domains/interview/interview.service';
 import { pickOpeningGreeting } from '../domains/interview/openingGreetings';
 import { fileService } from '../domains/resume/resume.service';
-import { level4ChallengeMock } from '../domains/interview/level4-challenge.mock';
 import { saveChallengeFinalResult } from '../domains/interview/level4-challenge.storage';
 import {
   Answer,
@@ -379,7 +378,7 @@ export default function ChallengeInterviewProcess() {
       setSession(res);
 
       if (res.nextTurn.type === 'END') {
-        const completed = level4ChallengeMock.buildFinalResult(res);
+        const completed = engineService.buildChallengeFinalResult(res);
         saveChallengeFinalResult(activeSessionId, completed);
         setFinalResult(completed);
         setIsInterviewFinished(true);
