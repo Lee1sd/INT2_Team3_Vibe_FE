@@ -1,5 +1,5 @@
 // 페이지 컴포넌트가 실제로 import하는 진입점. VITE_USE_MOCK으로 mock/실제 API를 스위칭한다.
-import { interviewApi, InterviewerApiItem, SubmitAnswersApiResponse } from './interview.api';
+import { interviewApi, InterviewerApiItem, SubmitAnswersApiResponse, InterviewHistoryApiResponse, InterviewDetailApiResponse } from './interview.api';
 import { interviewMock } from './interview.mock';
 import {
   getLevel4ChallengeInterviewerStub,
@@ -23,6 +23,8 @@ interface InterviewService {
     unlockedLevel: number;
     newlyAcquiredBadge: undefined;
   };
+  getHistory: () => Promise<InterviewHistoryApiResponse>;
+  getHistoryDetail: (sessionId: string, signal?: AbortSignal) => Promise<InterviewDetailApiResponse>;
 }
 
 const USE_MOCK = import.meta.env.VITE_USE_MOCK !== 'false';
@@ -291,6 +293,10 @@ const realInterviewService = {
     const res = await interviewApi.submitAnswers(Number(sessionId), toApiAnswers([answer], answer.questionId));
     return toInterviewResponse(res, 3);
   },
+
+  getHistory: () => interviewApi.getHistory(),
+
+  getHistoryDetail: (sessionId, signal) => interviewApi.getHistoryDetail(Number(sessionId), signal),
 };
 
 const baseService = USE_MOCK ? interviewMock : realInterviewService;
@@ -318,6 +324,10 @@ export const engineService: InterviewService = {
   buildChallengeFinalResult: (response) => level4ChallengeMock.buildFinalResult(response),
 
   getChallengeGaugeUpdate: (final) => level4ChallengeMock.getMockGaugeUpdate(final),
+
+  getHistory: () => baseService.getHistory(),
+
+  getHistoryDetail: (sessionId, signal) => baseService.getHistoryDetail(sessionId, signal),
 };
 
 export { isLevel4ChallengeInterviewerId, LEVEL4_INTERVIEWER_ID } from './level4-challenge.mock';
