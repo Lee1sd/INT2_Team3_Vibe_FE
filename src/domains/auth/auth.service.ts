@@ -12,7 +12,7 @@ import {
 
 interface AuthService {
   /** 앱 시작/새로고침 시 refresh 쿠키로 accessToken을 복구한다. */
-  restoreSession: () => Promise<boolean>;
+  restoreSession: (signal?: AbortSignal) => Promise<boolean>;
   login: () => Promise<{ user: User } | void>;
   getCurrentUser: () => Promise<User>;
   updateName: (name: string) => Promise<{ id: number; name: string }>;

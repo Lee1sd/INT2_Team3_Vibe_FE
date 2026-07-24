@@ -9,6 +9,9 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080
 /** 앱 부트가 hang 나지 않도록 refresh 요청 상한(ms). */
 const REFRESH_TIMEOUT_MS = 5000;
 
+/** 일반 API가 BE 지연/스레드 고갈에 영원히 묶이지 않도록 하는 상한(ms). */
+const REQUEST_TIMEOUT_MS = 15000;
+
 let accessToken: string | null = null;
 
 /** 동시에 여러 요청이 401을 받아도 refresh는 한 번만 돌리기 위한 in-flight 공유. */
@@ -41,11 +44,19 @@ export class ApiError extends Error {
   }
 }
 
+function isAbortError(error: unknown): boolean {
+  return error instanceof DOMException && error.name === 'AbortError';
+}
+
 /**
  * AU-003 — Refresh Token 쿠키로 accessToken을 다시 받는다.
  * apiClient.request 경로를 타지 않아 401 재시도 루프에 빠지지 않는다.
  */
-async function tryRefreshAccessToken(): Promise<boolean> {
+async function tryRefreshAccessToken(externalSignal?: AbortSignal): Promise<boolean> {
+  if (externalSignal?.aborted) {
+    return false;
+  }
+
   if (refreshInFlight) {
     return refreshInFlight;
   }
@@ -54,6 +65,15 @@ async function tryRefreshAccessToken(): Promise<boolean> {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), REFRESH_TIMEOUT_MS);
+      const onExternalAbort = () => controller.abort();
+      if (externalSignal) {
+        if (externalSignal.aborted) {
+          controller.abort();
+        } else {
+          externalSignal.addEventListener('abort', onExternalAbort, { once: true });
+        }
+      }
+
       let res: Response;
       try {
         res = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
@@ -63,6 +83,7 @@ async function tryRefreshAccessToken(): Promise<boolean> {
         });
       } finally {
         clearTimeout(timeoutId);
+        externalSignal?.removeEventListener('abort', onExternalAbort);
       }
 
       if (!res.ok) {
@@ -99,8 +120,8 @@ async function tryRefreshAccessToken(): Promise<boolean> {
  * 앱 부트(새로고침 포함) 시 메모리 accessToken을 복구한다.
  * 쿠키가 없거나 만료면 false — 호출 측에서 로그인 화면으로내면 된다.
  */
-export async function restoreSession(): Promise<boolean> {
-  return tryRefreshAccessToken();
+export async function restoreSession(signal?: AbortSignal): Promise<boolean> {
+  return tryRefreshAccessToken(signal);
 }
 
 async function request<T>(
@@ -109,50 +130,85 @@ async function request<T>(
   retried = false
 ): Promise<T> {
   const isFormData = options.body instanceof FormData;
+  const controller = new AbortController();
+  let timedOut = false;
+  const timeoutId = setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, REQUEST_TIMEOUT_MS);
 
-  const res = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
-    // Refresh Token은 HttpOnly 쿠키로 발급되므로(AU-002), 모든 요청에 쿠키를 함께 보낸다.
-    credentials: 'include',
-    headers: {
-      ...(options.body && !isFormData ? { 'Content-Type': 'application/json' } : {}),
-      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-      ...options.headers,
-    },
-  });
+  const onExternalAbort = () => controller.abort();
+  if (options.signal) {
+    if (options.signal.aborted) {
+      controller.abort();
+    } else {
+      options.signal.addEventListener('abort', onExternalAbort, { once: true });
+    }
+  }
 
-  if (!res.ok) {
-    // accessToken 만료 시 한 번만 refresh 후 동일 요청을 재시도한다.
-    // /api/auth/refresh 자체와 이미 재시도한 요청은 제외해 무한 루프를 막는다.
-    if (
-      res.status === 401 &&
-      !retried &&
-      path !== '/api/auth/refresh' &&
-      path !== '/api/auth/logout'
-    ) {
-      const refreshed = await tryRefreshAccessToken();
-      if (refreshed) {
-        return request<T>(path, options, true);
+  const cleanup = () => {
+    clearTimeout(timeoutId);
+    options.signal?.removeEventListener('abort', onExternalAbort);
+  };
+
+  try {
+    const res = await fetch(`${API_BASE_URL}${path}`, {
+      ...options,
+      signal: controller.signal,
+      // Refresh Token은 HttpOnly 쿠키로 발급되므로(AU-002), 모든 요청에 쿠키를 함께 보낸다.
+      credentials: 'include',
+      headers: {
+        ...(options.body && !isFormData ? { 'Content-Type': 'application/json' } : {}),
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        ...options.headers,
+      },
+    });
+
+    if (!res.ok) {
+      // accessToken 만료 시 한 번만 refresh 후 동일 요청을 재시도한다.
+      // /api/auth/refresh 자체와 이미 재시도한 요청은 제외해 무한 루프를 막는다.
+      if (
+        res.status === 401 &&
+        !retried &&
+        path !== '/api/auth/refresh' &&
+        path !== '/api/auth/logout'
+      ) {
+        const refreshed = await tryRefreshAccessToken();
+        if (refreshed) {
+          cleanup();
+          return request<T>(path, options, true);
+        }
       }
+
+      const body: ApiErrorBody | null = await res.json().catch(() => null);
+      throw new ApiError(
+        body ?? { code: 'UNKNOWN_ERROR', message: '알 수 없는 오류가 발생했습니다.', status: res.status }
+      );
     }
 
-    const body: ApiErrorBody | null = await res.json().catch(() => null);
-    throw new ApiError(
-      body ?? { code: 'UNKNOWN_ERROR', message: '알 수 없는 오류가 발생했습니다.', status: res.status }
-    );
-  }
+    if (res.status === 204) {
+      return undefined as T;
+    }
 
-  if (res.status === 204) {
-    return undefined as T;
+    // 204가 아니어도 body가 빈 응답일 수 있다 — res.json()을 바로 호출하면 파싱 에러가 나므로
+    // 먼저 텍스트로 읽어 빈 문자열인지 확인한다.
+    const text = await res.text();
+    if (!text) {
+      return undefined as T;
+    }
+    return JSON.parse(text) as T;
+  } catch (error) {
+    if (timedOut && isAbortError(error)) {
+      throw new ApiError({
+        code: 'REQUEST_TIMEOUT',
+        message: `요청 시간이 초과되었습니다. (${path})`,
+        status: 408,
+      });
+    }
+    throw error;
+  } finally {
+    cleanup();
   }
-
-  // 204가 아니어도 body가 빈 응답일 수 있다 — res.json()을 바로 호출하면 파싱 에러가 나므로
-  // 먼저 텍스트로 읽어 빈 문자열인지 확인한다.
-  const text = await res.text();
-  if (!text) {
-    return undefined as T;
-  }
-  return JSON.parse(text) as T;
 }
 
 export const apiClient = {
