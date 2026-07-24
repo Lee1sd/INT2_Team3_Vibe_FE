@@ -229,6 +229,9 @@ export default function InterviewerList() {
                         } else if (iv.level === 2) {
                           title = '💡 [실무 트러블슈팅 및 의사결정 심층 방어 수준]';
                           desc = '특정 기술을 도입한 논리적 근거(Trade-off)와 한계점, 장애 대처 경험을 설득력 있게 방어할 수 있습니다.';
+                        } else if (iv.level === 4) {
+                          title = '⚔️ [챌린지 모드 · 프론트 목업]';
+                          desc = '답변마다 채점되는 성과 게이지로 즉시 합격/탈락이 갈립니다. 꼬리질문 최대 3회 · 발화 최대 20회.';
                         }
 
                         if (!desc) return null;
@@ -279,7 +282,7 @@ export default function InterviewerList() {
                             className="w-full py-3 bg-primary text-white rounded-2xl font-bold text-[16px] leading-[24px] flex items-center justify-center gap-2 hover:bg-[#005bb5] transition-colors shadow-sm disabled:opacity-32 disabled:cursor-not-allowed"
                           >
                             <PlayCircle className="w-5 h-5" />
-                            면접 시작하기
+                            {iv.level === 4 ? '챌린지 시작하기 (MOCK)' : '면접 시작하기'}
                           </button>
                         </>
                       ) : (

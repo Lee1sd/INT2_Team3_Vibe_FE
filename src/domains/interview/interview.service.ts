@@ -1,13 +1,28 @@
 // 페이지 컴포넌트가 실제로 import하는 진입점. VITE_USE_MOCK으로 mock/실제 API를 스위칭한다.
 import { interviewApi, InterviewerApiItem, SubmitAnswersApiResponse, InterviewHistoryApiResponse, InterviewDetailApiResponse } from './interview.api';
 import { interviewMock } from './interview.mock';
-import { Interviewer, InterviewResponse, Question, Answer, NextTurn } from './interview.types';
+import {
+  getLevel4ChallengeInterviewerStub,
+  isLevel4ChallengeInterviewerId,
+  level4ChallengeMock,
+} from './level4-challenge.mock';
+import { Interviewer, InterviewResponse, Question, Answer, NextTurn, ChallengeFinalResult } from './interview.types';
 
 interface InterviewService {
   getInterviewers: () => Promise<Interviewer[]>;
   startInterview: (interviewerId: string, resumeId: string, selectedKeyword: string) => Promise<InterviewResponse>;
   submitAnswers: (sessionId: string, answers: Answer[]) => Promise<InterviewResponse>;
   submitFollowUp: (sessionId: string, answer: Answer) => Promise<InterviewResponse>;
+  /** Lv.4 챌린지 전용 — 답변 1건마다 채점·게이지 갱신. */
+  submitChallengeTurn: (sessionId: string, answer: Answer) => Promise<InterviewResponse>;
+  buildChallengeFinalResult: (response: InterviewResponse) => ChallengeFinalResult;
+  getChallengeGaugeUpdate: (final: ChallengeFinalResult) => {
+    previousGauge: number;
+    newGauge: number;
+    levelUp: boolean;
+    unlockedLevel: number;
+    newlyAcquiredBadge: undefined;
+  };
   getHistory: () => Promise<InterviewHistoryApiResponse>;
   getHistoryDetail: (sessionId: string, signal?: AbortSignal) => Promise<InterviewDetailApiResponse>;
 }
@@ -45,11 +60,28 @@ const STATIC_CONTENT_BY_LEVEL: Record<
   },
   4: {
     requiredGauge: 100,
-    description: '회사의 인재상과 컬처핏을 날카롭게 검증합니다.',
-    achievement: '조직의 비전에 부합하며 거시적인 관점에서의 엔지니어링 가치를 증명할 수 있습니다.',
-    avatar: '',
+    description: '챌린지 모드(목업). 답변마다 채점되며 게이지로 즉시 합격/탈락이 갈립니다.',
+    achievement: '제한된 발화 안에서 설득력 있는 근거로 임원을 납득시킬 수 있습니다.',
+    avatar: '/interviewers/lv4-executive.png',
   },
 };
+
+/** BE에 아직 없는 Lv.4를 FE에 주입한다. 기존 레벨 API 응답은 건드리지 않는다. */
+function withLevel4ChallengeInterviewer(interviewers: Interviewer[]): Interviewer[] {
+  const withoutLv4 = interviewers.filter((iv) => iv.level !== 4 && iv.id !== getLevel4ChallengeInterviewerStub().id);
+  const stub = getLevel4ChallengeInterviewerStub(true);
+  const staticContent = STATIC_CONTENT_BY_LEVEL[4]!;
+  return [
+    ...withoutLv4,
+    {
+      id: stub.id,
+      name: stub.name,
+      level: stub.level,
+      isUnlocked: stub.isUnlocked,
+      ...staticContent,
+    },
+  ];
+}
 
 function toInterviewer(item: InterviewerApiItem): Interviewer {
   const staticContent = STATIC_CONTENT_BY_LEVEL[item.level] ?? STATIC_CONTENT_BY_LEVEL[1];
@@ -62,16 +94,17 @@ function toInterviewer(item: InterviewerApiItem): Interviewer {
   };
 }
 
-/** 면접 세션용 전신 기본 포즈. Lv.3+는 빈 문자열. */
+/** 면접 세션용 전신 기본 포즈. */
 export function getInterviewerAvatarByLevel(level: number): string {
   return STATIC_CONTENT_BY_LEVEL[level]?.avatar ?? '';
 }
 
-/** 던전/메인 레벨 카드용 확대샷(누끼). Lv.4는 빈 문자열. */
+/** 던전/메인 레벨 카드용 확대샷(누끼). */
 export function getInterviewerBustByLevel(level: number): string {
   if (level === 1) return '/interviewers/lv1-casual-bust.png';
   if (level === 2) return '/interviewers/lv2-strict-bust.png';
   if (level === 3) return '/interviewers/lv3-pressure-bust.png';
+  if (level === 4) return '/interviewers/lv4-executive-bust.png';
   return '';
 }
 
@@ -91,9 +124,30 @@ export const LV2_STRICT_POSE_PATHS = [
   '/interviewers/poses/lv2-strict-pose-04.png',
 ] as const;
 
+/**
+ * Lv.4 세션 중 랜덤 포즈.
+ * 메인 미리보기(이중인격 임원님)와 bad2는 제외 — pose2/3 + bad1만 사용.
+ */
+export const LV4_EXECUTIVE_SESSION_POSE_PATHS = [
+  '/interviewers/poses/lv4-executive-pose-02.png',
+  '/interviewers/poses/lv4-executive-pose-03.png',
+  '/interviewers/poses/lv4-executive-pose-bad1.png',
+] as const;
+
+/** Lv.4 합격 종료 시 — 파일명에 bad가 없는 이미지만. */
+export const LV4_EXECUTIVE_GOOD_POSE_PATHS = [
+  '/interviewers/poses/lv4-executive-pose-good-01.png',
+  '/interviewers/poses/lv4-executive-pose-good-02.png',
+  '/interviewers/poses/lv4-executive-pose-good-03.png',
+] as const;
+
+/** Lv.4 불합격 종료 시 — bad2 고정. */
+export const LV4_EXECUTIVE_BAD_END_POSE = '/interviewers/poses/lv4-executive-pose-bad2.png';
+
 export function getSessionPosePaths(level: number): string[] {
   if (level === 1) return [...LV1_CASUAL_POSE_PATHS];
   if (level === 2) return [...LV2_STRICT_POSE_PATHS];
+  if (level === 4) return [...LV4_EXECUTIVE_SESSION_POSE_PATHS];
   return [];
 }
 
@@ -107,6 +161,13 @@ export function shufflePoseOrder(level: number): string[] {
     poses[j] = tmp!;
   }
   return poses;
+}
+
+/** Lv.4 종료 연출용 스프라이트. */
+export function pickLevel4ResultSprite(passed: boolean): string {
+  if (!passed) return LV4_EXECUTIVE_BAD_END_POSE;
+  const goods = [...LV4_EXECUTIVE_GOOD_POSE_PATHS];
+  return goods[Math.floor(Math.random() * goods.length)] ?? getInterviewerAvatarByLevel(4);
 }
 
 /**
@@ -125,10 +186,11 @@ export function pickSessionSpriteFromOrder(
   return poseOrder[options.questionSlot % poseOrder.length] ?? base;
 }
 
-/** 면접 세션 최후방 사무실 배경. 파일명: 1단계 프로그래머스 / 2단계 그렙. */
+/** 면접 세션 최후방 사무실 배경. */
 export function getInterviewBackgroundByLevel(level: number): string {
   if (level === 1) return '/interviewers/backgrounds/lv1-programmers.png';
   if (level === 2) return '/interviewers/backgrounds/lv2-grepp.png';
+  if (level === 4) return '/interviewers/backgrounds/lv4-grepp-hq.png';
   return '';
 }
 
@@ -199,13 +261,13 @@ function toInterviewResponse(res: SubmitAnswersApiResponse, turn: number): Inter
   };
 }
 
-const realInterviewService: InterviewService = {
+const realInterviewService = {
   getInterviewers: async () => {
     const res = await interviewApi.getInterviewers();
     return res.interviewers.map(toInterviewer);
   },
 
-  startInterview: async (interviewerId, resumeId, selectedKeyword) => {
+  startInterview: async (interviewerId: string, resumeId: string, selectedKeyword: string) => {
     // interviewApi.createSession의 시그니처는 (resumeId, interviewerId, keyword) 순서다 — 이전에
     // 인자가 뒤바뀌어 전달되던 버그(#11)를 수정.
     const res = await interviewApi.createSession(Number(resumeId), Number(interviewerId), selectedKeyword);
@@ -217,17 +279,17 @@ const realInterviewService: InterviewService = {
     return {
       sessionId: String(res.sessionId),
       passed: false,
-      nextTurn: { type: 'FOLLOW_UP', turn: 1 },
+      nextTurn: { type: 'FOLLOW_UP' as const, turn: 1 },
       questions,
     };
   },
 
-  submitAnswers: async (sessionId, answers) => {
+  submitAnswers: async (sessionId: string, answers: Answer[]) => {
     const res = await interviewApi.submitAnswers(Number(sessionId), toApiAnswers(answers));
     return toInterviewResponse(res, 2);
   },
 
-  submitFollowUp: async (sessionId, answer) => {
+  submitFollowUp: async (sessionId: string, answer: Answer) => {
     const res = await interviewApi.submitAnswers(Number(sessionId), toApiAnswers([answer], answer.questionId));
     return toInterviewResponse(res, 3);
   },
@@ -237,4 +299,35 @@ const realInterviewService: InterviewService = {
   getHistoryDetail: (sessionId, signal) => interviewApi.getHistoryDetail(Number(sessionId), signal),
 };
 
-export const engineService: InterviewService = USE_MOCK ? interviewMock : realInterviewService;
+const baseService = USE_MOCK ? interviewMock : realInterviewService;
+
+/**
+ * Lv.4만 프론트 챌린지 mock으로 분기한다.
+ * VITE_USE_MOCK=false여도 Lv1~3 실API는 유지하고, Lv.4만 목업한다.
+ */
+export const engineService: InterviewService = {
+  getInterviewers: async () => withLevel4ChallengeInterviewer(await baseService.getInterviewers()),
+
+  startInterview: async (interviewerId, resumeId, selectedKeyword) => {
+    if (isLevel4ChallengeInterviewerId(interviewerId)) {
+      return level4ChallengeMock.startInterview(interviewerId, resumeId, selectedKeyword);
+    }
+    return baseService.startInterview(interviewerId, resumeId, selectedKeyword);
+  },
+
+  submitAnswers: (sessionId, answers) => baseService.submitAnswers(sessionId, answers),
+
+  submitFollowUp: (sessionId, answer) => baseService.submitFollowUp(sessionId, answer),
+
+  submitChallengeTurn: (sessionId, answer) => level4ChallengeMock.submitTurn(sessionId, answer),
+
+  buildChallengeFinalResult: (response) => level4ChallengeMock.buildFinalResult(response),
+
+  getChallengeGaugeUpdate: (final) => level4ChallengeMock.getMockGaugeUpdate(final),
+
+  getHistory: () => baseService.getHistory(),
+
+  getHistoryDetail: (sessionId, signal) => baseService.getHistoryDetail(sessionId, signal),
+};
+
+export { isLevel4ChallengeInterviewerId, LEVEL4_INTERVIEWER_ID } from './level4-challenge.mock';

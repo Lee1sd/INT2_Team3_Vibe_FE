@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
-    "test": "node --import tsx --test src/domains/interview/interview-closing-message.test.ts src/domains/progress/progress.badges.test.ts"
+    "test": "node --import tsx --test src/domains/interview/interview-closing-message.test.ts src/domains/interview/level4-challenge.mock.test.ts src/domains/progress/progress.badges.test.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

@@ -4,8 +4,9 @@
  */
 
 import { useEffect, useState, type ReactNode } from 'react';
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { authService } from './domains/auth/auth.service';
+import { PROFILE_UPDATED_EVENT } from './domains/auth/profile-events';
 import Login from './pages/Login';
 import OAuthCallback from './pages/OAuthCallback';
 import ResumeUpload from './pages/ResumeUpload';
@@ -14,27 +15,49 @@ import InterviewProcess from './pages/InterviewProcess';
 import Result from './pages/Result';
 import MyPage from './pages/MyPage';
 
-/** 헤더 로고·마이페이지 아이콘·파비콘과 동일한 브랜드 에셋. */
+/** 헤더 로고·파비콘과 동일한 브랜드 에셋. */
 const BRAND_ICON_SRC = '/brand/career-dungeon-icon.png';
 
 /**
  * accessToken은 메모리에만 두므로, 새로고침 시 AU-003 refresh로 복구한다.
  * 복구가 끝날 때까지 하위 라우트가 API를 치면 401이 나므로 부트 완료 후 렌더한다.
+ * BE가 느리거나 hang이어도 스피너에 영구 고정되지 않도록 안전 상한을 둔다.
  */
+const AUTH_BOOT_SAFETY_MS = 4000;
+
 function AuthBootstrap({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
+    const bootController = new AbortController();
 
-    authService.restoreSession().finally(() => {
-      if (!cancelled) {
-        setReady(true);
-      }
-    });
+    const markReady = () => {
+      if (!cancelled) setReady(true);
+    };
+
+    const safetyTimer = window.setTimeout(() => {
+      console.warn(
+        `[AuthBootstrap] restoreSession이 ${AUTH_BOOT_SAFETY_MS}ms 내 끝나지 않아 부트를 강제 완료합니다.`,
+      );
+      bootController.abort();
+      markReady();
+    }, AUTH_BOOT_SAFETY_MS);
+
+    authService
+      .restoreSession(bootController.signal)
+      .catch((error) => {
+        console.error('[AuthBootstrap] restoreSession failed', error);
+      })
+      .finally(() => {
+        window.clearTimeout(safetyTimer);
+        markReady();
+      });
 
     return () => {
       cancelled = true;
+      bootController.abort();
+      window.clearTimeout(safetyTimer);
     };
   }, []);
 
@@ -47,6 +70,76 @@ function AuthBootstrap({ children }: { children: ReactNode }) {
   }
 
   return children;
+}
+
+/** 마이페이지와 동일: 사진 있으면 사진, 없으면 이메일 이니셜. */
+function HeaderProfileLink() {
+  const location = useLocation();
+  const [photoUrl, setPhotoUrl] = useState<string | undefined>();
+  const [initial, setInitial] = useState('U');
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const applyUser = (user: { photoUrl?: string; photoURL?: string; email?: string }) => {
+      if (cancelled) return;
+      setPhotoUrl(user.photoUrl || user.photoURL);
+      setInitial(user.email?.charAt(0).toUpperCase() || 'U');
+    };
+
+    const load = () => {
+      authService
+        .getCurrentUser()
+        .then(applyUser)
+        .catch(() => {
+          if (cancelled) return;
+          setPhotoUrl(undefined);
+          setInitial('U');
+        });
+    };
+
+    load();
+
+    const onProfileUpdated = (event: Event) => {
+      const detail = (event as CustomEvent<{ photoUrl?: string; email?: string }>).detail;
+      if (detail && 'photoUrl' in detail) {
+        if (cancelled) return;
+        setPhotoUrl(detail.photoUrl || undefined);
+        if (detail.email) {
+          setInitial(detail.email.charAt(0).toUpperCase() || 'U');
+        }
+        return;
+      }
+      load();
+    };
+
+    window.addEventListener(PROFILE_UPDATED_EVENT, onProfileUpdated);
+    return () => {
+      cancelled = true;
+      window.removeEventListener(PROFILE_UPDATED_EVENT, onProfileUpdated);
+    };
+  }, [location.pathname]);
+
+  return (
+    <Link
+      to="/mypage"
+      className="p-1.5 text-blue-grey-500 hover:text-primary hover:bg-blue-grey-25 rounded-full transition-colors flex items-center justify-center"
+      aria-label="마이페이지"
+    >
+      <div className="w-8 h-8 rounded-full bg-blue-grey-100 overflow-hidden border border-blue-grey-75 shadow-sm flex items-center justify-center">
+        {photoUrl ? (
+          <img
+            src={photoUrl}
+            alt=""
+            className="w-full h-full object-cover"
+            draggable={false}
+          />
+        ) : (
+          <span className="text-sm font-bold text-blue-grey-400">{initial}</span>
+        )}
+      </div>
+    </Link>
+  );
 }
 
 export default function App() {
@@ -65,18 +158,7 @@ export default function App() {
               <h1 className="text-[26px] leading-[32px] font-bold tracking-tight text-blue-grey-900">커리어 던전</h1>
             </Link>
             <div className="flex items-center gap-6">
-              <Link
-                to="/mypage"
-                className="p-1.5 text-blue-grey-500 hover:text-primary hover:bg-blue-grey-25 rounded-full transition-colors flex items-center justify-center"
-                aria-label="마이페이지"
-              >
-                <img
-                  src={BRAND_ICON_SRC}
-                  alt=""
-                  className="w-8 h-8 rounded-full object-cover border border-blue-grey-75 shadow-sm"
-                  draggable={false}
-                />
-              </Link>
+              <HeaderProfileLink />
             </div>
           </header>
 
