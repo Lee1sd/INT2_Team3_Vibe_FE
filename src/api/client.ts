@@ -45,7 +45,10 @@ export class ApiError extends Error {
 }
 
 function isAbortError(error: unknown): boolean {
-  return error instanceof DOMException && error.name === 'AbortError';
+  return (
+    (error instanceof DOMException && error.name === 'AbortError') ||
+    (error instanceof Error && error.name === 'AbortError')
+  );
 }
 
 /**
@@ -53,6 +56,9 @@ function isAbortError(error: unknown): boolean {
  * apiClient.request 경로를 타지 않아 401 재시도 루프에 빠지지 않는다.
  */
 async function tryRefreshAccessToken(externalSignal?: AbortSignal): Promise<boolean> {
+  // 이미 취소된 신호면 refresh를 시작하지 않는다.
+  // 단, abort ≠ 인증 실패이므로 accessToken을 지우지 않는다.
+  // (BE는 refresh 시 기존 쿠키를 revoke하므로, 중단된 refresh는 세션을 깨뜨릴 수 있다.)
   if (externalSignal?.aborted) {
     return false;
   }
@@ -105,7 +111,12 @@ async function tryRefreshAccessToken(externalSignal?: AbortSignal): Promise<bool
 
       setAccessToken(body.accessToken);
       return true;
-    } catch {
+    } catch (error) {
+      // Abort/timeout으로 끊긴 refresh는 인증 실패로 취급하지 않는다.
+      // BE가 이미 토큰을 rotate했을 수 있어, 여기서 null로 지우면 세션이 영구 소실된다.
+      if (isAbortError(error) || externalSignal?.aborted) {
+        return false;
+      }
       setAccessToken(null);
       return false;
     } finally {
@@ -176,7 +187,11 @@ async function request<T>(
         const refreshed = await tryRefreshAccessToken();
         if (refreshed) {
           cleanup();
-          return request<T>(path, options, true);
+          // 페이지 unmount로 원 요청 signal이 abort된 뒤에도,
+          // refresh로 받은 새 accessToken으로 재시도는 가능하게 한다.
+          const { signal, ...rest } = options;
+          const retryOptions = signal?.aborted ? rest : options;
+          return request<T>(path, retryOptions, true);
         }
       }
 

@@ -6,6 +6,7 @@ import { twMerge } from 'tailwind-merge';
 import { ApiError } from '../api/client';
 import { authService, validateProfilePhotoFile } from '../domains/auth/auth.service';
 import { PROFILE_PHOTO_ACCEPT } from '../domains/auth/auth.types';
+import { PROFILE_UPDATED_EVENT } from '../domains/auth/profile-events';
 import { User } from '../types';
 import { InfoTooltip } from '../components/InfoTooltip';
 import { ChatLog, HistoryDrawer, InterviewHistoryItem } from '../components/HistoryDrawer';
@@ -524,11 +525,17 @@ export default function MyPage() {
   };
 
   const applyPhotoUrl = (photoUrl: string | undefined) => {
-    setUser((prev) =>
-      prev
-        ? { ...prev, photoUrl, photoURL: photoUrl }
-        : prev
-    );
+    setUser((prev) => {
+      const next = prev ? { ...prev, photoUrl, photoURL: photoUrl } : prev;
+      if (next) {
+        window.dispatchEvent(
+          new CustomEvent(PROFILE_UPDATED_EVENT, {
+            detail: { photoUrl, email: next.email },
+          })
+        );
+      }
+      return next;
+    });
   };
 
   const handlePhotoButtonClick = () => {
