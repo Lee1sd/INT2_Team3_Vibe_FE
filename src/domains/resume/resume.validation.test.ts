@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { validateResumeFile, resolveResumeContentType, RESUME_MAX_BYTES } from './resume.types';
+import { validateResumeFile, resolveResumeContentType, formatFileSize, RESUME_MAX_BYTES } from './resume.types';
 
 function makeFile(name: string, size: number, type: string): File {
   return { name, size, type } as File;
@@ -34,4 +34,17 @@ test('resolveResumeContentType falls back to text/markdown for empty .md file.ty
 
 test('resolveResumeContentType falls back to application/octet-stream for unknown empty type', () => {
   assert.equal(resolveResumeContentType(makeFile('resume.pdf', 10, '')), 'application/octet-stream');
+});
+
+test('formatFileSize formats bytes/KB/MB/GB', () => {
+  assert.equal(formatFileSize(0), '0 B');
+  assert.equal(formatFileSize(512), '512 B');
+  assert.equal(formatFileSize(1284500), '1.22 MB');
+  assert.equal(formatFileSize(1024), '1.00 KB');
+  assert.equal(formatFileSize(1024 * 1024 * 1024 * 2), '2.00 GB');
+});
+
+test('formatFileSize returns empty string for null/undefined (legacy data without fileSize)', () => {
+  assert.equal(formatFileSize(null), '');
+  assert.equal(formatFileSize(undefined), '');
 });

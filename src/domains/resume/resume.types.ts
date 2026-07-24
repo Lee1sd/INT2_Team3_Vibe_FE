@@ -33,3 +33,14 @@ export function resolveResumeContentType(file: File): string {
   if (file.type) return file.type;
   return getFileExtension(file.name) === 'md' ? 'text/markdown' : 'application/octet-stream';
 }
+
+/** 바이트 단위 용량을 "1.23 MB" 같은 사람이 읽기 좋은 형식으로 변환한다. 예전 데이터는 fileSize가 없을 수 있다. */
+export function formatFileSize(bytes: number | null | undefined): string {
+  if (bytes == null || Number.isNaN(bytes) || bytes < 0) return '';
+  if (bytes === 0) return '0 B';
+
+  const units = ['B', 'KB', 'MB', 'GB'];
+  const exponent = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+  const value = bytes / 1024 ** exponent;
+  return `${exponent === 0 ? value : value.toFixed(2)} ${units[exponent]}`;
+}
