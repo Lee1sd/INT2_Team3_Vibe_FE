@@ -38,13 +38,13 @@ export const interviewMock = {
           },
           {
             id: 'iv4',
-            name: '냉철한 임원',
+            name: '이중인격 임원',
             level: 4,
             requiredGauge: 100,
-            isUnlocked: false,
-            description: '회사의 인재상과 컬처핏을 날카롭게 검증합니다.',
-            achievement: '조직의 비전에 부합하며 거시적인 관점에서의 엔지니어링 가치를 증명할 수 있습니다.',
-            avatar: '',
+            isUnlocked: true,
+            description: '챌린지 모드(목업). 답변마다 채점되며 게이지로 즉시 합격/탈락이 갈립니다.',
+            achievement: '제한된 발화 안에서 설득력 있는 근거로 임원을 납득시킬 수 있습니다.',
+            avatar: '/interviewers/lv4-executive.png',
           },
         ]);
       }, 500);

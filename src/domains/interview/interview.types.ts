@@ -46,6 +46,22 @@ export interface NextTurn {
   questionId?: string;
 }
 
+/** Lv.4 챌린지 모드 전용 — 세션 중 실시간 게이지/발화 카운트. */
+export interface ChallengeTurnMeta {
+  mode: 'level4-challenge';
+  /** 세션 성과 게이지 0~100 (던전 해금 신뢰도와 별개). */
+  challengeGauge: number;
+  utteranceCount: number;
+  maxUtterances: number;
+  followUpStreak: number;
+  maxFollowUps: number;
+  failThreshold: number;
+  passThreshold: number;
+  /** 이번 턴 채점 델타 (첫 질문에는 없음). */
+  lastDelta?: number;
+  endReason?: 'PASS' | 'FAIL' | 'MAX_UTTERANCES';
+}
+
 export interface InterviewResponse {
   // startInterview 응답에만 포함된다 — 이후 submitAnswers/submitFollowUp 호출은 화면이 들고 있는
   // 값을 그대로 재사용하므로 응답에 다시 실어줄 필요가 없다 (#11: 하드코딩된 'session_123' 제거).
@@ -57,4 +73,18 @@ export interface InterviewResponse {
   passed: boolean;
   nextTurn: NextTurn;
   questions?: Question[]; // Provided on initial load or follow-up
+  challenge?: ChallengeTurnMeta;
+}
+
+/** Lv.4 챌린지 최종 결과 — IS-002b(평가 4개 고정)와 계약을 분리한다. */
+export interface ChallengeFinalResult {
+  mode: 'level4-challenge';
+  evaluations: EvaluationDetail[];
+  totalScore: number;
+  passed: boolean;
+  overallFeedback: string;
+  challengeGauge: number;
+  utteranceCount: number;
+  endReason: 'PASS' | 'FAIL' | 'MAX_UTTERANCES';
+  closingMessage: string;
 }

@@ -9,6 +9,9 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080
 /** 앱 부트가 hang 나지 않도록 refresh 요청 상한(ms). */
 const REFRESH_TIMEOUT_MS = 5000;
 
+/** 일반 API가 BE 지연/스레드 고갈에 영원히 묶이지 않도록 하는 상한(ms). */
+const REQUEST_TIMEOUT_MS = 15000;
+
 let accessToken: string | null = null;
 
 /** 동시에 여러 요청이 401을 받아도 refresh는 한 번만 돌리기 위한 in-flight 공유. */
@@ -109,17 +112,44 @@ async function request<T>(
   retried = false
 ): Promise<T> {
   const isFormData = options.body instanceof FormData;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
-  const res = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
-    // Refresh Token은 HttpOnly 쿠키로 발급되므로(AU-002), 모든 요청에 쿠키를 함께 보낸다.
-    credentials: 'include',
-    headers: {
-      ...(options.body && !isFormData ? { 'Content-Type': 'application/json' } : {}),
-      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-      ...options.headers,
-    },
-  });
+  const onExternalAbort = () => controller.abort();
+  if (options.signal) {
+    if (options.signal.aborted) {
+      controller.abort();
+    } else {
+      options.signal.addEventListener('abort', onExternalAbort, { once: true });
+    }
+  }
+
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE_URL}${path}`, {
+      ...options,
+      signal: controller.signal,
+      // Refresh Token은 HttpOnly 쿠키로 발급되므로(AU-002), 모든 요청에 쿠키를 함께 보낸다.
+      credentials: 'include',
+      headers: {
+        ...(options.body && !isFormData ? { 'Content-Type': 'application/json' } : {}),
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        ...options.headers,
+      },
+    });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      throw new ApiError({
+        code: 'REQUEST_TIMEOUT',
+        message: `요청 시간이 초과되었습니다. (${path})`,
+        status: 408,
+      });
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+    options.signal?.removeEventListener('abort', onExternalAbort);
+  }
 
   if (!res.ok) {
     // accessToken 만료 시 한 번만 refresh 후 동일 요청을 재시도한다.
