@@ -44,7 +44,7 @@ const realResumeService: ResumeService = {
 
     await resumeApi.uploadToS3(uploadUrl, file, contentType);
 
-    const { resumeId } = await resumeApi.completeUpload({ type, s3Key });
+    const { resumeId } = await resumeApi.completeUpload({ type, s3Key, originalFileName: file.name });
     return { fileId: String(resumeId), status: 'PROCESSING' };
   },
   checkParseStatus: async (fileId) => toUploadResponse(await resumeApi.getStatus(Number(fileId))),

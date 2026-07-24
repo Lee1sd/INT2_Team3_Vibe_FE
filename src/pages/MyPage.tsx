@@ -12,6 +12,7 @@ import { HistoryDrawer, InterviewHistoryItem } from '../components/HistoryDrawer
 import { BadgeImage } from '../components/BadgeImage';
 import { progressService } from '../domains/progress/progress.service';
 import { UserBadge } from '../domains/progress/progress.types';
+import { formatFileSize } from '../domains/resume/resume.types';
 
 const BADGES = [
   { level: 1, name: '프로그래머쓱 LEVEL 1', icon: '🐣', description: '면접의 첫 걸음을 내딛다' },
@@ -77,6 +78,7 @@ interface UploadedFile {
   id: string;
   resumeId?: string;
   name: string;
+  fileSize?: number | null;
   uploadedAt?: string;
   status: 'UPLOADING' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'EXPIRED';
   errorMsg?: string;
@@ -121,7 +123,8 @@ function MultiFileUploader({
           .map(r => ({
             id: String(r.resumeId),
             resumeId: String(r.resumeId),
-            name: `${r.type === 'RESUME' ? '이력서' : '포트폴리오'} #${r.resumeId}`,
+            name: r.originalFileName || `${r.type === 'RESUME' ? '이력서' : '포트폴리오'} #${r.resumeId}`,
+            fileSize: r.fileSize,
             uploadedAt: r.lastUploadedAt,
             status: (r.parseStatus === 'DONE' ? 'COMPLETED' : r.parseStatus) as UploadedFile['status'],
           }));
@@ -190,6 +193,7 @@ function MultiFileUploader({
       const fileEntry: UploadedFile = {
         id: newId,
         name: newFile.name,
+        fileSize: newFile.size,
         uploadedAt: new Date().toISOString(),
         status: 'UPLOADING'
       };
@@ -276,6 +280,7 @@ function MultiFileUploader({
                   </h4>
                   <p className="text-[12px] text-blue-grey-500 font-mono mt-0.5">
                     {formatUploadedDate(file.uploadedAt)}
+                    {formatFileSize(file.fileSize) && ` · ${formatFileSize(file.fileSize)}`}
                   </p>
                   {file.errorMsg && (
                     <p className="text-[12px] text-danger mt-1">{file.errorMsg}</p>
