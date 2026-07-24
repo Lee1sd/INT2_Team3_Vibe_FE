@@ -43,17 +43,12 @@ export const resumeApi = {
    * apiClient를 거치면 백엔드 baseURL/Authorization/쿠키가 붙어버리므로 raw fetch로 호출한다.
    */
   uploadToS3: async (uploadUrl: string, file: File, contentType: string): Promise<void> => {
-    console.log("uploadUrl:", uploadUrl);
-    console.log("file.type:", file.type);
-    console.log("contentType:", contentType);
-
     const res = await fetch(uploadUrl, {
       method: 'PUT',
       headers: { 'Content-Type': contentType },
       body: file,
     });
 
-    console.log("status:", res.status);
     if (!res.ok) {
       throw new Error(`S3 업로드에 실패했습니다. (status: ${res.status})`);
     }
