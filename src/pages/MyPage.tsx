@@ -3,73 +3,23 @@ import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { fileService } from '../domains/resume/resume.service';
 import { UploadCloud, FileText, CheckCircle2, Loader2, AlertCircle, ShieldCheck, Lock, LogOut, UserMinus, ArrowLeft, ChevronDown, ChevronUp, Camera, Edit2, ChevronRight, Trash2 } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
+import { ApiError } from '../api/client';
 import { authService, validateProfilePhotoFile } from '../domains/auth/auth.service';
 import { PROFILE_PHOTO_ACCEPT } from '../domains/auth/auth.types';
 import { User } from '../types';
 import { InfoTooltip } from '../components/InfoTooltip';
-import { HistoryDrawer, InterviewHistoryItem } from '../components/HistoryDrawer';
+import { ChatLog, HistoryDrawer, InterviewHistoryItem } from '../components/HistoryDrawer';
 import { BadgeImage } from '../components/BadgeImage';
 import { progressService } from '../domains/progress/progress.service';
 import { UserBadge } from '../domains/progress/progress.types';
+import { engineService } from '../domains/interview/interview.service';
+import { InterviewDetailApiResponse, InterviewHistoryApiResponse, InterviewHistoryLevelApiItem, InterviewHistorySessionApiItem } from '../domains/interview/interview.api';
 
 const BADGES = [
   { level: 1, name: '프로그래머쓱 LEVEL 1', icon: '🐣', description: '면접의 첫 걸음을 내딛다' },
   { level: 2, name: '프로그래머쓱 LEVEL 2', icon: '🐥', description: '꼬리 질문에도 당황하지 않음' },
   { level: 3, name: '프로그래머쓱 LEVEL 3', icon: '🦅', description: '면접관을 리드하기 시작함' },
   { level: 4, name: '프로그래머쓱 LEVEL 4', icon: '🐉', description: '모든 면접관을 제패한 지원자' },
-];
-
-const MOCK_HISTORY: InterviewHistoryItem[] = [
-  {
-    id: '1',
-    date: '26.07.09',
-    interviewerName: '널널한 대리',
-    score: 90,
-    passed: true,
-    tag: 'React',
-    feedback: '전반적으로 프론트엔드 기본기가 탄탄하며, 실무에서 마주할 수 있는 트레이드오프 상황에 대한 이해도가 높습니다. 캐싱 정합성 문제에서 다소 아쉬운 점이 있었으나 꼬리 질문을 통해 훌륭하게 방어했습니다. 합격을 축하합니다!',
-    logs: [
-      { speaker: 'interviewer', name: '널널한 대리', message: '반갑습니다. 지원자님의 이력서를 흥미롭게 읽었습니다.\n\n[질문 1] 이력서에 작성하신 캐싱 전략에서 정합성 문제는 어떻게 해결하셨나요?' },
-      { speaker: 'applicant', name: '지원자', message: 'TTL을 짧게 가져가서 일시적인 불일치를 허용했습니다.' },
-      { speaker: 'interviewer', name: '널널한 대리', message: '[질문 2] 데이터베이스 락(Lock)을 사용하지 않은 특별한 이유가 있나요?' },
-      { speaker: 'applicant', name: '지원자', message: '읽기 작업이 90% 이상이라 락 오버헤드를 피하고 싶었습니다.' },
-      { speaker: 'interviewer', name: '널널한 대리', message: '[질문 3] 트래픽이 갑자기 10배 증가한다면 현재 아키텍처에서 가장 먼저 병목이 발생할 곳은 어디인가요?' },
-      { speaker: 'applicant', name: '지원자', message: 'DB 커넥션 풀 부족으로 인한 DB 병목이 예상됩니다.' },
-      { speaker: 'interviewer', name: '널널한 대리', message: '첫 번째 답변(Q1)에 대한 설명이 가장 부족합니다. 구체적인 해결 방안이 없네요.\n\n[추가 질문] 캐싱 정합성 문제에 대해 구체적인 해결 경험이 없으신가요? 예를 들어, Write-Through나 Cache Aside 패턴을 고려해보셨나요?' },
-      { speaker: 'applicant', name: '지원자', message: 'Cache Aside 패턴을 적용해 본 적이 있습니다. 데이터 변경 시 캐시 지우는 방식으로 정합성을 보장했습니다.' },
-      { speaker: 'interviewer', name: '널널한 대리', message: '꼬리질문 방어에 성공했습니다. 트레이드오프를 잘 이해하고 있군요.' }
-    ]
-  },
-  {
-    id: '2',
-    date: '26.07.08',
-    interviewerName: '깐깐한 과장',
-    score: 55,
-    passed: false,
-    tag: 'MSA',
-    feedback: '개별 기술에 대한 사용 경험은 있으나, 분산 시스템과 아키텍처 레벨에서의 깊이 있는 고민이 부족해 보입니다. 특히 메시지 큐의 데이터 유실 엣지 케이스 등 실무 장애 상황에 대한 대비책을 더 학습하시면 좋겠습니다.',
-    logs: [
-      { speaker: 'interviewer', name: '깐깐한 과장', message: '반갑습니다. 지원자님의 이력서를 흥미롭게 읽었습니다.\n\n[질문 1] 이력서의 MSA 아키텍처에서 서비스 간 트랜잭션 처리는 어떻게 하셨나요?' },
-      { speaker: 'applicant', name: '지원자', message: '분산 트랜잭션은 2PC로 해결했습니다.' },
-      { speaker: 'interviewer', name: '깐깐한 과장', message: '[질문 2] 메시지 큐(Kafka) 도입 시 발생할 수 있는 메시지 유실 문제는 어떻게 대비했나요?' },
-      { speaker: 'applicant', name: '지원자', message: '카프카는 기본적으로 데이터가 유실되지 않는다고 알고 있습니다.' },
-      { speaker: 'interviewer', name: '깐깐한 과장', message: '[질문 3] OOM(Out of Memory) 발생 시 디버깅 과정과 원인을 설명해주세요.' },
-      { speaker: 'applicant', name: '지원자', message: '힙 메모리를 늘려서 해결했습니다.' },
-      { speaker: 'interviewer', name: '깐깐한 과장', message: '답변들의 깊이가 전반적으로 얕습니다. 특히 카프카에 대한 이해가 부족해 보입니다.\n\n[추가 질문] 카프카에서 acks=all로 설정하더라도 메시지가 유실될 수 있는 엣지 케이스는 무엇이 있으며, 이를 보완하기 위한 Outbox 패턴에 대해 설명해 보시겠어요?' },
-      { speaker: 'applicant', name: '지원자', message: 'Outbox 패턴은 아직 사용해 본 적이 없어 잘 모르겠습니다. 더 공부하겠습니다.' },
-      { speaker: 'interviewer', name: '깐깐한 과장', message: '아키텍처 고민이 부족합니다. 본인이 사용한 기술에 대한 더 깊은 이해가 필요합니다.' }
-    ]
-  },
-  {
-    id: '3',
-    date: '26.07.05',
-    interviewerName: '깐깐한 과장',
-    score: 65,
-    passed: false,
-    tag: 'Redis',
-    feedback: '동시성 제어에 대한 기본적인 이해는 갖추었으나, 실제 트래픽 환경에서의 성능 테스트 경험이 다소 부족합니다.',
-    logs: []
-  }
 ];
 
 interface UploadedFile {
@@ -320,6 +270,84 @@ const TABS = [
 
 type TabId = typeof TABS[number]['id'];
 
+const PASSING_SCORE = 80;
+
+function formatHistoryDate(createdAt: string): string {
+  const date = new Date(createdAt);
+  if (Number.isNaN(date.getTime())) return createdAt;
+
+  const year = String(date.getFullYear()).slice(-2);
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}.${month}.${day}`;
+}
+
+function getHistoryGroupName(level: InterviewHistoryLevelApiItem): string {
+  if (level.interviewerName) return level.interviewerName;
+  if (level.levelName) return level.levelName;
+  if (level.level != null) return `Lv.${level.level} 면접관`;
+  return '면접관';
+}
+
+function toHistoryItem(
+  session: InterviewHistorySessionApiItem,
+  level: InterviewHistoryLevelApiItem
+): InterviewHistoryItem {
+  return {
+    id: String(session.sessionId),
+    date: formatHistoryDate(session.createdAt),
+    interviewerName: getHistoryGroupName(level),
+    score: session.totalScore,
+    passed: session.totalScore >= PASSING_SCORE,
+    logs: [],
+  };
+}
+
+function toHistoryItems(history: InterviewHistoryApiResponse): InterviewHistoryItem[] {
+  return history.levels.flatMap((level) =>
+    level.sessions.map((session) => toHistoryItem(session, level))
+  );
+}
+
+function toDetailLogs(
+  detail: InterviewDetailApiResponse,
+  interviewerName: string,
+  applicantName: string
+): ChatLog[] {
+  return detail.messages.flatMap((message) => [
+    {
+      speaker: 'interviewer' as const,
+      name: interviewerName,
+      message: message.question,
+    },
+    {
+      speaker: 'applicant' as const,
+      name: applicantName,
+      message: message.answer || '답변 기록이 없습니다.',
+    },
+  ]);
+}
+
+function getHistoryDetailErrorMessage(error: unknown): string {
+  if (error instanceof ApiError) {
+    if (error.status === 403) {
+      return '본인의 면접 기록만 조회할 수 있습니다.';
+    }
+    if (error.status === 404) {
+      return '면접 세션을 찾을 수 없습니다.';
+    }
+    if (error.status === 409) {
+      return '완료된 면접만 상세 기록을 확인할 수 있습니다.';
+    }
+  }
+
+  return '상세 기록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.';
+}
+
+function isAbortError(error: unknown): boolean {
+  return error instanceof Error && error.name === 'AbortError';
+}
+
 export default function MyPage() {
   const [user, setUser] = useState<User | null>(null);
   const [nameInput, setNameInput] = useState('');
@@ -331,6 +359,11 @@ export default function MyPage() {
   const [photoErrorMessage, setPhotoErrorMessage] = useState('');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedHistory, setSelectedHistory] = useState<InterviewHistoryItem | null>(null);
+  const [isHistoryDetailLoading, setIsHistoryDetailLoading] = useState(false);
+  const [historyDetailError, setHistoryDetailError] = useState<string | null>(null);
+  const [historyItems, setHistoryItems] = useState<InterviewHistoryItem[]>([]);
+  const [isHistoryLoading, setIsHistoryLoading] = useState(true);
+  const [historyError, setHistoryError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabId>('PROFILE');
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const [isDeleteAccountModalOpen, setIsDeleteAccountModalOpen] = useState(false);
@@ -344,6 +377,15 @@ export default function MyPage() {
   const nameHydratedFromServer = useRef(false);
   const isSavingNameRef = useRef(false);
   const isUploadingPhotoRef = useRef(false);
+  const historyDetailRequestSeq = useRef(0);
+  const historyDetailAbortController = useRef<AbortController | null>(null);
+  const historyDetailInFlightSessionId = useRef<string | null>(null);
+
+  useEffect(() => {
+    return () => {
+      historyDetailAbortController.current?.abort();
+    };
+  }, []);
 
   useEffect(() => {
     if (location.hash !== '#resume') return;
@@ -379,6 +421,34 @@ export default function MyPage() {
       })
       .catch((e) => {
         if (!cancelled) console.error(e);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    setIsHistoryLoading(true);
+    setHistoryError(null);
+    engineService
+      .getHistory()
+      .then((history) => {
+        if (cancelled) return;
+        setHistoryItems(toHistoryItems(history));
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        console.error(error);
+        setHistoryItems([]);
+        setHistoryError('면접 전적을 불러오지 못했습니다.');
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsHistoryLoading(false);
+        }
       });
 
     return () => {
@@ -515,12 +585,66 @@ export default function MyPage() {
     }));
   };
 
+  const handleHistoryClick = async (history: InterviewHistoryItem) => {
+    if (historyDetailInFlightSessionId.current === history.id) {
+      return;
+    }
+
+    historyDetailAbortController.current?.abort();
+
+    const requestSeq = historyDetailRequestSeq.current + 1;
+    const abortController = new AbortController();
+    historyDetailRequestSeq.current = requestSeq;
+    historyDetailAbortController.current = abortController;
+    historyDetailInFlightSessionId.current = history.id;
+
+    setSelectedHistory(history);
+    setIsDrawerOpen(true);
+    setIsHistoryDetailLoading(true);
+    setHistoryDetailError(null);
+
+    try {
+      const detail = await engineService.getHistoryDetail(history.id, abortController.signal);
+      if (historyDetailRequestSeq.current !== requestSeq) return;
+
+      const applicantName = user?.name || user?.displayName || '회원';
+      setSelectedHistory({
+        ...history,
+        logs: toDetailLogs(detail, history.interviewerName, applicantName),
+        feedback: detail.overallFeedback,
+      });
+    } catch (error) {
+      if (isAbortError(error)) return;
+      if (historyDetailRequestSeq.current !== requestSeq) return;
+      console.error(error);
+      setHistoryDetailError(getHistoryDetailErrorMessage(error));
+      setSelectedHistory(history);
+    } finally {
+      if (historyDetailRequestSeq.current === requestSeq) {
+        historyDetailAbortController.current = null;
+        historyDetailInFlightSessionId.current = null;
+        setIsHistoryDetailLoading(false);
+      }
+    }
+  };
+
+  const handleHistoryDrawerClose = () => {
+    historyDetailRequestSeq.current += 1;
+    historyDetailAbortController.current?.abort();
+    historyDetailAbortController.current = null;
+    historyDetailInFlightSessionId.current = null;
+    setIsDrawerOpen(false);
+    setIsHistoryDetailLoading(false);
+    setHistoryDetailError(null);
+  };
+
   // Group history by interviewerName
-  const groupedHistory = MOCK_HISTORY.reduce((acc, item) => {
+  const groupedHistory = historyItems.reduce((acc, item) => {
     if (!acc[item.interviewerName]) acc[item.interviewerName] = [];
     acc[item.interviewerName].push(item);
     return acc;
   }, {} as Record<string, InterviewHistoryItem[]>);
+  const historyGroups = Object.entries(groupedHistory) as [string, InterviewHistoryItem[]][];
 
   return (
     <div className="max-w-4xl mx-auto py-12 px-6">
@@ -778,8 +902,22 @@ export default function MyPage() {
               나의 면접 전적
             </h3>
             
-            <div className="space-y-4">
-              {Object.entries(groupedHistory).map(([groupName, items]) => {
+            {isHistoryLoading ? (
+              <div className="flex items-center justify-center gap-2 py-12 text-[14px] font-bold text-blue-grey-500">
+                <Loader2 className="w-5 h-5 animate-spin" />
+                면접 전적을 불러오는 중입니다.
+              </div>
+            ) : historyError ? (
+              <div className="rounded-2xl border border-danger/10 bg-danger/5 p-6 text-center text-[14px] font-bold text-danger">
+                {historyError}
+              </div>
+            ) : historyItems.length === 0 ? (
+              <div className="rounded-2xl border border-blue-grey-100 bg-blue-grey-10/50 p-8 text-center text-[14px] text-blue-grey-500">
+                아직 면접 전적이 없습니다.
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {historyGroups.map(([groupName, items]) => {
                 const isExpanded = expandedGroups[groupName] !== false; // default true
                 
                 return (
@@ -799,14 +937,19 @@ export default function MyPage() {
                     
                     {isExpanded && (
                       <div className="p-5 flex flex-col gap-3 bg-slate-50">
-                        {items.map((history) => (
+                        {items.map((history) => {
+                          const isCurrentHistoryLoading = isHistoryDetailLoading && selectedHistory?.id === history.id;
+
+                          return (
                           <button 
                             key={history.id}
-                            onClick={() => {
-                              setSelectedHistory(history);
-                              setIsDrawerOpen(true);
-                            }}
-                            className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-white border border-slate-100 rounded-xl hover:-translate-y-0.5 hover:shadow-md transition-all text-left group shadow-sm cursor-pointer"
+                            onClick={() => void handleHistoryClick(history)}
+                            disabled={isCurrentHistoryLoading}
+                            aria-busy={isCurrentHistoryLoading}
+                            className={twMerge(
+                              "flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-white border border-slate-100 rounded-xl hover:-translate-y-0.5 hover:shadow-md transition-all text-left group shadow-sm cursor-pointer disabled:cursor-wait disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:shadow-sm",
+                              isCurrentHistoryLoading && "border-primary/30 bg-primary/5"
+                            )}
                           >
                             <div className="mb-3 sm:mb-0">
                               <div className="flex items-center gap-2 mb-2">
@@ -834,13 +977,15 @@ export default function MyPage() {
                               <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-primary transition-colors" />
                             </div>
                           </button>
-                        ))}
+                          );
+                        })}
                       </div>
                     )}
                   </div>
                 );
-              })}
-            </div>
+                })}
+              </div>
+            )}
           </div>
         )}
 
@@ -938,8 +1083,10 @@ export default function MyPage() {
 
       <HistoryDrawer 
         isOpen={isDrawerOpen} 
-        onClose={() => setIsDrawerOpen(false)} 
+        onClose={handleHistoryDrawerClose} 
         historyItem={selectedHistory} 
+        isLoading={isHistoryDetailLoading}
+        errorMessage={historyDetailError}
       />
     </div>
   );
