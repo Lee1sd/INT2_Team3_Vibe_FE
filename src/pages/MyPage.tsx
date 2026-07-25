@@ -5,7 +5,6 @@ import { validateResumeFile } from '../domains/resume/resume.types';
 import { ApiError } from '../api/client';
 import { UploadCloud, FileText, CheckCircle2, Loader2, AlertCircle, ShieldCheck, Lock, LogOut, UserMinus, ArrowLeft, ChevronDown, ChevronUp, Camera, Edit2, ChevronRight, Trash2 } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
-import { ApiError } from '../api/client';
 import { authService, validateProfilePhotoFile } from '../domains/auth/auth.service';
 import { PROFILE_PHOTO_ACCEPT } from '../domains/auth/auth.types';
 import { PROFILE_UPDATED_EVENT } from '../domains/auth/profile-events';
