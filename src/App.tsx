@@ -6,7 +6,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { authService } from './domains/auth/auth.service';
-import { PROFILE_UPDATED_EVENT } from './domains/auth/profile-events';
+import { AUTH_TOKEN_CHANGED_EVENT, PROFILE_UPDATED_EVENT } from './domains/auth/profile-events';
 import { getAccessToken } from './api/client';
 import Login from './pages/Login';
 import OAuthCallback from './pages/OAuthCallback';
@@ -116,6 +116,13 @@ function HeaderProfileLink() {
       const detail = (event as CustomEvent<{ photoUrl?: string; email?: string }>).detail;
       if (detail && 'photoUrl' in detail) {
         if (cancelled) return;
+        // 로그아웃/탈퇴 직후 늦게 도착한 업로드 이벤트로 헤더가 다시 보이면 안 된다.
+        if (!getAccessToken()) {
+          setIsLoggedIn(false);
+          setPhotoUrl(undefined);
+          setInitial('U');
+          return;
+        }
         setIsLoggedIn(true);
         setPhotoUrl(detail.photoUrl || undefined);
         if (detail.email) {
@@ -126,10 +133,16 @@ function HeaderProfileLink() {
       load();
     };
 
+    const onAuthTokenChanged = () => {
+      load();
+    };
+
     window.addEventListener(PROFILE_UPDATED_EVENT, onProfileUpdated);
+    window.addEventListener(AUTH_TOKEN_CHANGED_EVENT, onAuthTokenChanged);
     return () => {
       cancelled = true;
       window.removeEventListener(PROFILE_UPDATED_EVENT, onProfileUpdated);
+      window.removeEventListener(AUTH_TOKEN_CHANGED_EVENT, onAuthTokenChanged);
     };
   }, [location.pathname]);
 
