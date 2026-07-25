@@ -4,9 +4,10 @@
  */
 
 import { useEffect, useState, type ReactNode } from 'react';
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { authService } from './domains/auth/auth.service';
-import { PROFILE_UPDATED_EVENT } from './domains/auth/profile-events';
+import { AUTH_TOKEN_CHANGED_EVENT, PROFILE_UPDATED_EVENT } from './domains/auth/profile-events';
+import { getAccessToken } from './api/client';
 import Login from './pages/Login';
 import OAuthCallback from './pages/OAuthCallback';
 import ResumeUpload from './pages/ResumeUpload';
@@ -71,8 +72,10 @@ function AuthBootstrap({ children }: { children: ReactNode }) {
   return children;
 }
 
-/** 마이페이지와 동일: 사진 있으면 사진, 없으면 이메일 이니셜. */
+/** 로그인 상태에서만 표시. 마이페이지와 동일: 사진 있으면 사진, 없으면 이메일 이니셜. */
 function HeaderProfileLink() {
+  const location = useLocation();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [photoUrl, setPhotoUrl] = useState<string | undefined>();
   const [initial, setInitial] = useState('U');
 
@@ -81,16 +84,27 @@ function HeaderProfileLink() {
 
     const applyUser = (user: { photoUrl?: string; photoURL?: string; email?: string }) => {
       if (cancelled) return;
+      setIsLoggedIn(true);
       setPhotoUrl(user.photoUrl || user.photoURL);
       setInitial(user.email?.charAt(0).toUpperCase() || 'U');
     };
 
     const load = () => {
+      if (!getAccessToken()) {
+        if (!cancelled) {
+          setIsLoggedIn(false);
+          setPhotoUrl(undefined);
+          setInitial('U');
+        }
+        return;
+      }
+
       authService
         .getCurrentUser()
         .then(applyUser)
         .catch(() => {
           if (cancelled) return;
+          setIsLoggedIn(false);
           setPhotoUrl(undefined);
           setInitial('U');
         });
@@ -102,6 +116,14 @@ function HeaderProfileLink() {
       const detail = (event as CustomEvent<{ photoUrl?: string; email?: string }>).detail;
       if (detail && 'photoUrl' in detail) {
         if (cancelled) return;
+        // 로그아웃/탈퇴 직후 늦게 도착한 업로드 이벤트로 헤더가 다시 보이면 안 된다.
+        if (!getAccessToken()) {
+          setIsLoggedIn(false);
+          setPhotoUrl(undefined);
+          setInitial('U');
+          return;
+        }
+        setIsLoggedIn(true);
         setPhotoUrl(detail.photoUrl || undefined);
         if (detail.email) {
           setInitial(detail.email.charAt(0).toUpperCase() || 'U');
@@ -111,12 +133,20 @@ function HeaderProfileLink() {
       load();
     };
 
+    const onAuthTokenChanged = () => {
+      load();
+    };
+
     window.addEventListener(PROFILE_UPDATED_EVENT, onProfileUpdated);
+    window.addEventListener(AUTH_TOKEN_CHANGED_EVENT, onAuthTokenChanged);
     return () => {
       cancelled = true;
       window.removeEventListener(PROFILE_UPDATED_EVENT, onProfileUpdated);
+      window.removeEventListener(AUTH_TOKEN_CHANGED_EVENT, onAuthTokenChanged);
     };
-  }, []);
+  }, [location.pathname]);
+
+  if (!isLoggedIn) return null;
 
   return (
     <Link

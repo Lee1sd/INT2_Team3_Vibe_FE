@@ -5,6 +5,8 @@ import { authService } from '../domains/auth/auth.service';
 import { Mail } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 
+const LOGIN_BRAND_ICON_SRC = '/brand/fvg.png';
+
 export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
@@ -29,11 +31,14 @@ export default function Login() {
 
   return (
     <div className="relative min-h-[calc(100vh-73px)] overflow-hidden flex flex-col items-center pt-24 px-6 z-0 bg-blue-grey-10">
-
-
       <div className="w-full max-w-md bg-white border border-blue-grey-75 rounded-2xl p-6 shadow-sm text-center relative z-10">
-        <div className="w-20 h-20 bg-blue-grey-25 rounded-2xl mx-auto flex items-center justify-center mb-8 border border-blue-grey-75">
-          <span className="text-4xl">🐣</span>
+        <div className="w-20 h-20 bg-blue-grey-25 rounded-2xl mx-auto flex items-center justify-center mb-8 border border-blue-grey-75 overflow-hidden">
+          <img
+            src={LOGIN_BRAND_ICON_SRC}
+            alt="커리어 던전"
+            className="w-full h-full object-cover"
+            draggable={false}
+          />
         </div>
         <h2 className="text-[32px] leading-[46px] font-bold text-blue-grey-900 mb-3 tracking-tight">커리어 던전 입장</h2>
         <p className="text-[16px] leading-[28px] text-blue-grey-900 mb-10">당신의 이력서로 구성된 맞춤형 면접관을<br/>격파하고 신뢰를 얻어내세요!</p>
@@ -58,10 +63,6 @@ export default function Login() {
           </div>
         )}
       </div>
-      
-      <p className="text-center text-[14px] leading-[20px] font-mono text-blue-grey-900 mt-6 bg-blue-grey-50 border border-blue-grey-75 py-2 px-4 rounded-xl relative z-10">
-        <span className="font-bold mr-1 text-info">INFO</span> Mock 모드입니다.
-      </p>
     </div>
   );
 }

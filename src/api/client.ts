@@ -12,13 +12,20 @@ const REFRESH_TIMEOUT_MS = 5000;
 /** 일반 API가 BE 지연/스레드 고갈에 영원히 묶이지 않도록 하는 상한(ms). */
 const REQUEST_TIMEOUT_MS = 15000;
 
+/** `profile-events.ts`의 AUTH_TOKEN_CHANGED_EVENT와 동일 문자열 — api 계층 순환 import 방지. */
+const AUTH_TOKEN_CHANGED_EVENT = 'career-dungeon:auth-token-changed';
+
 let accessToken: string | null = null;
 
 /** 동시에 여러 요청이 401을 받아도 refresh는 한 번만 돌리기 위한 in-flight 공유. */
 let refreshInFlight: Promise<boolean> | null = null;
 
 export function setAccessToken(token: string | null): void {
+  if (accessToken === token) return;
   accessToken = token;
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent(AUTH_TOKEN_CHANGED_EVENT));
+  }
 }
 
 export function getAccessToken(): string | null {
