@@ -1,11 +1,16 @@
 // 백엔드 /api/resumes 가 준비되기 전까지 업로드/파싱 흐름을 검증하기 위한 목업 구현.
-import { UploadResponse } from './resume.types';
+import { UploadResponse, validateResumeFile } from './resume.types';
 import {ResumeApiResponse} from "@/src/domains/resume/resume.api.ts";
 
 let memoryMockUploaded = false;
 
 export const resumeMock = {
   uploadResume: async (file: File, type: 'RESUME' | 'PORTFOLIO' = 'RESUME'): Promise<UploadResponse> => {
+    const validationError = validateResumeFile(file);
+    if (validationError) {
+      throw new Error(validationError);
+    }
+
     console.log('Uploading file:', file.name, 'type:', type);
     memoryMockUploaded = true;
     try {

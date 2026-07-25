@@ -8,3 +8,28 @@ export interface UploadResponse {
   fileId: string;
   status: 'UPLOADING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
 }
+
+export const RESUME_ALLOWED_EXTENSIONS = ['pdf', 'txt', 'md'] as const;
+export const RESUME_MAX_BYTES = 10 * 1024 * 1024;
+
+function getFileExtension(fileName: string): string {
+  return fileName.split('.').pop()?.toLowerCase() ?? '';
+}
+
+/** 확장자/용량을 검사해 presigned URL을 요청하기 전에 걸러낸다. */
+export function validateResumeFile(file: File): string | null {
+  const ext = getFileExtension(file.name);
+  if (!RESUME_ALLOWED_EXTENSIONS.includes(ext as (typeof RESUME_ALLOWED_EXTENSIONS)[number])) {
+    return 'PDF, TXT, MD 파일만 업로드할 수 있습니다.';
+  }
+  if (file.size > RESUME_MAX_BYTES) {
+    return '파일 크기는 최대 10MB까지 업로드할 수 있습니다.';
+  }
+  return null;
+}
+
+/** 브라우저가 .md 파일의 file.type을 비워서 주는 경우가 있어 확장자로 보정한다. */
+export function resolveResumeContentType(file: File): string {
+  if (file.type) return file.type;
+  return getFileExtension(file.name) === 'md' ? 'text/markdown' : 'application/octet-stream';
+}

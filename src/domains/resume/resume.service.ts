@@ -1,7 +1,7 @@
 // 페이지 컴포넌트가 실제로 import하는 진입점. VITE_USE_MOCK으로 mock/실제 API를 스위칭한다.
 import { resumeApi, ResumeApiResponse } from './resume.api';
 import { resumeMock } from './resume.mock';
-import { UploadResponse } from './resume.types';
+import { UploadResponse, validateResumeFile, resolveResumeContentType } from './resume.types';
 
 interface ResumeService {
   uploadResume: (file: File, type?: 'RESUME' | 'PORTFOLIO') => Promise<UploadResponse>;
@@ -27,7 +27,26 @@ function toUploadResponse(res: ResumeApiResponse): UploadResponse {
 }
 
 const realResumeService: ResumeService = {
-  uploadResume: async (file, type = 'RESUME') => toUploadResponse(await resumeApi.upload(file, type)),
+  /** presigned URL 발급 → S3 PUT → 업로드 완료 통지 3단계로 이루어진다. */
+  uploadResume: async (file, type = 'RESUME') => {
+    const validationError = validateResumeFile(file);
+    if (validationError) {
+      throw new Error(validationError);
+    }
+
+    const contentType = resolveResumeContentType(file);
+    const { uploadUrl, s3Key } = await resumeApi.getUploadUrl({
+      type,
+      fileName: file.name,
+      fileSize: file.size,
+      contentType,
+    });
+
+    await resumeApi.uploadToS3(uploadUrl, file, contentType);
+
+    const { resumeId } = await resumeApi.completeUpload({ type, s3Key });
+    return { fileId: String(resumeId), status: 'PROCESSING' };
+  },
   checkParseStatus: async (fileId) => toUploadResponse(await resumeApi.getStatus(Number(fileId))),
   checkResumeStatus: async () => {
    const resumes = await  resumeApi.getList();
