@@ -1,5 +1,6 @@
 // 백엔드 /api/interviewers, /api/interviews 등이 준비되기 전까지 면접 흐름을 검증하기 위한 목업 구현.
 import { Interviewer, InterviewResponse, Question, Answer } from './interview.types';
+import { InterviewHistoryApiResponse, InterviewDetailApiResponse } from './interview.api';
 
 export const interviewMock = {
   getInterviewers: async (): Promise<Interviewer[]> => {
@@ -36,15 +37,17 @@ export const interviewMock = {
             achievement: '스트레스 상황에서도 침착하게 근본적인 원인을 분석하고 대안을 제시할 수 있습니다.',
             avatar: '',
           },
+          // iv4는 withLevel4ChallengeInterviewer가 항상 canonical stub으로 덮어쓴다.
+          // 여기 항목은 목 목록 길이/레벨 슬롯 참고용이며, 실제 UI 카피는 stub/STATIC_CONTENT를 따른다.
           {
             id: 'iv4',
-            name: '냉철한 임원',
+            name: '이중인격 임원',
             level: 4,
             requiredGauge: 100,
-            isUnlocked: false,
-            description: '회사의 인재상과 컬처핏을 날카롭게 검증합니다.',
-            achievement: '조직의 비전에 부합하며 거시적인 관점에서의 엔지니어링 가치를 증명할 수 있습니다.',
-            avatar: '',
+            isUnlocked: true,
+            description: '챌린지 모드(목업). 답변마다 채점되며 게이지로 즉시 합격/탈락이 갈립니다.',
+            achievement: '제한된 발화 안에서 설득력 있는 근거로 임원을 납득시킬 수 있습니다.',
+            avatar: '/interviewers/lv4-executive.png',
           },
         ]);
       }, 500);
@@ -155,5 +158,42 @@ export const interviewMock = {
         });
       }, 2000);
     });
+  },
+
+  getHistory: async (): Promise<InterviewHistoryApiResponse> => ({
+    levels: [
+      {
+        level: 1,
+        interviewerName: 'Lv.1 면접관',
+        sessions: [
+          { sessionId: 1, createdAt: '2026-07-09T10:00:00', totalScore: 90 },
+        ],
+      },
+      {
+        level: 2,
+        interviewerName: 'Lv.2 면접관',
+        sessions: [
+          { sessionId: 2, createdAt: '2026-07-08T10:00:00', totalScore: 55 },
+          { sessionId: 3, createdAt: '2026-07-05T10:00:00', totalScore: 65 },
+        ],
+      },
+    ],
+  }),
+
+  getHistoryDetail: async (sessionId: string, signal?: AbortSignal): Promise<InterviewDetailApiResponse> => {
+    if (signal?.aborted) {
+      throw new DOMException('The operation was aborted.', 'AbortError');
+    }
+
+    return {
+      sessionId: Number(sessionId),
+      messages: [
+        { turn: 1, question: '이력서에서 가장 자신 있는 프로젝트를 설명해 주세요.', answer: '캐싱 전략을 개선해 응답 시간을 줄인 경험이 있습니다.' },
+        { turn: 2, question: '그 과정에서 가장 어려웠던 트레이드오프는 무엇이었나요?', answer: '정합성과 성능 사이의 균형을 맞추는 부분이 가장 어려웠습니다.' },
+        { turn: 3, question: '같은 상황을 다시 맡는다면 무엇을 다르게 하시겠어요?', answer: '초기부터 모니터링 지표를 더 촘촘히 설계하겠습니다.' },
+        { turn: 4, question: '캐시 무효화 정책은 어떻게 보완할 수 있을까요?', answer: null },
+      ],
+      overallFeedback: '전체적으로 문제 상황과 해결 과정을 구체적으로 설명했습니다. 다만 일부 답변은 운영 지표와 실패 대응까지 연결하면 더 설득력이 높아집니다.',
+    };
   },
 };

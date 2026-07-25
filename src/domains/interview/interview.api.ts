@@ -31,6 +31,35 @@ export interface SubmitAnswersApiResponse {
   nextTurn?: { type: 'FOLLOW_UP'; targetQuestionId: number; question: string } | { type: 'END' };
 }
 
+export interface InterviewHistorySessionApiItem {
+  sessionId: number;
+  createdAt: string;
+  totalScore: number;
+}
+
+export interface InterviewHistoryLevelApiItem {
+  level?: number;
+  levelName?: string;
+  interviewerName?: string;
+  sessions: InterviewHistorySessionApiItem[];
+}
+
+export interface InterviewHistoryApiResponse {
+  levels: InterviewHistoryLevelApiItem[];
+}
+
+export interface InterviewDetailMessageApiItem {
+  turn: number;
+  question: string;
+  answer: string | null;
+}
+
+export interface InterviewDetailApiResponse {
+  sessionId: number;
+  messages: InterviewDetailMessageApiItem[];
+  overallFeedback: string;
+}
+
 export const interviewApi = {
   /** IV-001 */
   getInterviewers: (): Promise<{ interviewers: InterviewerApiItem[] }> => apiClient.get('/api/interviewers'),
@@ -47,4 +76,9 @@ export const interviewApi = {
     sessionId: number,
     answers: { questionId: number; answerText: string }[]
   ): Promise<SubmitAnswersApiResponse> => apiClient.post(`/api/interviews/${sessionId}/answers`, { answers }),
+
+  getHistory: (): Promise<InterviewHistoryApiResponse> => apiClient.get('/api/interviews/history'),
+
+  getHistoryDetail: (sessionId: number, signal?: AbortSignal): Promise<InterviewDetailApiResponse> =>
+    apiClient.get(`/api/interviews/${sessionId}/detail`, { signal }),
 };

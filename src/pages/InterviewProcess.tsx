@@ -5,6 +5,7 @@ import {
   engineService,
   getInterviewerAvatarByLevel,
   getInterviewBackgroundByLevel,
+  isLevel4ChallengeInterviewerId,
   pickSessionSpriteFromOrder,
   shufflePoseOrder,
 } from '../domains/interview/interview.service';
@@ -22,8 +23,8 @@ import {
 } from '../domains/interview/interview-closing-message';
 import { InterviewResponse, Answer, FinalInterviewResult, Interviewer } from '../types';
 import { AlertCircle, Loader2, Send, ArrowLeft } from 'lucide-react';
-import { twMerge } from 'tailwind-merge';
 import { InterviewerAvatar } from '../components/InterviewerAvatar';
+import ChallengeInterviewProcess from './ChallengeInterviewProcess';
 
 function useTypewriter(text: string, speed = 35) {
   const [displayedText, setDisplayedText] = useState('');
@@ -72,6 +73,17 @@ function interviewerFromRouteState(state: unknown, interviewerId: string | undef
 }
 
 export default function InterviewProcess() {
+  const { interviewerId } = useParams();
+
+  // Lv.4 챌린지는 기존 3문항+꼬리1 흐름과 분리된 전용 화면으로 보낸다.
+  if (isLevel4ChallengeInterviewerId(interviewerId)) {
+    return <ChallengeInterviewProcess />;
+  }
+
+  return <StandardInterviewProcess />;
+}
+
+function StandardInterviewProcess() {
   const { interviewerId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();

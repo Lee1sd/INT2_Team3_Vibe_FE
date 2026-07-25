@@ -8,6 +8,8 @@ export type {
   Answer,
   EvaluationDetail,
   FinalInterviewResult,
+  ChallengeFinalResult,
+  ChallengeTurnMeta,
   NextTurn,
   InterviewResponse,
 } from './domains/interview/interview.types';
