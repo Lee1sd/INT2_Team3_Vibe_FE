@@ -190,6 +190,7 @@ function MultiFileUploader({
       const validationError = validateResumeFile(newFile);
       if (validationError) {
         alert(validationError);
+        e.target.value = '';
         return;
       }
 
