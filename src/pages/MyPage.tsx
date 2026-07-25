@@ -829,9 +829,7 @@ export default function MyPage() {
                           ? '이름 저장에 실패했습니다. 다시 시도해 주세요.'
                           : isNameDirty
                             ? '이름이 수정되었습니다. 저장을 눌러 반영하세요.'
-                            : isEditingName
-                              ? '이름을 수정한 뒤 저장을 누르거나 Enter를 누르세요. Esc로 취소할 수 있어요.'
-                              : '이름을 클릭하면 수정할 수 있어요.'}
+                            : null}
                   </p>
                   <p className="text-[14px] text-blue-grey-500 font-mono mt-1">{user?.email}</p>
                   <p className="text-[13px] text-blue-grey-500 font-normal min-h-[20px] mt-1">
@@ -841,7 +839,7 @@ export default function MyPage() {
                         ? '프로필 이미지가 저장되었습니다.'
                         : photoStatus === 'error'
                           ? photoErrorMessage
-                          : '카메라 아이콘을 눌러 프로필 이미지를 변경할 수 있어요. (JPEG/PNG/WebP, 최대 2MB)'}
+                          : null}
                   </p>
                 </div>
               </div>
