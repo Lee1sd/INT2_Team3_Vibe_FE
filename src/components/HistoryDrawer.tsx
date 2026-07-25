@@ -1,4 +1,4 @@
-import { X } from 'lucide-react';
+import { AlertCircle, Loader2, X } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 
 export interface ChatLog {
@@ -22,9 +22,17 @@ interface HistoryDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   historyItem: InterviewHistoryItem | null;
+  isLoading?: boolean;
+  errorMessage?: string | null;
 }
 
-export function HistoryDrawer({ isOpen, onClose, historyItem }: HistoryDrawerProps) {
+export function HistoryDrawer({
+  isOpen,
+  onClose,
+  historyItem,
+  isLoading = false,
+  errorMessage = null,
+}: HistoryDrawerProps) {
   return (
     <>
       {/* Dimmed Background */}
@@ -52,7 +60,7 @@ export function HistoryDrawer({ isOpen, onClose, historyItem }: HistoryDrawerPro
               </p>
             )}
           </div>
-          <button 
+          <button
             onClick={onClose}
             className="p-2 text-blue-grey-400 hover:text-blue-grey-900 hover:bg-blue-grey-50 rounded-full transition-colors"
           >
@@ -61,7 +69,23 @@ export function HistoryDrawer({ isOpen, onClose, historyItem }: HistoryDrawerPro
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-blue-grey-10">
-          {historyItem?.logs.map((log, index) => {
+          {isLoading && (
+            <div className="flex flex-col items-center justify-center py-16 text-blue-grey-500">
+              <Loader2 className="w-8 h-8 animate-spin text-primary mb-4" />
+              <p className="text-[14px] font-bold">상세 기록을 불러오는 중입니다.</p>
+            </div>
+          )}
+
+          {!isLoading && errorMessage && (
+            <div className="rounded-2xl border border-danger/10 bg-danger/5 p-5 text-danger">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+                <p className="text-[14px] leading-[22px] font-bold">{errorMessage}</p>
+              </div>
+            </div>
+          )}
+
+          {!isLoading && !errorMessage && historyItem?.logs.map((log, index) => {
             const isInterviewer = log.speaker === 'interviewer';
             return (
               <div 
@@ -87,14 +111,14 @@ export function HistoryDrawer({ isOpen, onClose, historyItem }: HistoryDrawerPro
               </div>
             );
           })}
-          {!historyItem?.logs.length && (
+          {!isLoading && !errorMessage && !historyItem?.logs.length && (
             <div className="text-center text-blue-grey-400 mt-10">
               대화 기록이 없습니다.
             </div>
           )}
 
           {/* 최종 종합 피드백 섹션 */}
-          {historyItem?.feedback && (
+          {!isLoading && !errorMessage && historyItem?.feedback && (
             <div className="mt-8 bg-blue-50 border border-blue-200 rounded-2xl p-5 shadow-sm">
               <h3 className="text-[14px] font-bold text-blue-800 mb-2 flex items-center gap-2">
                 ✨ 최종 종합 피드백

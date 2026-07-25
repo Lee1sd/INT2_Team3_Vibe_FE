@@ -1,0 +1,48 @@
+# main 머지 시 FE를 빌드해 EC2 Nginx 서빙 경로(dist)에 배포한다.
+# 필요 Secrets: EC2_HOST, EC2_USER, EC2_SSH_KEY, VITE_API_BASE_URL
+name: Deploy FE
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-fe-production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        env:
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+          VITE_USE_MOCK: "false"
+        run: npm run build
+
+      - name: Prepare SSH key
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/fe_deploy.pem
+          chmod 600 ~/.ssh/fe_deploy.pem
+          ssh-keyscan -H "${{ secrets.EC2_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Upload dist to EC2
+        run: |
+          rsync -avz --delete \
+            -e "ssh -i ~/.ssh/fe_deploy.pem -o StrictHostKeyChecking=yes" \
+            dist/ \
+            "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/home/ubuntu/INT2_Team3_Vibe_FE/dist/"
