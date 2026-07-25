@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { fileService } from '../domains/resume/resume.service';
+import { validateResumeFile } from '../domains/resume/resume.types';
 import { ApiError } from '../api/client';
 import { UploadCloud, FileText, CheckCircle2, Loader2, AlertCircle, ShieldCheck, Lock, LogOut, UserMinus, ArrowLeft, ChevronDown, ChevronUp, Camera, Edit2, ChevronRight, Trash2 } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
@@ -185,6 +186,13 @@ function MultiFileUploader({
         return;
       }
       const newFile = e.target.files[0];
+
+      const validationError = validateResumeFile(newFile);
+      if (validationError) {
+        alert(validationError);
+        return;
+      }
+
       const newId = Math.random().toString(36).substr(2, 9);
 
       const fileEntry: UploadedFile = {
