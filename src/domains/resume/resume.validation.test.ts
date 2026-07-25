@@ -48,3 +48,17 @@ test('formatFileSize returns empty string for null/undefined (legacy data withou
   assert.equal(formatFileSize(null), '');
   assert.equal(formatFileSize(undefined), '');
 });
+
+test('formatFileSize handles sub-byte values without underflowing the unit table', () => {
+  assert.equal(formatFileSize(0.5), '0.5 B');
+});
+
+test('formatFileSize caps at GB instead of overflowing past the unit table', () => {
+  assert.equal(formatFileSize(1000 * 1024 ** 3), '1000.00 GB');
+});
+
+test('formatFileSize rejects non-finite or negative input', () => {
+  assert.equal(formatFileSize(Infinity), '');
+  assert.equal(formatFileSize(NaN), '');
+  assert.equal(formatFileSize(-5), '');
+});
