@@ -909,7 +909,7 @@ export default function MyPage() {
                         {isUnlocked && <div className="absolute inset-0 bg-primary/5 rounded-2xl"></div>}
                         <span className="relative z-10 w-full h-full flex items-center justify-center p-2">
                           <BadgeImage
-                            src={catalogBadge?.imageUrl}
+                            src={catalogBadge?.imageUrl ?? `/badges/Level${badge.level}.png`}
                             alt={`${badge.name} 뱃지`}
                             className="w-full h-full object-contain"
                             fallback={<span>{badge.icon}</span>}
