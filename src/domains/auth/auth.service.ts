@@ -9,6 +9,7 @@ import {
   PROFILE_PHOTO_MIME_TYPES,
   User,
 } from './auth.types';
+import { clearReturnUrl } from './return-url';
 
 interface AuthService {
   /** 앱 시작/새로고침 시 refresh 쿠키로 accessToken을 복구한다. */
@@ -89,6 +90,7 @@ const realAuthService: AuthService = {
       await authApi.logout();
     } finally {
       setAccessToken(null);
+      clearReturnUrl();
     }
   },
   withdraw: async () => {
@@ -96,6 +98,7 @@ const realAuthService: AuthService = {
       await authApi.withdraw();
     } finally {
       setAccessToken(null);
+      clearReturnUrl();
     }
   },
 };

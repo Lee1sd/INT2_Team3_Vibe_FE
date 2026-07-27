@@ -4,10 +4,11 @@
  */
 
 import { useEffect, useState, type ReactNode } from 'react';
-import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import { authService } from './domains/auth/auth.service';
 import { AUTH_TOKEN_CHANGED_EVENT, PROFILE_UPDATED_EVENT } from './domains/auth/profile-events';
 import { getAccessToken } from './api/client';
+import { RequireAuth } from './components/RequireAuth';
 import Login from './pages/Login';
 import OAuthCallback from './pages/OAuthCallback';
 import ResumeUpload from './pages/ResumeUpload';
@@ -194,11 +195,47 @@ export default function App() {
             <Routes>
               <Route path="/" element={<Login />} />
               <Route path="/oauth/callback" element={<OAuthCallback />} />
-              <Route path="/upload" element={<ResumeUpload />} />
-              <Route path="/dungeon" element={<InterviewerList />} />
-              <Route path="/interview/:interviewerId" element={<InterviewProcess />} />
-              <Route path="/result/:sessionId" element={<Result />} />
-              <Route path="/mypage" element={<MyPage />} />
+              <Route
+                path="/upload"
+                element={
+                  <RequireAuth>
+                    <ResumeUpload />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/dungeon"
+                element={
+                  <RequireAuth>
+                    <InterviewerList />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/interview/:interviewerId"
+                element={
+                  <RequireAuth>
+                    <InterviewProcess />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/result/:sessionId"
+                element={
+                  <RequireAuth>
+                    <Result />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/mypage"
+                element={
+                  <RequireAuth>
+                    <MyPage />
+                  </RequireAuth>
+                }
+              />
+              <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>
         </div>

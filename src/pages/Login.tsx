@@ -1,7 +1,8 @@
-import { useState } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { getAccessToken } from '../api/client';
 import { authService } from '../domains/auth/auth.service';
+import { consumeReturnUrl, isSafeReturnUrl } from '../domains/auth/return-url';
 import { Mail } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 
@@ -10,17 +11,24 @@ const LOGIN_BRAND_ICON_SRC = '/brand/fvg.png';
 export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-
+  const location = useLocation();
   // AuthBootstrap이 refresh로 세션을 복구한 뒤면 로그인 화면을 건너뛴다.
-  if (getAccessToken()) {
-    return <Navigate to="/dungeon" replace />;
-  }
+  const hasAccessToken = Boolean(getAccessToken());
 
-  const handleLogin = async (provider: string) => {
+  // consumeReturnUrl은 sessionStorage를 바꾸므로 렌더가 아니라 effect에서 소비한다.
+  useEffect(() => {
+    if (!hasAccessToken) return;
+    const fromState = (location.state as { returnUrl?: string } | null)?.returnUrl;
+    navigate(consumeReturnUrl(isSafeReturnUrl(fromState) ? fromState : '/dungeon'), {
+      replace: true,
+    });
+  }, [hasAccessToken, location.state, navigate]);
+
+  const handleLogin = async (_provider: string) => {
     setIsLoading(true);
     try {
       await authService.login();
-      navigate('/dungeon');
+      navigate(consumeReturnUrl('/dungeon'), { replace: true });
     } catch (error) {
       console.error('Login failed', error);
       alert('로그인에 실패했습니다.');
@@ -28,6 +36,14 @@ export default function Login() {
       setIsLoading(false);
     }
   };
+
+  if (hasAccessToken) {
+    return (
+      <div className="flex justify-center items-center min-h-[calc(100vh-73px)]">
+        <div className="w-12 h-12 border-4 border-blue-grey-75 border-t-primary rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative min-h-[calc(100vh-73px)] overflow-hidden flex flex-col items-center pt-24 px-6 z-0 bg-blue-grey-10">
