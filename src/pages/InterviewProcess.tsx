@@ -328,6 +328,7 @@ function StandardInterviewProcess() {
       setSubmitNotice(precondition.notice ?? '');
       return;
     }
+    setSubmitNotice('');
 
     const generation = interviewGenerationRef.current;
     const activeSessionId = sessionId;
