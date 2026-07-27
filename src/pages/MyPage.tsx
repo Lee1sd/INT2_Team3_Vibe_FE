@@ -13,17 +13,25 @@ import { InfoTooltip } from '../components/InfoTooltip';
 import { ChatLog, HistoryDrawer, InterviewHistoryItem } from '../components/HistoryDrawer';
 import { BadgeImage } from '../components/BadgeImage';
 import { progressService } from '../domains/progress/progress.service';
+import { BADGE_STAGE_NAMES } from '../domains/progress/badge-names';
 import { UserBadge } from '../domains/progress/progress.types';
 import { engineService } from '../domains/interview/interview.service';
 import { InterviewDetailApiResponse, InterviewHistoryApiResponse, InterviewHistoryLevelApiItem, InterviewHistorySessionApiItem } from '../domains/interview/interview.api';
 
-const BADGES = [
-  { level: 1, name: '인턴머쓱', icon: '🐣', description: '면접의 첫 걸음을 내딛다' },
-  { level: 2, name: '대리머쓱', icon: '🐥', description: '꼬리 질문에도 당황하지 않음' },
-  { level: 3, name: '과장머쓱', icon: '🦅', description: '면접관을 리드하기 시작함' },
-  { level: 4, name: '팀장머쓱', icon: '🐉', description: '팀을 이끌 준비가 된 지원자' },
-  { level: 5, name: '프로그래머쓱', icon: '👑', description: '모든 면접관을 제패한 최종 성장형' },
-];
+const BADGE_META = [
+  { icon: '🐣', description: '면접의 첫 걸음을 내딛다' },
+  { icon: '🐥', description: '꼬리 질문에도 당황하지 않음' },
+  { icon: '🦅', description: '면접관을 리드하기 시작함' },
+  { icon: '🐉', description: '팀을 이끌 준비가 된 지원자' },
+  { icon: '👑', description: '모든 면접관을 제패한 최종 성장형' },
+] as const;
+
+const BADGES = BADGE_STAGE_NAMES.map((name, index) => ({
+  level: index + 1,
+  name,
+  icon: BADGE_META[index].icon,
+  description: BADGE_META[index].description,
+}));
 
 interface UploadedFile {
   id: string;

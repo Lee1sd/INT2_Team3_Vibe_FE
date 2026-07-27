@@ -11,6 +11,7 @@ import { BadgeImage } from '../components/BadgeImage';
 import { InterviewerAvatar } from '../components/InterviewerAvatar';
 import { progressService } from '../domains/progress/progress.service';
 import { progressApi } from '../domains/progress/progress.api';
+import { badgeNameForStage } from '../domains/progress/badge-names';
 import { UserBadge } from '../domains/progress/progress.types';
 
 /** 보유 뱃지 중 Stage가 가장 높은 뱃지를 메인 화면에 표시할 현재 뱃지로 선택한다. */
@@ -220,12 +221,12 @@ export default function InterviewerList() {
 
           <div className="flex flex-col items-center mb-16">
             <div className="relative mb-6">
-              <div className="w-32 h-32 bg-white border border-blue-grey-75 shadow-sm rounded-2xl flex items-center justify-center text-6xl">
+              <div className="w-40 h-40 bg-white border border-blue-grey-75 shadow-sm rounded-2xl flex items-center justify-center text-6xl p-3">
                 <div className="absolute inset-0 rounded-2xl shadow-[0_0_30px_rgba(0,120,255,0.2)] pointer-events-none"></div>
                 <BadgeImage
                   src={currentBadge?.imageUrl}
-                  alt={currentBadge?.name ?? '현재 뱃지'}
-                  className="relative z-10 w-full h-full object-contain rounded-2xl"
+                  alt={currentBadge ? badgeNameForStage(currentBadge.stage) : '현재 뱃지'}
+                  className="relative z-10 w-full h-full object-contain"
                   fallback={<span className="relative z-10">🐣</span>}
                 />
               </div>
@@ -239,11 +240,13 @@ export default function InterviewerList() {
               )}
             </div>
             <h3 className="text-[20px] leading-[28px] font-bold text-blue-grey-900 mb-3">
-              {currentBadge?.name ?? '현재 뱃지'}
+              {currentBadge
+                ? badgeNameForStage(currentBadge.stage, currentBadge.name)
+                : badgeNameForStage(unlockedLevel)}
             </h3>
             <div className="inline-flex items-center justify-center px-4 py-1.5 bg-white rounded-full text-blue-grey-700 font-mono text-[14px] leading-[20px] font-bold shadow-sm border border-blue-grey-100">
               <Star className="w-4 h-4 mr-2 text-warning fill-warning" />
-              현재 레벨: Lv.{unlockedLevel}
+              현재 레벨: Lv.{unlockedLevel} · {badgeNameForStage(unlockedLevel)}
             </div>
           </div>
 
