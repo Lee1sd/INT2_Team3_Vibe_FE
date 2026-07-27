@@ -4,12 +4,13 @@ import { engineService, getInterviewerBustByLevel } from '../domains/interview/i
 import { authService } from '../domains/auth/auth.service';
 import { fileService } from '../domains/resume/resume.service';
 import { Interviewer, User } from '../types';
-import { Lock, PlayCircle, ShieldCheck, Star } from 'lucide-react';
+import { AlertCircle, Lock, PlayCircle, ShieldCheck, Star } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 import { InfoTooltip } from '../components/InfoTooltip';
 import { BadgeImage } from '../components/BadgeImage';
 import { InterviewerAvatar } from '../components/InterviewerAvatar';
 import { progressService } from '../domains/progress/progress.service';
+import { progressApi } from '../domains/progress/progress.api';
 import { UserBadge } from '../domains/progress/progress.types';
 
 /** 보유 뱃지 중 Stage가 가장 높은 뱃지를 메인 화면에 표시할 현재 뱃지로 선택한다. */
@@ -27,49 +28,93 @@ export default function InterviewerList() {
   const [isLoading, setIsLoading] = useState(true);
   const [isUploaded, setIsUploaded] = useState(false);
   const [selectedKeyword, setSelectedKeyword] = useState<string>('');
+  /** 면접관 목록 등 핵심 데이터 실패 시 전체 에러. */
+  const [loadError, setLoadError] = useState<string | null>(null);
+  /** Progress/유저·뱃지 실패는 화면을 막지 않고 안내만 한다. */
+  const [progressWarning, setProgressWarning] = useState<string | null>(null);
+  const [retryKey, setRetryKey] = useState(0);
   const navigate = useNavigate();
 
   useEffect(() => {
+    let cancelled = false;
+
     const fetchData = async () => {
+      setIsLoading(true);
+      setLoadError(null);
+      setProgressWarning(null);
+
       try {
         // getCurrentUser가 아직 미연동이어도 면접관 목록은 뜨게, 요청을 독립적으로 처리한다.
         // (동기 throw 하는 stub도 allSettled가 잡도록 Promise로 감싼다)
-        const [userResult, interviewerResult, uploadResult, badgeResult] = await Promise.allSettled([
-          Promise.resolve().then(() => authService.getCurrentUser()),
-          engineService.getInterviewers(),
-          fileService.checkResumeStatus(),
-          progressService.getMyBadges(),
-        ]);
+        const [userResult, interviewerResult, uploadResult, badgeResult, progressResult] =
+          await Promise.allSettled([
+            Promise.resolve().then(() => authService.getCurrentUser()),
+            engineService.getInterviewers(),
+            fileService.checkResumeStatus(),
+            progressService.getMyBadges(),
+            progressApi.getProgress(),
+          ]);
 
-        if (userResult.status === 'fulfilled') {
-          setUser(userResult.value);
-        } else {
-          console.error(userResult.reason);
-        }
+        if (cancelled) return;
 
         if (interviewerResult.status === 'fulfilled') {
           setInterviewers(interviewerResult.value);
         } else {
           console.error(interviewerResult.reason);
+          setLoadError('면접관 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.');
+          return;
+        }
+
+        const warnings: string[] = [];
+
+        if (userResult.status === 'fulfilled') {
+          setUser(userResult.value);
+        } else {
+          console.error(userResult.reason);
+          setUser(null);
+          warnings.push('프로필을 불러오지 못했습니다.');
+        }
+
+        // UM-001을 별도 조회로 실패를 드러낸다(getCurrentUser는 실패 시 Lv.1/0으로 조용히 폴백함).
+        if (progressResult.status === 'fulfilled') {
+          const progress = progressResult.value;
+          setUser((prev) =>
+            prev
+              ? { ...prev, level: progress.unlockedLevel, gauge: progress.progressGauge }
+              : prev,
+          );
+        } else {
+          console.error(progressResult.reason);
+          warnings.push('진행도(게이지·레벨)를 불러오지 못했습니다.');
         }
 
         if (uploadResult.status === 'fulfilled') {
           setIsUploaded(uploadResult.value);
         } else {
           console.error(uploadResult.reason);
+          setIsUploaded(false);
+          warnings.push('이력서 상태를 확인하지 못했습니다.');
         }
 
         if (badgeResult.status === 'fulfilled') {
           setCurrentBadge(findCurrentBadge(badgeResult.value));
         } else {
           console.error('메인 화면 뱃지 조회 실패', badgeResult.reason);
+          setCurrentBadge(null);
+          warnings.push('보유 뱃지를 불러오지 못했습니다.');
         }
+
+        setProgressWarning(warnings.length > 0 ? warnings.join(' ') : null);
       } finally {
-        setIsLoading(false);
+        if (!cancelled) setIsLoading(false);
       }
     };
     fetchData();
-  }, []);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [retryKey]);
 
   if (isLoading) {
     return (
@@ -82,14 +127,44 @@ export default function InterviewerList() {
     );
   }
 
+  if (loadError) {
+    return (
+      <div className="flex flex-col justify-center items-center min-h-[calc(100vh-80px)] gap-4 px-6 text-center bg-blue-grey-10">
+        <AlertCircle className="w-12 h-12 text-danger" />
+        <p className="text-blue-grey-700 text-[14px] leading-[20px] font-normal">{loadError}</p>
+        <button
+          type="button"
+          onClick={() => setRetryKey((key) => key + 1)}
+          className="px-6 py-2 bg-primary text-white rounded-lg text-[14px] leading-[20px] font-bold hover:bg-[#005bb5] transition-colors"
+        >
+          다시 시도
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full relative bg-blue-grey-10">
       {/* Top Section: Dashboard (Hero) */}
       <section className="min-h-[70vh] py-24 flex flex-col items-center justify-center border-b border-blue-grey-100 bg-blue-grey-10 relative overflow-hidden z-0">
 
         <div className="text-center max-w-2xl mx-auto px-6 w-full mt-10">
+          {progressWarning && (
+            <div className="mb-6 flex flex-col sm:flex-row items-center justify-center gap-3 rounded-2xl border border-warning/40 bg-warning/10 px-4 py-3 text-left">
+              <p className="text-[13px] leading-[18px] font-normal text-blue-grey-800 flex-1">
+                {progressWarning} 일부 정보가 비어 보일 수 있습니다.
+              </p>
+              <button
+                type="button"
+                onClick={() => setRetryKey((key) => key + 1)}
+                className="shrink-0 px-4 py-2 bg-primary text-white rounded-lg text-[13px] leading-[18px] font-bold hover:bg-[#005bb5] transition-colors"
+              >
+                다시 불러오기
+              </button>
+            </div>
+          )}
           <h2 className="text-[40px] leading-[50px] font-bold text-blue-grey-900 mb-10 tracking-tight">
-            <span className="text-primary">{user?.name}</span>님,<br/>다음 면접관이 기다립니다.
+            <span className="text-primary">{user?.name ?? '모험가'}</span>님,<br/>다음 면접관이 기다립니다.
           </h2>
 
           <div className="flex flex-col items-center mb-16">

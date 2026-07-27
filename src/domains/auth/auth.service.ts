@@ -38,7 +38,7 @@ export function validateProfilePhotoFile(file: File): string | null {
 /**
  * UP-003(프로필) + UM-001(진행도)를 화면용 User로 합친다.
  * level/gauge는 auth 응답에 없고 progress 도메인 값이므로, 진행도 조회 실패 시
- * 가입 직후 기본값(Lv.1 / 0)으로 둔다.
+ * 가입 직후 기본값(Lv.1 / 0)으로 두되 호출 측이 경고를 띄울 수 있게 원인을 남긴다.
  */
 async function fetchCurrentUser(): Promise<User> {
   const me = await authApi.getMe();
@@ -50,7 +50,7 @@ async function fetchCurrentUser(): Promise<User> {
     level = progress.unlockedLevel;
     gauge = progress.progressGauge;
   } catch (e) {
-    console.error(e);
+    console.error('[auth] Progress(UM-001) 조회 실패 — 게이지/레벨 기본값 사용', e);
   }
 
   const photoUrl = me.photoUrl ?? undefined;

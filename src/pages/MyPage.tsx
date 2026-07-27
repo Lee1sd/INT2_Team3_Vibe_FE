@@ -386,6 +386,7 @@ export default function MyPage() {
   const [badgeCatalog, setBadgeCatalog] = useState<UserBadge[]>([]);
   const [badgesLoading, setBadgesLoading] = useState(true);
   const [badgeLoadError, setBadgeLoadError] = useState(false);
+  const [badgeRetryKey, setBadgeRetryKey] = useState(0);
   const navigate = useNavigate();
   const location = useLocation();
   const photoInputRef = useRef<HTMLInputElement>(null);
@@ -474,6 +475,7 @@ export default function MyPage() {
 
   useEffect(() => {
     let cancelled = false;
+    setBadgesLoading(true);
 
     // BG-001 실패가 프로필 전체 로딩을 막지 않도록 뱃지 목록을 독립적으로 조회한다.
     progressService
@@ -493,7 +495,7 @@ export default function MyPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [badgeRetryKey]);
 
   const savedName = user?.name || '';
   const trimmedName = nameInput.trim();
@@ -861,9 +863,19 @@ export default function MyPage() {
                 {badgesLoading && <Loader2 className="w-4 h-4 text-primary animate-spin" />}
               </h3>
               {badgeLoadError && (
-                <p className="text-[12px] text-blue-grey-500 mb-4">
-                  뱃지 이미지를 불러오지 못해 기본 아이콘으로 표시합니다.
-                </p>
+                <div className="mb-4 flex flex-col sm:flex-row sm:items-center gap-3">
+                  <p className="text-[12px] text-blue-grey-500 flex-1">
+                    뱃지 목록을 불러오지 못했습니다. 기본 아이콘으로 표시합니다.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setBadgeRetryKey((key) => key + 1)}
+                    disabled={badgesLoading}
+                    className="shrink-0 px-4 py-2 border border-blue-grey-75 rounded-lg text-blue-grey-700 text-[12px] font-bold hover:bg-blue-grey-25 transition-colors disabled:opacity-50"
+                  >
+                    다시 시도
+                  </button>
+                </div>
               )}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {BADGES.map((badge) => {
