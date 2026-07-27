@@ -895,15 +895,15 @@ export default function MyPage() {
                       )}
                     >
                       <div className={twMerge(
-                        "w-16 h-16 rounded-2xl flex items-center justify-center text-3xl mb-4 relative",
+                        "w-full aspect-square rounded-2xl flex items-center justify-center text-5xl mb-4 relative overflow-hidden",
                         isUnlocked ? "bg-blue-grey-25 border border-blue-grey-75" : "bg-blue-grey-50 border border-blue-grey-75 grayscale opacity-50"
                       )}>
                         {isUnlocked && <div className="absolute inset-0 bg-primary/5 rounded-2xl"></div>}
-                        <span className="relative z-10 w-full h-full flex items-center justify-center">
+                        <span className="relative z-10 w-full h-full flex items-center justify-center p-2">
                           <BadgeImage
                             src={catalogBadge?.imageUrl}
                             alt={`${badge.name} 뱃지`}
-                            className="w-full h-full object-contain rounded-2xl"
+                            className="w-full h-full object-contain"
                             fallback={<span>{badge.icon}</span>}
                           />
                         </span>
