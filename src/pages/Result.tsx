@@ -65,6 +65,7 @@ export default function Result() {
             totalScore: finalChallenge.totalScore,
             passed: finalChallenge.passed,
             overallFeedback: finalChallenge.overallFeedback,
+            passingScore: 80,
           });
           setResult(engineService.getChallengeGaugeUpdate(finalChallenge));
           setDisplayedScore(0);
@@ -207,10 +208,18 @@ export default function Result() {
                   className="h-full bg-gradient-to-r from-primary to-info rounded-lg transition-all duration-1000 relative z-10"
                   style={{ width: `${Math.min(displayedScore, 100)}%` }}
                 />
-                <div className="absolute top-0 bottom-0 left-[80%] w-0.5 bg-blue-grey-300 z-20" />
+                <div
+                  className="absolute top-0 bottom-0 w-0.5 bg-blue-grey-300 z-20"
+                  style={{ left: `${judgmentResult.passingScore}%` }}
+                />
               </div>
-              <div className="absolute -top-6 left-[80%] -translate-x-1/2 text-[12px] font-bold text-blue-grey-400 whitespace-nowrap">
-                {isChallenge ? '합격선 (80)' : '레벨업 기준 (80점)'}
+              <div
+                className="absolute -top-6 -translate-x-1/2 text-[12px] font-bold text-blue-grey-400 whitespace-nowrap"
+                style={{ left: `${judgmentResult.passingScore}%` }}
+              >
+                {isChallenge
+                  ? '합격선 (80)'
+                  : `레벨업 기준 (${judgmentResult.passingScore}점)`}
               </div>
             </div>
 

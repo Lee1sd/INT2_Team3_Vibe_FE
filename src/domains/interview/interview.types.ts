@@ -37,6 +37,8 @@ export interface FinalInterviewResult {
   totalScore: number;
   passed: boolean;
   overallFeedback: string;
+  /** 면접 레벨별 서버 판정 기준(Lv.1 60점, Lv.2 80점). */
+  passingScore: number;
 }
 
 export interface NextTurn {
@@ -76,7 +78,7 @@ export interface InterviewResponse {
   challenge?: ChallengeTurnMeta;
 }
 
-/** Lv.4 챌린지 최종 결과 — IS-002b(평가 4개 고정)와 계약을 분리한다. */
+/** Lv.4 챌린지 최종 결과 — 표준 IS-002b의 5문항 평가 계약과 분리한다. */
 export interface ChallengeFinalResult {
   mode: 'level4-challenge';
   evaluations: EvaluationDetail[];

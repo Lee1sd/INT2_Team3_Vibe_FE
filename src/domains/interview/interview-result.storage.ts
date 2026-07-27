@@ -1,15 +1,18 @@
 import { FinalInterviewResult, InterviewResponse } from './interview.types';
+import { getInterviewPassingScore } from './interview-score-policy';
 
 const RESULT_STORAGE_PREFIX = 'career-dungeon:interview-result:';
+const FINAL_QUESTION_IDS = new Set(['1', '2', '3', '4', '5']);
 
 /** 저장소나 라우터에서 읽은 값이 최종 판정 계약을 만족하는지 확인한다. */
 export function isFinalInterviewResult(value: unknown): value is FinalInterviewResult {
   if (!value || typeof value !== 'object') return false;
 
   const result = value as Partial<FinalInterviewResult>;
-  if (!Array.isArray(result.evaluations) || result.evaluations.length !== 4) return false;
+  if (!Array.isArray(result.evaluations) || result.evaluations.length !== FINAL_QUESTION_IDS.size) return false;
   if (!Number.isInteger(result.totalScore) || result.totalScore! < 0 || result.totalScore! > 100) return false;
-  if (typeof result.passed !== 'boolean' || result.passed !== (result.totalScore! >= 80)) return false;
+  if (result.passingScore !== 60 && result.passingScore !== 80) return false;
+  if (typeof result.passed !== 'boolean' || result.passed !== (result.totalScore! >= result.passingScore)) return false;
   if (typeof result.overallFeedback !== 'string' || !result.overallFeedback.trim()) return false;
 
   const evaluationsValid = result.evaluations.every((evaluation) => (
@@ -17,20 +20,25 @@ export function isFinalInterviewResult(value: unknown): value is FinalInterviewR
     && typeof evaluation.questionId === 'string'
     && Number.isInteger(evaluation.score)
     && evaluation.score >= 0
-    && evaluation.score <= 25
+    && evaluation.score <= 20
     && (evaluation.feedback === undefined || typeof evaluation.feedback === 'string')
   ));
   const questionIds = new Set(result.evaluations.map((evaluation) => evaluation.questionId));
-  return evaluationsValid && questionIds.size === 4;
+  const evaluationTotal = result.evaluations.reduce((sum, evaluation) => sum + evaluation.score, 0);
+  return evaluationsValid
+    && questionIds.size === FINAL_QUESTION_IDS.size
+    && [...questionIds].every((questionId) => FINAL_QUESTION_IDS.has(questionId))
+    && evaluationTotal === result.totalScore;
 }
 
 /** IS-002b 화면 응답에서 검증된 최종 판정 데이터만 분리한다. */
-export function toFinalInterviewResult(response: InterviewResponse): FinalInterviewResult {
+export function toFinalInterviewResult(response: InterviewResponse, level: number): FinalInterviewResult {
   const candidate: FinalInterviewResult = {
     evaluations: response.evaluations ?? [],
     totalScore: response.totalScore ?? Number.NaN,
     passed: response.passed,
     overallFeedback: response.overallFeedback ?? '',
+    passingScore: getInterviewPassingScore(level),
   };
 
   if (!isFinalInterviewResult(candidate)) {

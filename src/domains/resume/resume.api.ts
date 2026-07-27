@@ -1,6 +1,9 @@
 // 백엔드 domain.resume 실제 엔드포인트 연동 구현.
 // 근거: INT2_Team3_Vibe_BE/docs/api/api-spec.md RS-001, RS-002.
-import { apiClient } from '../../api/client';
+import { apiClient, getAccessToken } from '../../api/client';
+import { buildResumeUploadHeaders } from './resume.upload';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
 export interface ResumeApiResponse {
   resumeId: number;
@@ -46,18 +49,18 @@ export const resumeApi = {
     apiClient.post('/api/resumes/upload-url', params),
 
   /**
-   * RS-001b — 발급받은 presigned URL로 S3에 직접 PUT한다.
-   * apiClient를 거치면 백엔드 baseURL/Authorization/쿠키가 붙어버리므로 raw fetch로 호출한다.
+   * RS-001b — 운영은 S3로, 로컬 시연은 인증된 백엔드 임시 저장소로 직접 PUT한다.
+   * 외부 S3 URL에는 JWT를 보내지 않고 로컬 백엔드 업로드 URL에만 현재 토큰을 첨부한다.
    */
-  uploadToS3: async (uploadUrl: string, file: File, contentType: string): Promise<void> => {
+  uploadToStorage: async (uploadUrl: string, file: File, contentType: string): Promise<void> => {
     const res = await fetch(uploadUrl, {
       method: 'PUT',
-      headers: { 'Content-Type': contentType },
+      headers: buildResumeUploadHeaders(uploadUrl, API_BASE_URL, contentType, getAccessToken()),
       body: file,
     });
 
     if (!res.ok) {
-      throw new Error(`S3 업로드에 실패했습니다. (status: ${res.status})`);
+      throw new Error(`이력서 파일 업로드에 실패했습니다. (status: ${res.status})`);
     }
   },
 

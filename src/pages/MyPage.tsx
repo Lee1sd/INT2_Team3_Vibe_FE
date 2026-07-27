@@ -12,6 +12,7 @@ import { User } from '../types';
 import { InfoTooltip } from '../components/InfoTooltip';
 import { ChatLog, HistoryDrawer, InterviewHistoryItem } from '../components/HistoryDrawer';
 import { BadgeImage } from '../components/BadgeImage';
+import { getInterviewPassingScore } from '../domains/interview/interview-score-policy';
 import { progressService } from '../domains/progress/progress.service';
 import { BADGE_STAGE_NAMES } from '../domains/progress/badge-names';
 import { UserBadge } from '../domains/progress/progress.types';
@@ -313,8 +314,6 @@ const TABS = [
 
 type TabId = typeof TABS[number]['id'];
 
-const PASSING_SCORE = 80;
-
 function formatHistoryDate(createdAt: string): string {
   const date = new Date(createdAt);
   if (Number.isNaN(date.getTime())) return createdAt;
@@ -341,7 +340,7 @@ function toHistoryItem(
     date: formatHistoryDate(session.createdAt),
     interviewerName: getHistoryGroupName(level),
     score: session.totalScore,
-    passed: session.totalScore >= PASSING_SCORE,
+    passed: session.totalScore >= getInterviewPassingScore(level.level),
     logs: [],
   };
 }

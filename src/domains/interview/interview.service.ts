@@ -233,6 +233,7 @@ function toNextTurn(res: SubmitAnswersApiResponse, turn: number): NextTurn {
   };
 }
 
+/** IS-002/IS-002b 응답을 화면에서 사용하는 면접 상태로 변환한다. */
 function toInterviewResponse(res: SubmitAnswersApiResponse, turn: number): InterviewResponse {
   const nextTurn = toNextTurn(res, turn);
   const weakestQuestionId = toStringId(res.weakestQuestionId);

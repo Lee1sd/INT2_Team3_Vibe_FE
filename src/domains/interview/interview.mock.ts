@@ -70,9 +70,10 @@ export const interviewMock = {
             turn: 1,
           },
           questions: [
-            { id: 'q1', content: '이력서에 작성하신 캐싱 전략에서 정합성 문제는 어떻게 해결하셨나요?', type: 'MAIN' },
-            { id: 'q2', content: '데이터베이스 락(Lock)을 사용하지 않은 특별한 이유가 있나요?', type: 'MAIN' },
-            { id: 'q3', content: '트래픽이 갑자기 10배 증가한다면 현재 아키텍처에서 가장 먼저 병목이 발생할 곳은 어디인가요?', type: 'MAIN' },
+            { id: '1', content: '이력서에 작성하신 캐싱 전략에서 정합성 문제는 어떻게 해결하셨나요?', type: 'MAIN' },
+            { id: '2', content: '데이터베이스 락(Lock)을 사용하지 않은 특별한 이유가 있나요?', type: 'MAIN' },
+            { id: '3', content: '트래픽이 갑자기 10배 증가한다면 현재 아키텍처에서 가장 먼저 병목이 발생할 곳은 어디인가요?', type: 'MAIN' },
+            { id: '4', content: '운영 중 장애를 조기에 발견하기 위해 어떤 지표를 확인하셨나요?', type: 'MAIN' },
           ],
         });
       }, 1500);
@@ -86,32 +87,37 @@ export const interviewMock = {
         resolve({
           evaluations: [
             {
-              questionId: 'q1',
-              score: 15,
+              questionId: '1',
+              score: 12,
               feedback: '첫 번째 답변(Q1)에 대한 설명이 가장 부족합니다. 구체적인 해결 방안이 없네요.',
             },
             {
-              questionId: 'q2',
-              score: 25,
+              questionId: '2',
+              score: 18,
               feedback: '데이터베이스 락을 쓰지 않은 이유는 비교적 명확하게 설명했습니다.',
             },
             {
-              questionId: 'q3',
-              score: 20,
+              questionId: '3',
+              score: 16,
               feedback: '병목 지점은 짚었지만 트래픽 증가 상황의 대응 순서가 조금 더 필요합니다.',
+            },
+            {
+              questionId: '4',
+              score: 14,
+              feedback: '운영 지표를 제시했지만 임계치와 대응 절차가 더 필요합니다.',
             },
           ],
           totalScore: 60,
-          weakestQuestionId: 'q1',
+          weakestQuestionId: '1',
           passed: false,
           nextTurn: {
             type: 'FOLLOW_UP',
             turn: 2,
-            questionId: 'q4',
+            questionId: '1',
           },
           questions: [
             {
-              id: 'q4',
+              id: '5',
               content: '캐싱 정합성 문제에 대해 구체적인 해결 경험이 없으신가요? 예를 들어, Write-Through나 Cache Aside 패턴을 고려해보셨나요?',
               type: 'FOLLOW_UP',
             },
@@ -128,22 +134,27 @@ export const interviewMock = {
         resolve({
           evaluations: [
             {
-              questionId: 'q1',
-              score: 15,
+              questionId: '1',
+              score: 12,
               feedback: '첫 번째 답변은 해결 방안의 구체성이 부족했습니다.',
             },
             {
-              questionId: 'q2',
-              score: 25,
+              questionId: '2',
+              score: 18,
               feedback: '락을 선택하지 않은 근거를 명확하게 설명했습니다.',
             },
             {
-              questionId: 'q3',
-              score: 20,
+              questionId: '3',
+              score: 16,
               feedback: '병목 지점과 대응 순서를 적절하게 설명했습니다.',
             },
             {
-              questionId: 'q4',
+              questionId: '4',
+              score: 14,
+              feedback: '운영 지표와 대응 절차를 설명했습니다.',
+            },
+            {
+              questionId: '5',
               score: 20,
               feedback: '꼬리질문 방어에 성공했습니다. 트레이드오프를 잘 이해하고 있군요.',
             },
@@ -191,7 +202,8 @@ export const interviewMock = {
         { turn: 1, question: '이력서에서 가장 자신 있는 프로젝트를 설명해 주세요.', answer: '캐싱 전략을 개선해 응답 시간을 줄인 경험이 있습니다.' },
         { turn: 2, question: '그 과정에서 가장 어려웠던 트레이드오프는 무엇이었나요?', answer: '정합성과 성능 사이의 균형을 맞추는 부분이 가장 어려웠습니다.' },
         { turn: 3, question: '같은 상황을 다시 맡는다면 무엇을 다르게 하시겠어요?', answer: '초기부터 모니터링 지표를 더 촘촘히 설계하겠습니다.' },
-        { turn: 4, question: '캐시 무효화 정책은 어떻게 보완할 수 있을까요?', answer: null },
+        { turn: 4, question: '운영 장애를 조기에 발견하기 위해 어떤 지표를 확인했나요?', answer: '오류율과 응답 시간, 캐시 적중률을 함께 확인했습니다.' },
+        { turn: 5, question: '캐시 무효화 정책은 어떻게 보완할 수 있을까요?', answer: '변경 가능성을 먼저 확인한 뒤 해시를 계산하는 방식으로 보완하겠습니다.' },
       ],
       overallFeedback: '전체적으로 문제 상황과 해결 과정을 구체적으로 설명했습니다. 다만 일부 답변은 운영 지표와 실패 대응까지 연결하면 더 설득력이 높아집니다.',
     };

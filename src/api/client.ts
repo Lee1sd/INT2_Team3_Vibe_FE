@@ -145,7 +145,8 @@ export async function restoreSession(signal?: AbortSignal): Promise<boolean> {
 async function request<T>(
   path: string,
   options: RequestInit = {},
-  retried = false
+  retried = false,
+  timeoutMs = REQUEST_TIMEOUT_MS
 ): Promise<T> {
   const isFormData = options.body instanceof FormData;
   const controller = new AbortController();
@@ -153,7 +154,7 @@ async function request<T>(
   const timeoutId = setTimeout(() => {
     timedOut = true;
     controller.abort();
-  }, REQUEST_TIMEOUT_MS);
+  }, timeoutMs);
 
   const onExternalAbort = () => controller.abort();
   if (options.signal) {
@@ -198,7 +199,7 @@ async function request<T>(
           // refresh로 받은 새 accessToken으로 재시도는 가능하게 한다.
           const { signal, ...rest } = options;
           const retryOptions = signal?.aborted ? rest : options;
-          return request<T>(path, retryOptions, true);
+          return request<T>(path, retryOptions, true, timeoutMs);
         }
       }
 
@@ -235,8 +236,14 @@ async function request<T>(
 
 export const apiClient = {
   get: <T>(path: string, options: RequestInit = {}) => request<T>(path, options),
-  post: <T>(path: string, body?: unknown) =>
-    request<T>(path, { method: 'POST', body: body !== undefined ? JSON.stringify(body) : undefined }),
+  /** LLM 연동처럼 오래 걸리는 API만 호출부에서 별도 타임아웃을 지정할 수 있다. */
+  post: <T>(path: string, body?: unknown, timeoutMs = REQUEST_TIMEOUT_MS) =>
+    request<T>(
+      path,
+      { method: 'POST', body: body !== undefined ? JSON.stringify(body) : undefined },
+      false,
+      timeoutMs
+    ),
   patch: <T>(path: string, body?: unknown) =>
     request<T>(path, { method: 'PATCH', body: body !== undefined ? JSON.stringify(body) : undefined }),
   delete: <T>(path: string) => request<T>(path, { method: 'DELETE' }),

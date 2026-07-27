@@ -79,7 +79,7 @@ function interviewerFromRouteState(state: unknown, interviewerId: string | undef
 export default function InterviewProcess() {
   const { interviewerId } = useParams();
 
-  // Lv.4 챌린지는 기존 3문항+꼬리1 흐름과 분리된 전용 화면으로 보낸다.
+  // Lv.4 챌린지는 표준 4문항+꼬리1 흐름과 분리된 전용 화면으로 보낸다.
   if (isLevel4ChallengeInterviewerId(interviewerId)) {
     return <ChallengeInterviewProcess />;
   }
@@ -339,7 +339,7 @@ function StandardInterviewProcess() {
     setIsSubmitting(true);
     try {
       if (!isFollowUp) {
-        // First turn: submit 3 answers
+        // 최초 turn에서는 서버가 내려준 본문항 4개를 일괄 제출한다.
         const payload: Answer[] = session.questions.map(q => ({
           questionId: q.id,
           content: answers[q.id]
@@ -362,7 +362,7 @@ function StandardInterviewProcess() {
         
         if (res.nextTurn.type === 'END') {
           // 최종 응답을 먼저 검증·저장한 뒤 종료 상태를 한 번에 반영해 불완전한 END 화면을 방지한다.
-          const completedResult = toFinalInterviewResult(res);
+          const completedResult = toFinalInterviewResult(res, interviewer.level);
           saveFinalInterviewResult(activeSessionId, completedResult);
           setFinalResult(completedResult);
           setIsInterviewFinished(true);

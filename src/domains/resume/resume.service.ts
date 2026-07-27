@@ -53,7 +53,7 @@ const realResumeService: ResumeService = {
       contentType,
     });
 
-    await resumeApi.uploadToS3(uploadUrl, file, contentType);
+    await resumeApi.uploadToStorage(uploadUrl, file, contentType);
 
     const { resumeId } = await resumeApi.completeUpload({ type, s3Key, originalFileName: file.name });
     return { fileId: String(resumeId), status: 'PROCESSING' };
