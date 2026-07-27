@@ -13,7 +13,7 @@ import {
 import { pickOpeningGreeting } from '../domains/interview/openingGreetings';
 import { evaluateSubmitPrecondition } from '../domains/interview/submit-precondition';
 import { evaluationService } from '../domains/progress/progress.service';
-import { fileService } from '../domains/resume/resume.service';
+import { fileService, markResumeAsSelected } from '../domains/resume/resume.service';
 import {
   saveFinalInterviewResult,
   toFinalInterviewResult,
@@ -188,6 +188,8 @@ function StandardInterviewProcess() {
         }
         const res = await engineService.startInterview(interviewerId || '1', resumeId, selectedKeyword);
         if (isStale()) return;
+        // 방금 사용한 이력서를 다음 새로고침에도 선택 상태로 유지한다.
+        markResumeAsSelected(resumeId);
         setSession(res);
         setSessionId(res.sessionId || '');
         if (res.sessionId) {

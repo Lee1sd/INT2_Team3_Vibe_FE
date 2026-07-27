@@ -1,7 +1,18 @@
 // 페이지 컴포넌트가 실제로 import하는 진입점. VITE_USE_MOCK으로 mock/실제 API를 스위칭한다.
 import { resumeApi, ResumeApiResponse } from './resume.api';
 import { resumeMock } from './resume.mock';
-import { UploadResponse, validateResumeFile, resolveResumeContentType } from './resume.types';
+import {
+  UploadResponse,
+  validateResumeFile,
+  resolveResumeContentType,
+  resolveActiveResumeId,
+  getStoredSelectedResumeId,
+  clearStoredSelectedResumeId,
+} from './resume.types';
+
+// resolveActiveResumeId/markResumeAsSelected는 순수 로직이라 resume.types.ts에 두고 여기서는
+// 재노출만 한다 — 페이지들이 기존처럼 이 파일에서 import할 수 있도록 경로만 유지한다.
+export { resolveActiveResumeId, markResumeAsSelected } from './resume.types';
 
 interface ResumeService {
   uploadResume: (file: File, type?: 'RESUME' | 'PORTFOLIO') => Promise<UploadResponse>;
@@ -57,14 +68,17 @@ const realResumeService: ResumeService = {
   getResumeList: async () => {
     return await resumeApi.getList();
   },
-  /** 최신 파싱 완료 이력서를 면접 입력으로 선택한다. */
+  /** 면접 입력으로 쓸 이력서를 고른다 (localStorage 선택 > isLastUsed > 없음). */
   getLatestCompletedResumeId: async () => {
     const resumes = await resumeApi.getList();
-    const resume = resumes.find((item) => item.type === 'RESUME' && item.parseStatus === 'DONE');
-    return resume ? String(resume.resumeId) : null;
+    return resolveActiveResumeId(resumes);
   },
   deleteResume: async (resumeId) => {
     await resumeApi.delete(Number(resumeId));
+    // 지금 선택 중이던 이력서가 삭제된 거라면, 다음 조회 때 isLastUsed로 자연히 폴백하도록 정리한다.
+    if (getStoredSelectedResumeId() === resumeId) {
+      clearStoredSelectedResumeId();
+    }
   },
 };
 
