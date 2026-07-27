@@ -8,6 +8,7 @@ import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-do
 import { authService } from './domains/auth/auth.service';
 import { AUTH_TOKEN_CHANGED_EVENT, PROFILE_UPDATED_EVENT } from './domains/auth/profile-events';
 import { getAccessToken } from './api/client';
+import { PageSpinner } from './components/ui';
 import Login from './pages/Login';
 import OAuthCallback from './pages/OAuthCallback';
 import ResumeUpload from './pages/ResumeUpload';
@@ -62,11 +63,7 @@ function AuthBootstrap({ children }: { children: ReactNode }) {
   }, []);
 
   if (!ready) {
-    return (
-      <div className="flex justify-center items-center min-h-screen bg-blue-grey-10">
-        <div className="w-12 h-12 border-4 border-blue-grey-75 border-t-primary rounded-full animate-spin" />
-      </div>
-    );
+    return <PageSpinner className="min-h-screen bg-shell-bg" label="세션 복구 중" />;
   }
 
   return children;
@@ -174,8 +171,8 @@ export default function App() {
   return (
     <AuthBootstrap>
       <BrowserRouter>
-        <div className="min-h-screen bg-blue-grey-10 text-blue-grey-900 font-sans selection:bg-primary/20 selection:text-primary">
-          <header className="border-b border-blue-grey-75 bg-white sticky top-0 z-50 px-6 py-4 flex items-center justify-between shadow-sm">
+        <div className="min-h-screen bg-shell-bg text-shell-ink font-sans selection:bg-primary/20 selection:text-primary">
+          <header className="border-b border-shell-border bg-shell-card sticky top-0 z-50 px-6 py-4 flex items-center justify-between shadow-sm">
             <Link to="/dungeon" className="flex items-center gap-3">
               <img
                 src={BRAND_ICON_SRC}
@@ -183,7 +180,7 @@ export default function App() {
                 className="w-10 h-10 rounded-2xl shadow-sm object-cover"
                 draggable={false}
               />
-              <h1 className="text-[26px] leading-[32px] font-bold tracking-tight text-blue-grey-900">커리어 던전</h1>
+              <h1 className="text-[26px] leading-[32px] font-bold tracking-tight text-shell-ink">커리어 던전</h1>
             </Link>
             <div className="flex items-center gap-6">
               <HeaderProfileLink />

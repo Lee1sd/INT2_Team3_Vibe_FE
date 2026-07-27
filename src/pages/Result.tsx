@@ -12,9 +12,10 @@ import {
   loadChallengeFinalResult,
 } from '../domains/interview/level4-challenge.storage';
 import { GaugeUpdate, Interviewer, FinalInterviewResult, ChallengeFinalResult } from '../types';
-import { Award, ChevronRight, Zap, MessageSquare, AlertCircle } from 'lucide-react';
+import { Award, ChevronRight, Zap, MessageSquare } from 'lucide-react';
 import { InfoTooltip } from '../components/InfoTooltip';
 import { BadgeImage } from '../components/BadgeImage';
+import { Button, ErrorState, PageSpinner } from '../components/ui';
 
 export default function Result() {
   const { sessionId } = useParams();
@@ -116,25 +117,19 @@ export default function Result() {
 
   if (error) {
     return (
-      <div className="flex flex-col justify-center items-center min-h-[70vh] gap-4 px-6 text-center">
-        <AlertCircle className="w-12 h-12 text-danger" />
-        <p className="text-blue-grey-700 text-[14px] leading-[20px] font-normal">{error}</p>
-        <button
-          onClick={() => navigate('/dungeon')}
-          className="px-6 py-2 border border-blue-grey-75 rounded-lg text-blue-grey-700 text-[14px] leading-[20px] font-bold hover:bg-blue-grey-25 transition-colors"
-        >
-          던전 맵으로 돌아가기
-        </button>
-      </div>
+      <ErrorState
+        message={error}
+        action={
+          <Button variant="ghost" onClick={() => navigate('/dungeon')}>
+            던전 맵으로 돌아가기
+          </Button>
+        }
+      />
     );
   }
 
   if (!result || !judgmentResult) {
-    return (
-      <div className="flex justify-center items-center min-h-[70vh]">
-        <div className="w-16 h-16 border-4 border-blue-grey-75 border-t-primary rounded-full animate-spin"></div>
-      </div>
-    );
+    return <PageSpinner label="결과 불러오는 중" />;
   }
 
   const isChallenge = Boolean(challengeResult);
@@ -231,24 +226,25 @@ export default function Result() {
         </div>
 
         <div className="flex justify-center pb-12">
-          <button
+          <Button
+            variant="primary"
+            className="rounded-2xl px-8 py-3 bg-blue-grey-900 hover:bg-blue-grey-800"
             onClick={() => navigate('/dungeon')}
-            className="px-8 py-3 bg-blue-grey-900 text-white rounded-2xl text-[14px] leading-[20px] font-bold flex items-center gap-2 hover:bg-blue-grey-800 transition-colors shadow-sm"
           >
             던전 맵으로 돌아가기
             <ChevronRight className="w-5 h-5" />
-          </button>
+          </Button>
         </div>
       </div>
 
       {showBadgeModal && (
         <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-10 max-w-sm w-full text-center shadow-2xl relative overflow-hidden animate-bounceIn">
+          <div className="bg-shell-card rounded-3xl p-10 max-w-sm w-full text-center shadow-2xl relative overflow-hidden animate-bounceIn">
             <div className="absolute inset-0 bg-warning/5"></div>
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-warning/20 rounded-full blur-3xl z-0 pointer-events-none"></div>
 
             <div className="relative z-10 flex flex-col items-center">
-              <div className="w-24 h-24 bg-white rounded-3xl mx-auto flex items-center justify-center shadow-lg mb-6 border border-blue-grey-50 animate-badge-3d hover:scale-110 transition-transform duration-500">
+              <div className="w-24 h-24 bg-shell-card rounded-3xl mx-auto flex items-center justify-center shadow-lg mb-6 border border-blue-grey-50 animate-badge-3d hover:scale-110 transition-transform duration-500">
                 <BadgeImage
                   src={result.newlyAcquiredBadge?.imageUrl}
                   alt={`${result.newlyAcquiredBadge?.name ?? '새로 획득한'} 뱃지`}
@@ -256,23 +252,20 @@ export default function Result() {
                   fallback={<Award className="w-12 h-12 text-warning fill-warning" />}
                 />
               </div>
-              <h3 className="text-[26px] leading-[32px] font-bold text-blue-grey-900 mb-2">새로운 뱃지 획득!</h3>
-              <p className="text-blue-grey-900 text-[14px] leading-[20px] font-normal mb-6">
+              <h3 className="text-[26px] leading-[32px] font-bold text-shell-ink mb-2">새로운 뱃지 획득!</h3>
+              <p className="text-shell-ink text-[14px] leading-[20px] font-normal mb-6">
                 {unlockedInterviewer
                   ? `Lv.${unlockedInterviewer.level} ${unlockedInterviewer.name} 면접관이 해금되었습니다.`
                   : '축하합니다! 레벨업에 성공했습니다.'}
               </p>
 
-              <div className="w-full text-[14px] leading-[20px] font-normal bg-blue-grey-25 text-blue-grey-900 p-5 rounded-2xl border border-blue-grey-75 shadow-inner mb-8 italic">
+              <div className="w-full text-[14px] leading-[20px] font-normal bg-shell-muted text-shell-ink p-5 rounded-2xl border border-shell-border shadow-inner mb-8 italic">
                 &quot;트레이드오프를 설명할 줄 아는군요. 다음 단계로 오시죠.&quot;
               </div>
 
-              <button
-                onClick={() => setShowBadgeModal(false)}
-                className="w-full py-4 bg-primary text-white rounded-2xl text-[16px] leading-[28px] font-bold hover:bg-[#005bb5] transition-colors shadow-md"
-              >
+              <Button size="lg" onClick={() => setShowBadgeModal(false)}>
                 피드백 확인하기
-              </button>
+              </Button>
             </div>
           </div>
         </div>

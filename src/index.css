@@ -26,14 +26,21 @@
   --color-success: #4CAF50;
   --color-danger: #F44336;
   --color-primary: #0078ff;
-  
-      
+
+  /* 라이트 셸(로그인·마이페이지·업로드·결과)용 시맨틱 토큰 — 팔레트 값은 blue-grey에 고정 */
+  --color-shell-bg: #FBFBFD;
+  --color-shell-card: #FFFFFF;
+  --color-shell-muted: #F4F4F8;
+  --color-shell-border: #D7E2EB;
+  --color-shell-ink: #263747;
+  --color-shell-subtle: #5F7F90;
+  --color-primary-hover: #005bb5;
+
   --animate-shimmer: shimmer 2s linear infinite;
   --animate-bounceIn: bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   --animate-float: float 3s ease-in-out infinite;
   --animate-pulse-glow: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  
-      }
+}
 
 @keyframes shimmer {
   0% { transform: translateX(-100%); }
