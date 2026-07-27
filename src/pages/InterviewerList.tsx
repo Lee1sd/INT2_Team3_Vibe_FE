@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { engineService, getInterviewerBustByLevel } from '../domains/interview/interview.service';
-import { authService } from '../domains/auth/auth.service';
+import { authApi } from '../domains/auth/auth.api';
 import { fileService } from '../domains/resume/resume.service';
 import { Interviewer, User } from '../types';
 import { AlertCircle, Lock, PlayCircle, ShieldCheck, Star } from 'lucide-react';
@@ -21,6 +21,25 @@ function findCurrentBadge(badges: UserBadge[]): UserBadge | null {
   );
 }
 
+/** UP-003 프로필만 매핑한다. level/gauge는 UM-001을 별도로 붙인다(중복 호출 방지). */
+function toUserFromMe(
+  me: Awaited<ReturnType<typeof authApi.getMe>>,
+  level: number,
+  gauge: number,
+): User {
+  const photoUrl = me.photoUrl ?? undefined;
+  return {
+    id: String(me.id),
+    name: me.name,
+    email: me.email,
+    displayName: me.name,
+    photoUrl,
+    photoURL: photoUrl,
+    level,
+    gauge,
+  };
+}
+
 export default function InterviewerList() {
   const [interviewers, setInterviewers] = useState<Interviewer[]>([]);
   const [user, setUser] = useState<User | null>(null);
@@ -29,17 +48,76 @@ export default function InterviewerList() {
   const [progressGauge, setProgressGauge] = useState(0);
   const [currentBadge, setCurrentBadge] = useState<UserBadge | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSoftRefreshing, setIsSoftRefreshing] = useState(false);
   const [isUploaded, setIsUploaded] = useState(false);
   const [selectedKeyword, setSelectedKeyword] = useState<string>('');
   /** 면접관 목록 등 핵심 데이터 실패 시 전체 에러. */
   const [loadError, setLoadError] = useState<string | null>(null);
   /** Progress/유저·뱃지 실패는 화면을 막지 않고 안내만 한다. */
   const [progressWarning, setProgressWarning] = useState<string | null>(null);
-  const [retryKey, setRetryKey] = useState(0);
+  /** 면접관 목록까지 포함한 전체 재시도. */
+  const [hardRetryKey, setHardRetryKey] = useState(0);
+  /** 부가 데이터(프로필·진행도·뱃지·이력서)만 재조회. */
+  const [softRetryKey, setSoftRetryKey] = useState(0);
   const navigate = useNavigate();
+
+  /** 프로필·진행도·뱃지·이력서 — UM-001은 여기서만 호출한다(getCurrentUser 경유 금지). */
+  const loadAuxiliaryData = useCallback(async (cancelled: () => boolean) => {
+    setProgressWarning(null);
+
+    const [meResult, uploadResult, badgeResult, progressResult] = await Promise.allSettled([
+      authApi.getMe(),
+      fileService.checkResumeStatus(),
+      progressService.getMyBadges(),
+      progressApi.getProgress(),
+    ]);
+
+    if (cancelled()) return;
+
+    const warnings: string[] = [];
+    let nextLevel = 1;
+    let nextGauge = 0;
+
+    if (progressResult.status === 'fulfilled') {
+      nextLevel = progressResult.value.unlockedLevel;
+      nextGauge = progressResult.value.progressGauge;
+      setUnlockedLevel(nextLevel);
+      setProgressGauge(nextGauge);
+    } else {
+      console.error(progressResult.reason);
+      warnings.push('진행도(게이지·레벨)를 불러오지 못했습니다.');
+    }
+
+    if (meResult.status === 'fulfilled') {
+      setUser(toUserFromMe(meResult.value, nextLevel, nextGauge));
+    } else {
+      console.error(meResult.reason);
+      setUser(null);
+      warnings.push('프로필을 불러오지 못했습니다.');
+    }
+
+    if (uploadResult.status === 'fulfilled') {
+      setIsUploaded(uploadResult.value);
+    } else {
+      console.error(uploadResult.reason);
+      setIsUploaded(false);
+      warnings.push('이력서 상태를 확인하지 못했습니다.');
+    }
+
+    if (badgeResult.status === 'fulfilled') {
+      setCurrentBadge(findCurrentBadge(badgeResult.value));
+    } else {
+      console.error('메인 화면 뱃지 조회 실패', badgeResult.reason);
+      setCurrentBadge(null);
+      warnings.push('보유 뱃지를 불러오지 못했습니다.');
+    }
+
+    setProgressWarning(warnings.length > 0 ? warnings.join(' ') : null);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
+    const isCancelled = () => cancelled;
 
     const fetchData = async () => {
       setIsLoading(true);
@@ -49,69 +127,20 @@ export default function InterviewerList() {
       setProgressGauge(0);
 
       try {
-        // getCurrentUser가 아직 미연동이어도 면접관 목록은 뜨게, 요청을 독립적으로 처리한다.
-        // (동기 throw 하는 stub도 allSettled가 잡도록 Promise로 감싼다)
-        const [userResult, interviewerResult, uploadResult, badgeResult, progressResult] =
-          await Promise.allSettled([
-            Promise.resolve().then(() => authService.getCurrentUser()),
-            engineService.getInterviewers(),
-            fileService.checkResumeStatus(),
-            progressService.getMyBadges(),
-            progressApi.getProgress(),
-          ]);
-
-        if (cancelled) return;
-
-        if (interviewerResult.status === 'fulfilled') {
-          setInterviewers(interviewerResult.value);
-        } else {
-          console.error(interviewerResult.reason);
-          setLoadError('면접관 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.');
+        let interviewersResult: Interviewer[];
+        try {
+          interviewersResult = await engineService.getInterviewers();
+        } catch (reason) {
+          console.error(reason);
+          if (!cancelled) {
+            setLoadError('면접관 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.');
+          }
           return;
         }
+        if (cancelled) return;
+        setInterviewers(interviewersResult);
 
-        const warnings: string[] = [];
-
-        if (userResult.status === 'fulfilled') {
-          setUser(userResult.value);
-        } else {
-          console.error(userResult.reason);
-          setUser(null);
-          warnings.push('프로필을 불러오지 못했습니다.');
-        }
-
-        // UM-001은 프로필과 분리 저장한다. 프로필이 null이어도 게이지/해금 계산이 동작해야 한다.
-        if (progressResult.status === 'fulfilled') {
-          const progress = progressResult.value;
-          setUnlockedLevel(progress.unlockedLevel);
-          setProgressGauge(progress.progressGauge);
-          setUser((prev) =>
-            prev
-              ? { ...prev, level: progress.unlockedLevel, gauge: progress.progressGauge }
-              : prev,
-          );
-        } else {
-          console.error(progressResult.reason);
-          warnings.push('진행도(게이지·레벨)를 불러오지 못했습니다.');
-        }
-
-        if (uploadResult.status === 'fulfilled') {
-          setIsUploaded(uploadResult.value);
-        } else {
-          console.error(uploadResult.reason);
-          setIsUploaded(false);
-          warnings.push('이력서 상태를 확인하지 못했습니다.');
-        }
-
-        if (badgeResult.status === 'fulfilled') {
-          setCurrentBadge(findCurrentBadge(badgeResult.value));
-        } else {
-          console.error('메인 화면 뱃지 조회 실패', badgeResult.reason);
-          setCurrentBadge(null);
-          warnings.push('보유 뱃지를 불러오지 못했습니다.');
-        }
-
-        setProgressWarning(warnings.length > 0 ? warnings.join(' ') : null);
+        await loadAuxiliaryData(isCancelled);
       } finally {
         if (!cancelled) setIsLoading(false);
       }
@@ -121,7 +150,21 @@ export default function InterviewerList() {
     return () => {
       cancelled = true;
     };
-  }, [retryKey]);
+  }, [hardRetryKey, loadAuxiliaryData]);
+
+  useEffect(() => {
+    if (softRetryKey === 0) return;
+
+    let cancelled = false;
+    setIsSoftRefreshing(true);
+    loadAuxiliaryData(() => cancelled).finally(() => {
+      if (!cancelled) setIsSoftRefreshing(false);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [softRetryKey, loadAuxiliaryData]);
 
   if (isLoading) {
     return (
@@ -141,7 +184,7 @@ export default function InterviewerList() {
         <p className="text-blue-grey-700 text-[14px] leading-[20px] font-normal">{loadError}</p>
         <button
           type="button"
-          onClick={() => setRetryKey((key) => key + 1)}
+          onClick={() => setHardRetryKey((key) => key + 1)}
           className="px-6 py-2 bg-primary text-white rounded-lg text-[14px] leading-[20px] font-bold hover:bg-[#005bb5] transition-colors"
         >
           다시 시도
@@ -163,10 +206,11 @@ export default function InterviewerList() {
               </p>
               <button
                 type="button"
-                onClick={() => setRetryKey((key) => key + 1)}
-                className="shrink-0 px-4 py-2 bg-primary text-white rounded-lg text-[13px] leading-[18px] font-bold hover:bg-[#005bb5] transition-colors"
+                disabled={isSoftRefreshing}
+                onClick={() => setSoftRetryKey((key) => key + 1)}
+                className="shrink-0 px-4 py-2 bg-primary text-white rounded-lg text-[13px] leading-[18px] font-bold hover:bg-[#005bb5] transition-colors disabled:opacity-50"
               >
-                다시 불러오기
+                {isSoftRefreshing ? '불러오는 중…' : '다시 불러오기'}
               </button>
             </div>
           )}
