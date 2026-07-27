@@ -225,7 +225,7 @@ export default function InterviewerList() {
                 <div className="absolute inset-0 rounded-2xl shadow-[0_0_30px_rgba(0,120,255,0.2)] pointer-events-none"></div>
                 <BadgeImage
                   src={currentBadge?.imageUrl ?? (currentBadge ? `/badges/Level${currentBadge.stage}.png` : `/badges/Level${unlockedLevel}.png`)}
-                  alt={currentBadge ? badgeNameForStage(currentBadge.stage) : '현재 뱃지'}
+                  alt={badgeNameForStage(currentBadge?.stage ?? unlockedLevel, currentBadge?.name)}
                   className="relative z-10 w-full h-full object-contain"
                   fallback={<span className="relative z-10">🐣</span>}
                 />
