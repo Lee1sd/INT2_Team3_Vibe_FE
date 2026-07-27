@@ -13,16 +13,25 @@ import { InfoTooltip } from '../components/InfoTooltip';
 import { ChatLog, HistoryDrawer, InterviewHistoryItem } from '../components/HistoryDrawer';
 import { BadgeImage } from '../components/BadgeImage';
 import { progressService } from '../domains/progress/progress.service';
+import { BADGE_STAGE_NAMES } from '../domains/progress/badge-names';
 import { UserBadge } from '../domains/progress/progress.types';
 import { engineService } from '../domains/interview/interview.service';
 import { InterviewDetailApiResponse, InterviewHistoryApiResponse, InterviewHistoryLevelApiItem, InterviewHistorySessionApiItem } from '../domains/interview/interview.api';
 
-const BADGES = [
-  { level: 1, name: '프로그래머쓱 LEVEL 1', icon: '🐣', description: '면접의 첫 걸음을 내딛다' },
-  { level: 2, name: '프로그래머쓱 LEVEL 2', icon: '🐥', description: '꼬리 질문에도 당황하지 않음' },
-  { level: 3, name: '프로그래머쓱 LEVEL 3', icon: '🦅', description: '면접관을 리드하기 시작함' },
-  { level: 4, name: '프로그래머쓱 LEVEL 4', icon: '🐉', description: '모든 면접관을 제패한 지원자' },
-];
+const BADGE_META = [
+  { icon: '🐣', description: '면접의 첫 걸음을 내딛다' },
+  { icon: '🐥', description: '꼬리 질문에도 당황하지 않음' },
+  { icon: '🦅', description: '면접관을 리드하기 시작함' },
+  { icon: '🐉', description: '팀을 이끌 준비가 된 지원자' },
+  { icon: '👑', description: '모든 면접관을 제패한 최종 성장형' },
+] as const;
+
+const BADGES = BADGE_STAGE_NAMES.map((name, index) => ({
+  level: index + 1,
+  name,
+  icon: BADGE_META[index].icon,
+  description: BADGE_META[index].description,
+}));
 
 interface UploadedFile {
   id: string;
@@ -895,7 +904,7 @@ export default function MyPage() {
                   </button>
                 </div>
               )}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                 {BADGES.map((badge) => {
                   const catalogBadge = badgeCatalog.find((item) => item.stage === badge.level);
                   const isUnlocked = catalogBadge?.acquired === true;
@@ -908,22 +917,22 @@ export default function MyPage() {
                       )}
                     >
                       <div className={twMerge(
-                        "w-16 h-16 rounded-2xl flex items-center justify-center text-3xl mb-4 relative",
+                        "w-full aspect-square rounded-2xl flex items-center justify-center text-5xl mb-4 relative overflow-hidden",
                         isUnlocked ? "bg-blue-grey-25 border border-blue-grey-75" : "bg-blue-grey-50 border border-blue-grey-75 grayscale opacity-50"
                       )}>
                         {isUnlocked && <div className="absolute inset-0 bg-primary/5 rounded-2xl"></div>}
-                        <span className="relative z-10 w-full h-full flex items-center justify-center">
+                        <span className="relative z-10 w-full h-full flex items-center justify-center p-2">
                           <BadgeImage
-                            src={catalogBadge?.imageUrl}
-                            alt={`${catalogBadge?.name ?? badge.name} 뱃지`}
-                            className="w-full h-full object-contain rounded-2xl"
+                            src={catalogBadge?.imageUrl ?? `/badges/Level${badge.level}.png`}
+                            alt={`${badge.name} 뱃지`}
+                            className="w-full h-full object-contain"
                             fallback={<span>{badge.icon}</span>}
                           />
                         </span>
                       </div>
                       <div className="text-[12px] font-mono font-bold text-primary mb-1">Lv.{badge.level}</div>
                       <h4 className="text-[14px] font-bold text-blue-grey-900 mb-2">
-                        {catalogBadge?.name ?? badge.name}
+                        {badge.name}
                       </h4>
                       <p className="text-[12px] text-blue-grey-500 leading-relaxed font-normal">{badge.description}</p>
                       

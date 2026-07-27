@@ -1,15 +1,19 @@
 // 백엔드 게이지/뱃지 API가 준비되기 전까지 결과 화면을 검증하기 위한 목업 구현.
 import { selectAcquiredBadges } from './progress.badges';
+import { BADGE_STAGE_NAMES } from './badge-names';
 import { GaugeUpdate, UserBadge } from './progress.types';
 
-const MOCK_BADGE_CATALOG: UserBadge[] = [1, 2, 3, 4].map((stage) => ({
-  badgeId: stage,
-  stage,
-  name: `프로그래머쓱 LEVEL ${stage}`,
-  imageUrl: `/badges/Level${stage}.png`,
-  acquired: stage === 1,
-  acquiredAt: stage === 1 ? '2026-07-21T00:00:00Z' : null,
-}));
+const MOCK_BADGE_CATALOG: UserBadge[] = BADGE_STAGE_NAMES.map((name, index) => {
+  const stage = index + 1;
+  return {
+    badgeId: stage,
+    stage,
+    name,
+    imageUrl: `/badges/Level${stage}.png`,
+    acquired: stage === 1,
+    acquiredAt: stage === 1 ? '2026-07-21T00:00:00Z' : null,
+  };
+});
 
 export const progressMock = {
   /** Mock 화면에서는 Stage1 뱃지를 보유한 가입 직후 상태를 반환한다. */
@@ -34,7 +38,7 @@ export const progressMock = {
           newlyAcquiredBadge: {
             badgeId: 2,
             stage: 2,
-            name: '프로그래머쓱 LEVEL 2',
+            name: BADGE_STAGE_NAMES[1],
             imageUrl: null,
             acquired: true,
             acquiredAt: '2026-07-21T00:00:00Z',

@@ -8,7 +8,7 @@ function badge(stage: number, acquired: boolean): UserBadge {
   return {
     badgeId: stage,
     stage,
-    name: `프로그래머쓱 LEVEL ${stage}`,
+    name: `뱃지 Stage ${stage}`,
     imageUrl: `/badges/Level${stage}.png`,
     acquired,
     acquiredAt: acquired ? '2026-07-23T00:00:00Z' : null,
@@ -30,7 +30,7 @@ test('구 BG-001 응답은 acquiredAt이 있는 항목을 획득 뱃지로 유�
   const legacyBadge: BadgeApiItem = {
     badgeId: 1,
     stage: 1,
-    name: '프로그래머쓱 LEVEL 1',
+    name: '인턴머쓱',
     imageUrl: '/badges/Level1.png',
     acquiredAt: '2026-07-23T00:00:00Z',
   };
@@ -42,7 +42,7 @@ test('구 BG-001 응답에서 acquiredAt이 없으면 미획득 상태로 정규
   const legacyLockedBadge: BadgeApiItem = {
     badgeId: 2,
     stage: 2,
-    name: '프로그래머쓱 LEVEL 2',
+    name: '대리머쓱',
     imageUrl: '/badges/Level2.png',
     acquiredAt: null,
   };
@@ -54,7 +54,7 @@ test('catalog가 없으면 기존 badges를 도감 대체값으로 사용한다'
   const legacyOwnedBadge: BadgeApiItem = {
     badgeId: 1,
     stage: 1,
-    name: '프로그래머쓱 LEVEL 1',
+    name: '인턴머쓱',
     imageUrl: '/badges/Level1.png',
     acquiredAt: '2026-07-23T00:00:00Z',
   };
