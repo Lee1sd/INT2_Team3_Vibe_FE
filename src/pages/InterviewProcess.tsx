@@ -11,6 +11,7 @@ import {
   shufflePoseOrder,
 } from '../domains/interview/interview.service';
 import { pickOpeningGreeting } from '../domains/interview/openingGreetings';
+import { evaluateSubmitPrecondition } from '../domains/interview/submit-precondition';
 import { evaluationService } from '../domains/progress/progress.service';
 import { fileService } from '../domains/resume/resume.service';
 import {
@@ -320,8 +321,9 @@ function StandardInterviewProcess() {
 
     // 토큰 복구(restoreSession) 미완/배경 refresh 중에는 accessToken이 null이라
     // Authorization 헤더 없이 나가 401이 된다. 이 경우 제출을 막고 재시도를 안내한다. (#87)
-    if (!getAccessToken()) {
-      setSubmitNotice('인증 정보를 복구하고 있습니다. 잠시 후 다시 시도해 주세요.');
+    const precondition = evaluateSubmitPrecondition(getAccessToken());
+    if (!precondition.canSubmit) {
+      setSubmitNotice(precondition.notice ?? '');
       return;
     }
 
