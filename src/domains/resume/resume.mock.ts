@@ -1,5 +1,5 @@
 // 백엔드 /api/resumes 가 준비되기 전까지 업로드/파싱 흐름을 검증하기 위한 목업 구현.
-import { UploadResponse, validateResumeFile } from './resume.types';
+import { UploadResponse, validateResumeFile, getStoredSelectedResumeId } from './resume.types';
 import {ResumeApiResponse} from "@/src/domains/resume/resume.api.ts";
 
 let memoryMockUploaded = false;
@@ -56,8 +56,10 @@ export const resumeMock = {
   getResumeList: async (): Promise<ResumeApiResponse[]> => {
     return [];
   },
-  /** 실제 서비스와 동일하게 면접에 사용할 최신 완료 이력서 ID를 반환한다. */
+  /** 실제 서비스와 동일하게 localStorage 선택을 우선한다. */
   getLatestCompletedResumeId: async (): Promise<string | null> => {
+    const stored = getStoredSelectedResumeId();
+    if (stored) return stored;
     const hasResume = await resumeMock.checkResumeStatus();
     return hasResume ? 'f123' : null;
   },

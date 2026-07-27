@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
-import { fileService } from '../domains/resume/resume.service';
+import { fileService, resolveActiveResumeId, markResumeAsSelected } from '../domains/resume/resume.service';
 import { validateResumeFile, formatFileSize } from '../domains/resume/resume.types';
 import { ApiError } from '../api/client';
 import { UploadCloud, FileText, CheckCircle2, Loader2, AlertCircle, ShieldCheck, Lock, LogOut, UserMinus, ArrowLeft, ChevronDown, ChevronUp, Camera, Edit2, ChevronRight, Trash2 } from 'lucide-react';
@@ -79,6 +79,10 @@ function MultiFileUploader({
             status: (r.parseStatus === 'DONE' ? 'COMPLETED' : r.parseStatus) as UploadedFile['status'],
           }));
       setFiles(existing);
+      // 면접 입력 선택(이력서만 해당)은 localStorage 선택 > isLastUsed > 없음 순으로 복원한다.
+      if (resumeType === 'RESUME') {
+        setSelectedId(resolveActiveResumeId(list));
+      }
     })
         .catch(error => {
           console.error('이력서 목록 조회 실패', error);
@@ -218,7 +222,13 @@ function MultiFileUploader({
                   "p-4 flex items-center gap-4 transition-colors",
                   selectedId === file.id ? "bg-primary/5" : "hover:bg-blue-grey-10/50 cursor-pointer"
                 )}
-                onClick={() => file.status === 'COMPLETED' && setSelectedId(file.id)}
+                onClick={() => {
+                  if (file.status !== 'COMPLETED') return;
+                  setSelectedId(file.id);
+                  if (resumeType === 'RESUME' && file.resumeId) {
+                    markResumeAsSelected(file.resumeId);
+                  }
+                }}
               >
                 <div className="flex-shrink-0 relative">
                   <input 

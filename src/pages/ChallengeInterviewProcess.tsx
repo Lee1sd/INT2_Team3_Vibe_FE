@@ -10,7 +10,7 @@ import {
   shufflePoseOrder,
 } from '../domains/interview/interview.service';
 import { pickOpeningGreeting } from '../domains/interview/openingGreetings';
-import { fileService } from '../domains/resume/resume.service';
+import { fileService, markResumeAsSelected } from '../domains/resume/resume.service';
 import { saveChallengeFinalResult } from '../domains/interview/level4-challenge.storage';
 import {
   Answer,
@@ -275,6 +275,8 @@ export default function ChallengeInterviewProcess() {
 
         const res = await engineService.startInterview(interviewerId || '-4', resumeId, selectedKeyword);
         if (isStale()) return;
+        // 방금 사용한 이력서를 다음 새로고침에도 선택 상태로 유지한다.
+        markResumeAsSelected(resumeId);
         setSession(res);
         setSessionId(res.sessionId || '');
         setDisplayedGauge(res.challenge?.challengeGauge ?? 50);
