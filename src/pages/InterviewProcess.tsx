@@ -12,6 +12,8 @@ import {
 } from '../domains/interview/interview.service';
 import { pickOpeningGreeting } from '../domains/interview/openingGreetings';
 import { evaluateSubmitPrecondition } from '../domains/interview/submit-precondition';
+import { isSessionExpiredError } from '../domains/auth/session-error';
+import { saveReturnUrl } from '../domains/auth/return-url';
 import { evaluationService } from '../domains/progress/progress.service';
 import { fileService, markResumeAsSelected } from '../domains/resume/resume.service';
 import {
@@ -369,7 +371,16 @@ function StandardInterviewProcess() {
       }
     } catch (e) {
       console.error(e);
-      if (!isStale()) alert('답변 제출 중 오류가 발생했습니다.');
+      if (isStale()) return;
+      // 여기까지 온 401 = client.ts의 자동 refresh까지 실패한 완전 만료다(access+refresh 모두).
+      // 복구 불가하므로 복귀 경로를 저장하고 로그인으로 유도한다. (#89)
+      if (isSessionExpiredError(e)) {
+        saveReturnUrl(location.pathname);
+        alert('세션이 만료되었습니다. 다시 로그인해 주세요.');
+        navigate('/', { replace: true });
+        return;
+      }
+      alert('답변 제출 중 오류가 발생했습니다.');
     } finally {
       if (!isStale()) setIsSubmitting(false);
     }
