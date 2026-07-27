@@ -8,6 +8,10 @@ export interface ResumeApiResponse {
   parseStatus: 'PROCESSING' | 'DONE' | 'FAILED' | 'EXPIRED';
   extractedText?: string;
   lastUploadedAt?: string;
+  /** 예전에 업로드된 이력서는 이 필드가 없을 수 있다(null). */
+  originalFileName?: string | null;
+  /** 예전에 업로드된 이력서는 이 필드가 없을 수 있다(null). */
+  fileSize?: number | null;
 }
 
 export interface UploadUrlRequest {
@@ -26,6 +30,7 @@ export interface UploadUrlResponse {
 export interface UploadCompleteRequest {
   type: 'RESUME' | 'PORTFOLIO';
   s3Key: string;
+  originalFileName: string;
 }
 
 export interface UploadCompleteResponse {

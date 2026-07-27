@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { fileService } from '../domains/resume/resume.service';
-import { validateResumeFile } from '../domains/resume/resume.types';
+import { validateResumeFile, formatFileSize } from '../domains/resume/resume.types';
 import { ApiError } from '../api/client';
 import { UploadCloud, FileText, CheckCircle2, Loader2, AlertCircle, ShieldCheck, Lock, LogOut, UserMinus, ArrowLeft, ChevronDown, ChevronUp, Camera, Edit2, ChevronRight, Trash2 } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
@@ -28,6 +28,7 @@ interface UploadedFile {
   id: string;
   resumeId?: string;
   name: string;
+  fileSize?: number | null;
   uploadedAt?: string;
   status: 'UPLOADING' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'EXPIRED';
   errorMsg?: string;
@@ -72,7 +73,8 @@ function MultiFileUploader({
           .map(r => ({
             id: String(r.resumeId),
             resumeId: String(r.resumeId),
-            name: `${r.type === 'RESUME' ? '이력서' : '포트폴리오'} #${r.resumeId}`,
+            name: r.originalFileName || `${r.type === 'RESUME' ? '이력서' : '포트폴리오'} #${r.resumeId}`,
+            fileSize: r.fileSize,
             uploadedAt: r.lastUploadedAt,
             status: (r.parseStatus === 'DONE' ? 'COMPLETED' : r.parseStatus) as UploadedFile['status'],
           }));
@@ -149,6 +151,7 @@ function MultiFileUploader({
       const fileEntry: UploadedFile = {
         id: newId,
         name: newFile.name,
+        fileSize: newFile.size,
         uploadedAt: new Date().toISOString(),
         status: 'UPLOADING'
       };
@@ -235,6 +238,7 @@ function MultiFileUploader({
                   </h4>
                   <p className="text-[12px] text-blue-grey-500 font-mono mt-0.5">
                     {formatUploadedDate(file.uploadedAt)}
+                    {formatFileSize(file.fileSize) && ` · ${formatFileSize(file.fileSize)}`}
                   </p>
                   {file.errorMsg && (
                     <p className="text-[12px] text-danger mt-1">{file.errorMsg}</p>
