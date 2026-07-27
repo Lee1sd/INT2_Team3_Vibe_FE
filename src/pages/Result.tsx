@@ -39,6 +39,8 @@ export default function Result() {
       setResult(null);
       setJudgmentResult(null);
       setChallengeResult(null);
+      setShowBadgeModal(false);
+      setUnlockedInterviewer(null);
       try {
         const routeState = location.state as {
           finalResult?: unknown;

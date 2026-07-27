@@ -24,6 +24,9 @@ function findCurrentBadge(badges: UserBadge[]): UserBadge | null {
 export default function InterviewerList() {
   const [interviewers, setInterviewers] = useState<Interviewer[]>([]);
   const [user, setUser] = useState<User | null>(null);
+  /** 프로필과 분리된 진행도 — 프로필 실패 시에도 UM-001 값을 게이지 UI에 쓴다. */
+  const [unlockedLevel, setUnlockedLevel] = useState(1);
+  const [progressGauge, setProgressGauge] = useState(0);
   const [currentBadge, setCurrentBadge] = useState<UserBadge | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploaded, setIsUploaded] = useState(false);
@@ -42,6 +45,8 @@ export default function InterviewerList() {
       setIsLoading(true);
       setLoadError(null);
       setProgressWarning(null);
+      setUnlockedLevel(1);
+      setProgressGauge(0);
 
       try {
         // getCurrentUser가 아직 미연동이어도 면접관 목록은 뜨게, 요청을 독립적으로 처리한다.
@@ -75,9 +80,11 @@ export default function InterviewerList() {
           warnings.push('프로필을 불러오지 못했습니다.');
         }
 
-        // UM-001을 별도 조회로 실패를 드러낸다(getCurrentUser는 실패 시 Lv.1/0으로 조용히 폴백함).
+        // UM-001은 프로필과 분리 저장한다. 프로필이 null이어도 게이지/해금 계산이 동작해야 한다.
         if (progressResult.status === 'fulfilled') {
           const progress = progressResult.value;
+          setUnlockedLevel(progress.unlockedLevel);
+          setProgressGauge(progress.progressGauge);
           setUser((prev) =>
             prev
               ? { ...prev, level: progress.unlockedLevel, gauge: progress.progressGauge }
@@ -192,15 +199,15 @@ export default function InterviewerList() {
             </h3>
             <div className="inline-flex items-center justify-center px-4 py-1.5 bg-white rounded-full text-blue-grey-700 font-mono text-[14px] leading-[20px] font-bold shadow-sm border border-blue-grey-100">
               <Star className="w-4 h-4 mr-2 text-warning fill-warning" />
-              현재 레벨: Lv.{user?.level}
+              현재 레벨: Lv.{unlockedLevel}
             </div>
           </div>
 
           {(() => {
-            const nextInterviewer = interviewers.find(iv => user && user.gauge < iv.requiredGauge);
+            const nextInterviewer = interviewers.find((iv) => progressGauge < iv.requiredGauge);
             const targetGauge = nextInterviewer ? nextInterviewer.requiredGauge : 100;
-            const remainingGauge = nextInterviewer ? targetGauge - (user?.gauge || 0) : 0;
-            const gaugePercent = Math.min(user?.gauge || 0, 100);
+            const remainingGauge = nextInterviewer ? targetGauge - progressGauge : 0;
+            const gaugePercent = Math.min(progressGauge, 100);
 
             return (
               <div className="w-full max-w-lg mx-auto bg-white p-6 rounded-2xl shadow-sm border border-blue-grey-75">
@@ -212,7 +219,7 @@ export default function InterviewerList() {
                       answer="A. 다음 면접관(레벨)을 해금하기 위해 필요한 누적 경험치입니다." 
                     />
                   </span>
-                  <span className="text-primary font-mono">{user?.gauge || 0} / 100</span>
+                  <span className="text-primary font-mono">{progressGauge} / 100</span>
                 </div>
                 <div className="w-full h-4 bg-blue-grey-50 rounded-full overflow-hidden border border-blue-grey-75 relative">
                   <div 
