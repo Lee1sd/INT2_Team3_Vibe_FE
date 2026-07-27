@@ -12,6 +12,8 @@ export interface ResumeApiResponse {
   originalFileName?: string | null;
   /** 예전에 업로드된 이력서는 이 필드가 없을 수 있다(null). */
   fileSize?: number | null;
+  /** 이 사용자가 마지막으로 면접에 사용한 이력서인지. 면접 이력이 없는 신규 사용자는 전부 false. */
+  isLastUsed?: boolean;
 }
 
 export interface UploadUrlRequest {
