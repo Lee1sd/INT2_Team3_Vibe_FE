@@ -38,7 +38,7 @@ export const progressMock = {
           newlyAcquiredBadge: {
             badgeId: 2,
             stage: 2,
-            name: '대리머쓱',
+            name: BADGE_STAGE_NAMES[1],
             imageUrl: null,
             acquired: true,
             acquiredAt: '2026-07-21T00:00:00Z',
