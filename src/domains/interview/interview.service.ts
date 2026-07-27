@@ -1,6 +1,7 @@
 // 페이지 컴포넌트가 실제로 import하는 진입점. VITE_USE_MOCK으로 mock/실제 API를 스위칭한다.
 import { interviewApi, InterviewerApiItem, SubmitAnswersApiResponse, InterviewHistoryApiResponse, InterviewDetailApiResponse } from './interview.api';
 import { interviewMock } from './interview.mock';
+import { getFollowUpQuestionId } from './followup-question';
 import {
   getLevel4ChallengeInterviewerStub,
   isLevel4ChallengeInterviewerId,
@@ -251,8 +252,9 @@ function toInterviewResponse(res: SubmitAnswersApiResponse, turn: number): Inter
       nextTurn.type === 'FOLLOW_UP' && nextTurn.question
         ? [
             {
-              // targetQuestionId는 최저점 원문항이고, 새 꼬리질문의 외부 questionId는 항상 turn 4다.
-              id: '4',
+              // targetQuestionId는 최저점 원문항이다. 꼬리질문의 외부 questionId는 평가된
+              // 본문항 수(N)에서 N+1로 유도한다 — 하드코딩 제거로 문항 수 변경(#146)에 자동 대응.
+              id: getFollowUpQuestionId(res.evaluations.length),
               content: nextTurn.question,
               type: 'FOLLOW_UP',
             },
