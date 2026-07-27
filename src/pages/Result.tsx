@@ -265,12 +265,12 @@ export default function Result() {
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-warning/20 rounded-full blur-3xl z-0 pointer-events-none"></div>
 
             <div className="relative z-10 flex flex-col items-center">
-              <div className="w-24 h-24 bg-white rounded-3xl mx-auto flex items-center justify-center shadow-lg mb-6 border border-blue-grey-50 animate-badge-3d hover:scale-110 transition-transform duration-500">
+              <div className="w-40 h-40 bg-white rounded-3xl mx-auto flex items-center justify-center shadow-lg mb-6 border border-blue-grey-50 animate-badge-3d hover:scale-110 transition-transform duration-500 p-3">
                 <BadgeImage
                   src={result.newlyAcquiredBadge?.imageUrl}
                   alt={`${result.newlyAcquiredBadge?.name ?? '새로 획득한'} 뱃지`}
-                  className="w-full h-full object-contain rounded-3xl"
-                  fallback={<Award className="w-12 h-12 text-warning fill-warning" />}
+                  className="w-full h-full object-contain"
+                  fallback={<Award className="w-16 h-16 text-warning fill-warning" />}
                 />
               </div>
               <h3 className="text-[26px] leading-[32px] font-bold text-blue-grey-900 mb-2">새로운 뱃지 획득!</h3>
