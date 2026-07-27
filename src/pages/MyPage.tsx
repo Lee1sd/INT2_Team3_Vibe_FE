@@ -18,10 +18,11 @@ import { engineService } from '../domains/interview/interview.service';
 import { InterviewDetailApiResponse, InterviewHistoryApiResponse, InterviewHistoryLevelApiItem, InterviewHistorySessionApiItem } from '../domains/interview/interview.api';
 
 const BADGES = [
-  { level: 1, name: '프로그래머쓱 LEVEL 1', icon: '🐣', description: '면접의 첫 걸음을 내딛다' },
-  { level: 2, name: '프로그래머쓱 LEVEL 2', icon: '🐥', description: '꼬리 질문에도 당황하지 않음' },
-  { level: 3, name: '프로그래머쓱 LEVEL 3', icon: '🦅', description: '면접관을 리드하기 시작함' },
-  { level: 4, name: '프로그래머쓱 LEVEL 4', icon: '🐉', description: '모든 면접관을 제패한 지원자' },
+  { level: 1, name: '인턴머쓱', icon: '🐣', description: '면접의 첫 걸음을 내딛다' },
+  { level: 2, name: '대리머쓱', icon: '🐥', description: '꼬리 질문에도 당황하지 않음' },
+  { level: 3, name: '과장머쓱', icon: '🦅', description: '면접관을 리드하기 시작함' },
+  { level: 4, name: '팀장머쓱', icon: '🐉', description: '팀을 이끌 준비가 된 지원자' },
+  { level: 5, name: '프로그래머쓱', icon: '👑', description: '모든 면접관을 제패한 최종 성장형' },
 ];
 
 interface UploadedFile {
@@ -881,7 +882,7 @@ export default function MyPage() {
                   </button>
                 </div>
               )}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                 {BADGES.map((badge) => {
                   const catalogBadge = badgeCatalog.find((item) => item.stage === badge.level);
                   const isUnlocked = catalogBadge?.acquired === true;
@@ -901,7 +902,7 @@ export default function MyPage() {
                         <span className="relative z-10 w-full h-full flex items-center justify-center">
                           <BadgeImage
                             src={catalogBadge?.imageUrl}
-                            alt={`${catalogBadge?.name ?? badge.name} 뱃지`}
+                            alt={`${badge.name} 뱃지`}
                             className="w-full h-full object-contain rounded-2xl"
                             fallback={<span>{badge.icon}</span>}
                           />
@@ -909,7 +910,7 @@ export default function MyPage() {
                       </div>
                       <div className="text-[12px] font-mono font-bold text-primary mb-1">Lv.{badge.level}</div>
                       <h4 className="text-[14px] font-bold text-blue-grey-900 mb-2">
-                        {catalogBadge?.name ?? badge.name}
+                        {badge.name}
                       </h4>
                       <p className="text-[12px] text-blue-grey-500 leading-relaxed font-normal">{badge.description}</p>
                       

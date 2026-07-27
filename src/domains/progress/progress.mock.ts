@@ -2,10 +2,12 @@
 import { selectAcquiredBadges } from './progress.badges';
 import { GaugeUpdate, UserBadge } from './progress.types';
 
-const MOCK_BADGE_CATALOG: UserBadge[] = [1, 2, 3, 4].map((stage) => ({
+const BADGE_NAMES = ['인턴머쓱', '대리머쓱', '과장머쓱', '팀장머쓱', '프로그래머쓱'] as const;
+
+const MOCK_BADGE_CATALOG: UserBadge[] = [1, 2, 3, 4, 5].map((stage) => ({
   badgeId: stage,
   stage,
-  name: `프로그래머쓱 LEVEL ${stage}`,
+  name: BADGE_NAMES[stage - 1],
   imageUrl: `/badges/Level${stage}.png`,
   acquired: stage === 1,
   acquiredAt: stage === 1 ? '2026-07-21T00:00:00Z' : null,
@@ -34,7 +36,7 @@ export const progressMock = {
           newlyAcquiredBadge: {
             badgeId: 2,
             stage: 2,
-            name: '프로그래머쓱 LEVEL 2',
+            name: '대리머쓱',
             imageUrl: null,
             acquired: true,
             acquiredAt: '2026-07-21T00:00:00Z',
