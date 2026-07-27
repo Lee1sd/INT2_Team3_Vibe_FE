@@ -22,7 +22,7 @@ Object.defineProperty(globalThis, 'sessionStorage', {
   configurable: true,
 });
 
-const { consumeReturnUrl, isSafeReturnUrl, saveReturnUrl } = await import('./return-url');
+const { clearReturnUrl, consumeReturnUrl, isSafeReturnUrl, saveReturnUrl } = await import('./return-url');
 
 test('같은 출처 상대 경로만 허용한다', () => {
   assert.equal(isSafeReturnUrl('/mypage'), true);
@@ -32,9 +32,17 @@ test('같은 출처 상대 경로만 허용한다', () => {
   assert.equal(isSafeReturnUrl('/oauth/callback'), false);
 });
 
-test('returnUrl을 한 번 저장하고 소비한다', () => {
+test('returnUrl을 저장하고 소비하며 Strict Mode처럼 연속 호출해도 같은 값을 준다', () => {
   store.clear();
   saveReturnUrl('/mypage');
   assert.equal(consumeReturnUrl('/dungeon'), '/mypage');
+  assert.equal(consumeReturnUrl('/dungeon'), '/mypage');
+});
+
+test('clearReturnUrl 이후에는 fallback으로 돌아간다', () => {
+  store.clear();
+  saveReturnUrl('/result/1');
+  assert.equal(consumeReturnUrl('/dungeon'), '/result/1');
+  clearReturnUrl();
   assert.equal(consumeReturnUrl('/dungeon'), '/dungeon');
 });

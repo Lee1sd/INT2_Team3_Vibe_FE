@@ -2,7 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { getAccessToken } from '../api/client';
 import { AUTH_TOKEN_CHANGED_EVENT } from '../domains/auth/profile-events';
-import { saveReturnUrl } from '../domains/auth/return-url';
+import { clearReturnUrl, saveReturnUrl } from '../domains/auth/return-url';
 
 /**
  * 보호 라우트 가드. AuthBootstrap 이후에만 마운트되므로,
@@ -11,6 +11,7 @@ import { saveReturnUrl } from '../domains/auth/return-url';
 export function RequireAuth({ children }: { children: ReactNode }) {
   const location = useLocation();
   const [accessToken, setAccessTokenState] = useState<string | null>(() => getAccessToken());
+  const returnUrl = `${location.pathname}${location.search}${location.hash}`;
 
   useEffect(() => {
     const sync = () => setAccessTokenState(getAccessToken());
@@ -19,9 +20,16 @@ export function RequireAuth({ children }: { children: ReactNode }) {
     return () => window.removeEventListener(AUTH_TOKEN_CHANGED_EVENT, sync);
   }, []);
 
-  if (!accessToken) {
-    const returnUrl = `${location.pathname}${location.search}${location.hash}`;
+  // render 중 side-effect 금지 — Strict Mode 이중 렌더에서도 sessionStorage를 한 경로로만 쓴다.
+  useEffect(() => {
+    if (accessToken) {
+      clearReturnUrl();
+      return;
+    }
     saveReturnUrl(returnUrl);
+  }, [accessToken, returnUrl]);
+
+  if (!accessToken) {
     return <Navigate to="/" replace state={{ returnUrl }} />;
   }
 
