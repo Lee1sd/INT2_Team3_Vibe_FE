@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { getAccessToken } from '../api/client';
 import { authService } from '../domains/auth/auth.service';
 import {
   engineService,
@@ -10,6 +11,7 @@ import {
   shufflePoseOrder,
 } from '../domains/interview/interview.service';
 import { pickOpeningGreeting } from '../domains/interview/openingGreetings';
+import { evaluateSubmitPrecondition } from '../domains/interview/submit-precondition';
 import { isSessionExpiredError } from '../domains/auth/session-error';
 import { saveReturnUrl } from '../domains/auth/return-url';
 import { evaluationService } from '../domains/progress/progress.service';
@@ -96,6 +98,8 @@ function StandardInterviewProcess() {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  /** 토큰 미복구 등으로 제출을 막았을 때 잠깐 띄우는 안내. (#87) */
+  const [submitNotice, setSubmitNotice] = useState('');
   const [phases, setPhases] = useState<string[]>([]);
   const [phaseIndex, setPhaseIndex] = useState(0);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -302,6 +306,12 @@ function StandardInterviewProcess() {
     setAnswers(prev => ({ ...prev, [qId]: value }));
   };
 
+  useEffect(() => {
+    if (!submitNotice) return;
+    const timer = window.setTimeout(() => setSubmitNotice(''), 3000);
+    return () => window.clearTimeout(timer);
+  }, [submitNotice]);
+
   const handleNextOrSubmit = () => {
     if (isLastQuestion) {
       handleSubmit();
@@ -312,6 +322,15 @@ function StandardInterviewProcess() {
 
   const handleSubmit = async () => {
     if (!session || !session.questions) return;
+
+    // 토큰 복구(restoreSession) 미완/배경 refresh 중에는 accessToken이 null이라
+    // Authorization 헤더 없이 나가 401이 된다. 이 경우 제출을 막고 재시도를 안내한다. (#87)
+    const precondition = evaluateSubmitPrecondition(getAccessToken());
+    if (!precondition.canSubmit) {
+      setSubmitNotice(precondition.notice ?? '');
+      return;
+    }
+    setSubmitNotice('');
 
     const generation = interviewGenerationRef.current;
     const activeSessionId = sessionId;
@@ -517,6 +536,17 @@ function StandardInterviewProcess() {
             </div>
           )}
         </div>
+
+        {submitNotice && (
+          <div
+            className="fixed top-6 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-2 bg-blue-grey-990/90 border border-white/15 text-white text-[14px] font-bold px-4 py-3 rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.3)]"
+            style={{ animation: 'fadeIn 0.3s ease-in-out' }}
+            role="status"
+          >
+            <AlertCircle className="w-5 h-5 text-primary shrink-0" />
+            {submitNotice}
+          </div>
+        )}
 
         {/* Input Area / Result Button */}
         {isInterviewFinished ? (
