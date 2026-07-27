@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAccessToken, setAccessToken } from '../api/client';
+import { consumeReturnUrl } from '../domains/auth/return-url';
 
 /**
  * AU-002(구글 로그인 콜백) 완료 후 백엔드가 이 경로로 리다이렉트한다.
@@ -29,7 +30,7 @@ export default function OAuthCallback() {
       setAccessToken(accessToken);
       // 토큰이 담긴 fragment를 주소창 히스토리에서 즉시 제거한다(ADR-017).
       window.history.replaceState(null, '', window.location.pathname);
-      navigate('/dungeon', { replace: true });
+      navigate(consumeReturnUrl('/dungeon'), { replace: true });
     } else {
       console.error('OAuth 콜백 URL(fragment)에 accessToken이 없습니다.');
       navigate('/', { replace: true });

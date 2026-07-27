@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { getAccessToken } from '../api/client';
 import { authService } from '../domains/auth/auth.service';
+import { consumeReturnUrl, isSafeReturnUrl } from '../domains/auth/return-url';
 import { Mail } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 
@@ -10,17 +11,20 @@ const LOGIN_BRAND_ICON_SRC = '/brand/fvg.png';
 export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   // AuthBootstrap이 refresh로 세션을 복구한 뒤면 로그인 화면을 건너뛴다.
   if (getAccessToken()) {
-    return <Navigate to="/dungeon" replace />;
+    const fromState = (location.state as { returnUrl?: string } | null)?.returnUrl;
+    const destination = consumeReturnUrl(isSafeReturnUrl(fromState) ? fromState : '/dungeon');
+    return <Navigate to={destination} replace />;
   }
 
   const handleLogin = async (provider: string) => {
     setIsLoading(true);
     try {
       await authService.login();
-      navigate('/dungeon');
+      navigate(consumeReturnUrl('/dungeon'));
     } catch (error) {
       console.error('Login failed', error);
       alert('로그인에 실패했습니다.');
