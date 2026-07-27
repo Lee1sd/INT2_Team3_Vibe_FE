@@ -1,15 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { engineService, getInterviewerBustByLevel } from '../domains/interview/interview.service';
-import { authService } from '../domains/auth/auth.service';
+import { authApi } from '../domains/auth/auth.api';
 import { fileService } from '../domains/resume/resume.service';
 import { Interviewer, User } from '../types';
-import { Lock, PlayCircle, ShieldCheck, Star } from 'lucide-react';
+import { AlertCircle, Lock, PlayCircle, ShieldCheck, Star } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 import { InfoTooltip } from '../components/InfoTooltip';
 import { BadgeImage } from '../components/BadgeImage';
 import { InterviewerAvatar } from '../components/InterviewerAvatar';
 import { progressService } from '../domains/progress/progress.service';
+import { progressApi } from '../domains/progress/progress.api';
 import { UserBadge } from '../domains/progress/progress.types';
 
 /** 보유 뱃지 중 Stage가 가장 높은 뱃지를 메인 화면에 표시할 현재 뱃지로 선택한다. */
@@ -20,56 +21,150 @@ function findCurrentBadge(badges: UserBadge[]): UserBadge | null {
   );
 }
 
+/** UP-003 프로필만 매핑한다. level/gauge는 UM-001을 별도로 붙인다(중복 호출 방지). */
+function toUserFromMe(
+  me: Awaited<ReturnType<typeof authApi.getMe>>,
+  level: number,
+  gauge: number,
+): User {
+  const photoUrl = me.photoUrl ?? undefined;
+  return {
+    id: String(me.id),
+    name: me.name,
+    email: me.email,
+    displayName: me.name,
+    photoUrl,
+    photoURL: photoUrl,
+    level,
+    gauge,
+  };
+}
+
 export default function InterviewerList() {
   const [interviewers, setInterviewers] = useState<Interviewer[]>([]);
   const [user, setUser] = useState<User | null>(null);
+  /** 프로필과 분리된 진행도 — 프로필 실패 시에도 UM-001 값을 게이지 UI에 쓴다. */
+  const [unlockedLevel, setUnlockedLevel] = useState(1);
+  const [progressGauge, setProgressGauge] = useState(0);
   const [currentBadge, setCurrentBadge] = useState<UserBadge | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSoftRefreshing, setIsSoftRefreshing] = useState(false);
   const [isUploaded, setIsUploaded] = useState(false);
   const [selectedKeyword, setSelectedKeyword] = useState<string>('');
+  /** 면접관 목록 등 핵심 데이터 실패 시 전체 에러. */
+  const [loadError, setLoadError] = useState<string | null>(null);
+  /** Progress/유저·뱃지 실패는 화면을 막지 않고 안내만 한다. */
+  const [progressWarning, setProgressWarning] = useState<string | null>(null);
+  /** 면접관 목록까지 포함한 전체 재시도. */
+  const [hardRetryKey, setHardRetryKey] = useState(0);
+  /** 부가 데이터(프로필·진행도·뱃지·이력서)만 재조회. */
+  const [softRetryKey, setSoftRetryKey] = useState(0);
   const navigate = useNavigate();
 
+  /** 프로필·진행도·뱃지·이력서 — UM-001은 여기서만 호출한다(getCurrentUser 경유 금지). */
+  const loadAuxiliaryData = useCallback(async (cancelled: () => boolean) => {
+    setProgressWarning(null);
+
+    const [meResult, uploadResult, badgeResult, progressResult] = await Promise.allSettled([
+      authApi.getMe(),
+      fileService.checkResumeStatus(),
+      progressService.getMyBadges(),
+      progressApi.getProgress(),
+    ]);
+
+    if (cancelled()) return;
+
+    const warnings: string[] = [];
+    let nextLevel = 1;
+    let nextGauge = 0;
+
+    if (progressResult.status === 'fulfilled') {
+      nextLevel = progressResult.value.unlockedLevel;
+      nextGauge = progressResult.value.progressGauge;
+      setUnlockedLevel(nextLevel);
+      setProgressGauge(nextGauge);
+    } else {
+      console.error(progressResult.reason);
+      warnings.push('진행도(게이지·레벨)를 불러오지 못했습니다.');
+    }
+
+    if (meResult.status === 'fulfilled') {
+      setUser(toUserFromMe(meResult.value, nextLevel, nextGauge));
+    } else {
+      console.error(meResult.reason);
+      setUser(null);
+      warnings.push('프로필을 불러오지 못했습니다.');
+    }
+
+    if (uploadResult.status === 'fulfilled') {
+      setIsUploaded(uploadResult.value);
+    } else {
+      console.error(uploadResult.reason);
+      setIsUploaded(false);
+      warnings.push('이력서 상태를 확인하지 못했습니다.');
+    }
+
+    if (badgeResult.status === 'fulfilled') {
+      setCurrentBadge(findCurrentBadge(badgeResult.value));
+    } else {
+      console.error('메인 화면 뱃지 조회 실패', badgeResult.reason);
+      setCurrentBadge(null);
+      warnings.push('보유 뱃지를 불러오지 못했습니다.');
+    }
+
+    setProgressWarning(warnings.length > 0 ? warnings.join(' ') : null);
+  }, []);
+
   useEffect(() => {
+    let cancelled = false;
+    const isCancelled = () => cancelled;
+
     const fetchData = async () => {
+      setIsLoading(true);
+      setLoadError(null);
+      setProgressWarning(null);
+      setUnlockedLevel(1);
+      setProgressGauge(0);
+
       try {
-        // getCurrentUser가 아직 미연동이어도 면접관 목록은 뜨게, 요청을 독립적으로 처리한다.
-        // (동기 throw 하는 stub도 allSettled가 잡도록 Promise로 감싼다)
-        const [userResult, interviewerResult, uploadResult, badgeResult] = await Promise.allSettled([
-          Promise.resolve().then(() => authService.getCurrentUser()),
-          engineService.getInterviewers(),
-          fileService.checkResumeStatus(),
-          progressService.getMyBadges(),
-        ]);
-
-        if (userResult.status === 'fulfilled') {
-          setUser(userResult.value);
-        } else {
-          console.error(userResult.reason);
+        let interviewersResult: Interviewer[];
+        try {
+          interviewersResult = await engineService.getInterviewers();
+        } catch (reason) {
+          console.error(reason);
+          if (!cancelled) {
+            setLoadError('면접관 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.');
+          }
+          return;
         }
+        if (cancelled) return;
+        setInterviewers(interviewersResult);
 
-        if (interviewerResult.status === 'fulfilled') {
-          setInterviewers(interviewerResult.value);
-        } else {
-          console.error(interviewerResult.reason);
-        }
-
-        if (uploadResult.status === 'fulfilled') {
-          setIsUploaded(uploadResult.value);
-        } else {
-          console.error(uploadResult.reason);
-        }
-
-        if (badgeResult.status === 'fulfilled') {
-          setCurrentBadge(findCurrentBadge(badgeResult.value));
-        } else {
-          console.error('메인 화면 뱃지 조회 실패', badgeResult.reason);
-        }
+        await loadAuxiliaryData(isCancelled);
       } finally {
-        setIsLoading(false);
+        if (!cancelled) setIsLoading(false);
       }
     };
     fetchData();
-  }, []);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [hardRetryKey, loadAuxiliaryData]);
+
+  useEffect(() => {
+    if (softRetryKey === 0) return;
+
+    let cancelled = false;
+    setIsSoftRefreshing(true);
+    loadAuxiliaryData(() => cancelled).finally(() => {
+      if (!cancelled) setIsSoftRefreshing(false);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [softRetryKey, loadAuxiliaryData]);
 
   if (isLoading) {
     return (
@@ -82,14 +177,45 @@ export default function InterviewerList() {
     );
   }
 
+  if (loadError) {
+    return (
+      <div className="flex flex-col justify-center items-center min-h-[calc(100vh-80px)] gap-4 px-6 text-center bg-blue-grey-10">
+        <AlertCircle className="w-12 h-12 text-danger" />
+        <p className="text-blue-grey-700 text-[14px] leading-[20px] font-normal">{loadError}</p>
+        <button
+          type="button"
+          onClick={() => setHardRetryKey((key) => key + 1)}
+          className="px-6 py-2 bg-primary text-white rounded-lg text-[14px] leading-[20px] font-bold hover:bg-[#005bb5] transition-colors"
+        >
+          다시 시도
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full relative bg-blue-grey-10">
       {/* Top Section: Dashboard (Hero) */}
       <section className="min-h-[70vh] py-24 flex flex-col items-center justify-center border-b border-blue-grey-100 bg-blue-grey-10 relative overflow-hidden z-0">
 
         <div className="text-center max-w-2xl mx-auto px-6 w-full mt-10">
+          {progressWarning && (
+            <div className="mb-6 flex flex-col sm:flex-row items-center justify-center gap-3 rounded-2xl border border-warning/40 bg-warning/10 px-4 py-3 text-left">
+              <p className="text-[13px] leading-[18px] font-normal text-blue-grey-800 flex-1">
+                {progressWarning} 일부 정보가 비어 보일 수 있습니다.
+              </p>
+              <button
+                type="button"
+                disabled={isSoftRefreshing}
+                onClick={() => setSoftRetryKey((key) => key + 1)}
+                className="shrink-0 px-4 py-2 bg-primary text-white rounded-lg text-[13px] leading-[18px] font-bold hover:bg-[#005bb5] transition-colors disabled:opacity-50"
+              >
+                {isSoftRefreshing ? '불러오는 중…' : '다시 불러오기'}
+              </button>
+            </div>
+          )}
           <h2 className="text-[40px] leading-[50px] font-bold text-blue-grey-900 mb-10 tracking-tight">
-            <span className="text-primary">{user?.name}</span>님,<br/>다음 면접관이 기다립니다.
+            <span className="text-primary">{user?.name ?? '모험가'}</span>님,<br/>다음 면접관이 기다립니다.
           </h2>
 
           <div className="flex flex-col items-center mb-16">
@@ -117,15 +243,15 @@ export default function InterviewerList() {
             </h3>
             <div className="inline-flex items-center justify-center px-4 py-1.5 bg-white rounded-full text-blue-grey-700 font-mono text-[14px] leading-[20px] font-bold shadow-sm border border-blue-grey-100">
               <Star className="w-4 h-4 mr-2 text-warning fill-warning" />
-              현재 레벨: Lv.{user?.level}
+              현재 레벨: Lv.{unlockedLevel}
             </div>
           </div>
 
           {(() => {
-            const nextInterviewer = interviewers.find(iv => user && user.gauge < iv.requiredGauge);
+            const nextInterviewer = interviewers.find((iv) => progressGauge < iv.requiredGauge);
             const targetGauge = nextInterviewer ? nextInterviewer.requiredGauge : 100;
-            const remainingGauge = nextInterviewer ? targetGauge - (user?.gauge || 0) : 0;
-            const gaugePercent = Math.min(user?.gauge || 0, 100);
+            const remainingGauge = nextInterviewer ? targetGauge - progressGauge : 0;
+            const gaugePercent = Math.min(progressGauge, 100);
 
             return (
               <div className="w-full max-w-lg mx-auto bg-white p-6 rounded-2xl shadow-sm border border-blue-grey-75">
@@ -137,7 +263,7 @@ export default function InterviewerList() {
                       answer="A. 다음 면접관(레벨)을 해금하기 위해 필요한 누적 경험치입니다." 
                     />
                   </span>
-                  <span className="text-primary font-mono">{user?.gauge || 0} / 100</span>
+                  <span className="text-primary font-mono">{progressGauge} / 100</span>
                 </div>
                 <div className="w-full h-4 bg-blue-grey-50 rounded-full overflow-hidden border border-blue-grey-75 relative">
                   <div 

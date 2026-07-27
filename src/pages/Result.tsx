@@ -27,6 +27,8 @@ export default function Result() {
   const [displayedScore, setDisplayedScore] = useState(0);
   const [showBadgeModal, setShowBadgeModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** 에러 화면에서 재시도할 때 effect를 다시 돌리기 위한 키. */
+  const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -34,6 +36,11 @@ export default function Result() {
 
     const fetchResult = async () => {
       setError(null);
+      setResult(null);
+      setJudgmentResult(null);
+      setChallengeResult(null);
+      setShowBadgeModal(false);
+      setUnlockedInterviewer(null);
       try {
         const routeState = location.state as {
           finalResult?: unknown;
@@ -112,19 +119,29 @@ export default function Result() {
       cancelled = true;
       if (gaugeTimer) clearTimeout(gaugeTimer);
     };
-  }, [location.state, sessionId]);
+  }, [location.state, sessionId, retryKey]);
 
   if (error) {
     return (
       <div className="flex flex-col justify-center items-center min-h-[70vh] gap-4 px-6 text-center">
         <AlertCircle className="w-12 h-12 text-danger" />
         <p className="text-blue-grey-700 text-[14px] leading-[20px] font-normal">{error}</p>
-        <button
-          onClick={() => navigate('/dungeon')}
-          className="px-6 py-2 border border-blue-grey-75 rounded-lg text-blue-grey-700 text-[14px] leading-[20px] font-bold hover:bg-blue-grey-25 transition-colors"
-        >
-          던전 맵으로 돌아가기
-        </button>
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          <button
+            type="button"
+            onClick={() => setRetryKey((key) => key + 1)}
+            className="px-6 py-2 bg-primary text-white rounded-lg text-[14px] leading-[20px] font-bold hover:bg-[#005bb5] transition-colors"
+          >
+            다시 시도
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate('/dungeon')}
+            className="px-6 py-2 border border-blue-grey-75 rounded-lg text-blue-grey-700 text-[14px] leading-[20px] font-bold hover:bg-blue-grey-25 transition-colors"
+          >
+            던전 맵으로 돌아가기
+          </button>
+        </div>
       </div>
     );
   }
