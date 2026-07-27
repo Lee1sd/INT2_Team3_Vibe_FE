@@ -160,12 +160,16 @@ function MultiFileUploader({
         status: 'UPLOADING'
       };
 
+      const isAutoSelected = !selectedId;
       setFiles(prev => [...prev, fileEntry]);
-      if (!selectedId) setSelectedId(newId);
+      if (isAutoSelected) setSelectedId(newId);
 
       try {
         const res = await fileService.uploadResume(newFile, resumeType);
         updateFile(newId, { resumeId: res.fileId, status: 'PROCESSING' });
+        if (isAutoSelected && resumeType === 'RESUME') {
+          markResumeAsSelected(res.fileId);
+        }
         await pollUntilDone(newId, res.fileId);
       } catch (err) {
         const isConflict = err instanceof ApiError && err.code === 'RESUME_OBJECT_VERSION_CONFLICT';

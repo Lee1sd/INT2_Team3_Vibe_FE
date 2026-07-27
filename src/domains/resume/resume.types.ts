@@ -57,6 +57,14 @@ export function setStoredSelectedResumeId(resumeId: string): void {
   }
 }
 
+export function clearStoredSelectedResumeId(): void {
+  try {
+    localStorage.removeItem(SELECTED_RESUME_ID_STORAGE_KEY);
+  } catch {
+    // localStorage 접근 불가 환경(시크릿 모드 등)에서도 앱이 죽지 않게 무시한다.
+  }
+}
+
 /**
  * 면접에 사용할 이력서를 고른다.
  * 우선순위: localStorage에 저장된 선택(방금 클릭했거나 방금 그걸로 면접을 봄) >
