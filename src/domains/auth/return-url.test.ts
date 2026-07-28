@@ -22,7 +22,15 @@ Object.defineProperty(globalThis, 'sessionStorage', {
   configurable: true,
 });
 
-const { clearReturnUrl, consumeReturnUrl, isSafeReturnUrl, saveReturnUrl } = await import('./return-url');
+const {
+  clearIntentionalSignOut,
+  clearReturnUrl,
+  consumeReturnUrl,
+  isIntentionalSignOut,
+  isSafeReturnUrl,
+  markIntentionalSignOut,
+  saveReturnUrl,
+} = await import('./return-url');
 
 test('같은 출처 상대 경로만 허용한다', () => {
   assert.equal(isSafeReturnUrl('/mypage'), true);
@@ -54,6 +62,18 @@ test('clearReturnUrl 이후에는 fallback으로 돌아간다 (로그아웃 후 
   assert.equal(consumeReturnUrl('/dungeon'), '/result/1');
   clearReturnUrl();
   assert.equal(consumeReturnUrl('/dungeon'), '/dungeon');
+});
+
+test('의도적 로그아웃 표시는 다음 로그인까지 유지되고 해제할 수 있다', () => {
+  store.clear();
+  clearIntentionalSignOut();
+  assert.equal(isIntentionalSignOut(), false);
+  markIntentionalSignOut();
+  assert.equal(isIntentionalSignOut(), true);
+  // Strict Mode처럼 가드 effect가 두 번 돌아도 표시가 사라지지 않아야 한다.
+  assert.equal(isIntentionalSignOut(), true);
+  clearIntentionalSignOut();
+  assert.equal(isIntentionalSignOut(), false);
 });
 
 test('새 returnUrl을 저장하면 이전 pending 값을 덮어쓴다', () => {
