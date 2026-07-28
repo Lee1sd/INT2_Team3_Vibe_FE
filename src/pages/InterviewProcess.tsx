@@ -154,6 +154,8 @@ function StandardInterviewProcess() {
       setAnswers({});
       setIsLoading(true);
       setIsSubmitting(false);
+      // 현재 세션 동안은 유지되지만, 새 세션 시작 시엔 이전 세션의 안내가 남지 않게 지운다. (#95)
+      setPostSubmitError('');
       setPhases([]);
       setPhaseIndex(0);
       setCurrentQuestionIndex(0);
