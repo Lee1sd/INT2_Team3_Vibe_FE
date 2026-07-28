@@ -218,7 +218,17 @@ async function request<T>(
     if (!text) {
       return undefined as T;
     }
-    return JSON.parse(text) as T;
+    try {
+      return JSON.parse(text) as T;
+    } catch {
+      // 2xx인데 본문이 JSON이 아닌 경우(프록시/게이트웨이 HTML, 잘린 응답)다.
+      // 날 SyntaxError로 올리면 호출 측이 요청 실패와 구분할 수 없으므로 ApiError로 감싼다. (#95)
+      throw new ApiError({
+        code: 'INVALID_JSON_RESPONSE',
+        message: `서버 응답을 해석할 수 없습니다. (${path})`,
+        status: res.status,
+      });
+    }
   } catch (error) {
     if (timedOut && isAbortError(error)) {
       throw new ApiError({

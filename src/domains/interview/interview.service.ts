@@ -2,6 +2,7 @@
 import { interviewApi, InterviewerApiItem, SubmitAnswersApiResponse, InterviewHistoryApiResponse, InterviewDetailApiResponse } from './interview.api';
 import { interviewMock } from './interview.mock';
 import { getFollowUpQuestionId } from './followup-question';
+import { InterviewPostSubmitError } from './submit-failure';
 import {
   getLevel4ChallengeInterviewerStub,
   isLevel4ChallengeInterviewerId,
@@ -234,6 +235,12 @@ function toNextTurn(res: SubmitAnswersApiResponse, turn: number): NextTurn {
 }
 
 function toInterviewResponse(res: SubmitAnswersApiResponse, turn: number): InterviewResponse {
+  // evaluations는 타입상 non-optional이지만 런타임 보장은 없다. 없는 채로 map을 부르면
+  // TypeError가 나면서 "제출 실패"로 오인되므로 여기서 구분 가능한 에러로 바꾼다. (#95)
+  if (!res || !Array.isArray(res.evaluations)) {
+    throw new InterviewPostSubmitError('답변 제출 응답에 evaluations 배열이 없습니다.');
+  }
+
   const nextTurn = toNextTurn(res, turn);
   const weakestQuestionId = toStringId(res.weakestQuestionId);
 

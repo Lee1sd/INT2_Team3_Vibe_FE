@@ -17,9 +17,11 @@ import { saveReturnUrl } from '../domains/auth/return-url';
 import { evaluationService } from '../domains/progress/progress.service';
 import { fileService, markResumeAsSelected } from '../domains/resume/resume.service';
 import {
+  getFinalEvaluationCount,
   saveFinalInterviewResult,
   toFinalInterviewResult,
 } from '../domains/interview/interview-result.storage';
+import { isPostSubmitFailure } from '../domains/interview/submit-failure';
 import {
   createInterviewClosingMessage,
   getInterviewerTone,
@@ -62,6 +64,13 @@ function useTypewriter(text: string, speed = 35) {
   return { displayedText, isComplete, skip };
 }
 
+/**
+ * 제출은 성공했는데 결과 화면을 준비하지 못한 경우의 안내. (#95)
+ * 재제출을 유도하지 않는다 — 이미 완료된 세션에 다시 제출하면 409가 난다.
+ */
+const POST_SUBMIT_ERROR_MESSAGE =
+  '답변은 정상적으로 제출되었지만 결과 화면을 준비하지 못했습니다. 다시 제출하지 마시고 마이페이지의 면접 기록에서 결과를 확인해 주세요.';
+
 type InterviewerView = Pick<Interviewer, 'name' | 'level' | 'avatar'>;
 
 function interviewerFromRouteState(state: unknown, interviewerId: string | undefined): InterviewerView | null {
@@ -100,6 +109,8 @@ function StandardInterviewProcess() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   /** 토큰 미복구 등으로 제출을 막았을 때 잠깐 띄우는 안내. (#87) */
   const [submitNotice, setSubmitNotice] = useState('');
+  /** 제출 성공 후 결과 화면 준비에 실패했을 때의 안내 — 자동으로 사라지지 않는다. (#95) */
+  const [postSubmitError, setPostSubmitError] = useState('');
   const [phases, setPhases] = useState<string[]>([]);
   const [phaseIndex, setPhaseIndex] = useState(0);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -338,49 +349,70 @@ function StandardInterviewProcess() {
 
     setIsSubmitting(true);
     try {
-      if (!isFollowUp) {
-        // First turn: submit 3 answers
-        const payload: Answer[] = session.questions.map(q => ({
-          questionId: q.id,
-          content: answers[q.id]
-        }));
-        const res = await engineService.submitAnswers(activeSessionId, payload);
+      // 1단계: API 호출. 여기서 실패한 것만 "제출 실패"다 — 재시도해도 된다.
+      let res: InterviewResponse;
+      try {
+        if (!isFollowUp) {
+          const payload: Answer[] = session.questions.map(q => ({
+            questionId: q.id,
+            content: answers[q.id]
+          }));
+          res = await engineService.submitAnswers(activeSessionId, payload);
+        } else {
+          const q = session.questions[0];
+          res = await engineService.submitFollowUp(activeSessionId, {
+            questionId: q.id,
+            content: answers[q.id]
+          });
+        }
+      } catch (e) {
+        console.error(e);
         if (isStale()) return;
-        
-        // Clear answers for the next turn
-        setAnswers({});
-        setCurrentQuestionIndex(0);
-        setSession(res);
-      } else {
-        // Follow-up turn
-        const q = session.questions[0]; 
-        const res = await engineService.submitFollowUp(activeSessionId, {
-          questionId: q.id,
-          content: answers[q.id]
-        });
-        if (isStale()) return;
-        
+        // 여기까지 온 401 = client.ts의 자동 refresh까지 실패한 완전 만료다(access+refresh 모두).
+        // 복구 불가하므로 복귀 경로를 저장하고 로그인으로 유도한다. (#89)
+        if (isSessionExpiredError(e)) {
+          saveReturnUrl(location.pathname);
+          alert('세션이 만료되었습니다. 다시 로그인해 주세요.');
+          navigate('/', { replace: true });
+          return;
+        }
+        // 2xx를 받은 뒤 응답을 쓸 수 없는 경우(계약 위반, JSON 파싱 실패)는 제출이
+        // 이미 성공한 상태다. 재제출을 유도하면 완료된 세션에 다시 제출해 409가 난다. (#95)
+        if (isPostSubmitFailure(e)) {
+          setPostSubmitError(POST_SUBMIT_ERROR_MESSAGE);
+          return;
+        }
+        alert('답변 제출 중 오류가 발생했습니다.');
+        return;
+      }
+      if (isStale()) return;
+
+      // 2단계: 응답 후처리. 서버는 이미 답변을 받아들였으므로 실패해도 제출 실패가 아니다.
+      try {
+        if (!isFollowUp) {
+          setAnswers({});
+          setCurrentQuestionIndex(0);
+          setSession(res);
+          return;
+        }
+
         if (res.nextTurn.type === 'END') {
           // 최종 응답을 먼저 검증·저장한 뒤 종료 상태를 한 번에 반영해 불완전한 END 화면을 방지한다.
-          const completedResult = toFinalInterviewResult(res);
+          // 본문항 수를 알고 있으면 evaluations 개수를 정확히 검사한다(본문항 N + 꼬리질문 1). (#95)
+          const completedResult = toFinalInterviewResult(
+            res,
+            mainQuestionCount > 0 ? getFinalEvaluationCount(mainQuestionCount) : undefined,
+          );
           saveFinalInterviewResult(activeSessionId, completedResult);
           setFinalResult(completedResult);
           setIsInterviewFinished(true);
         }
         setSession(res);
+      } catch (e) {
+        console.error(e);
+        if (isStale()) return;
+        setPostSubmitError(POST_SUBMIT_ERROR_MESSAGE);
       }
-    } catch (e) {
-      console.error(e);
-      if (isStale()) return;
-      // 여기까지 온 401 = client.ts의 자동 refresh까지 실패한 완전 만료다(access+refresh 모두).
-      // 복구 불가하므로 복귀 경로를 저장하고 로그인으로 유도한다. (#89)
-      if (isSessionExpiredError(e)) {
-        saveReturnUrl(location.pathname);
-        alert('세션이 만료되었습니다. 다시 로그인해 주세요.');
-        navigate('/', { replace: true });
-        return;
-      }
-      alert('답변 제출 중 오류가 발생했습니다.');
     } finally {
       if (!isStale()) setIsSubmitting(false);
     }
@@ -549,7 +581,28 @@ function StandardInterviewProcess() {
         )}
 
         {/* Input Area / Result Button */}
-        {isInterviewFinished ? (
+        {postSubmitError ? (
+          // 제출은 이미 성공했으므로 입력창을 내려 재제출을 막는다. (#95)
+          <div
+            className="shrink-0 mt-4 bg-blue-grey-920/70 backdrop-blur-[2px] border border-white/15 rounded-2xl p-4 md:p-6 flex flex-col items-center gap-4 text-center shadow-[0_8px_40px_rgba(0,0,0,0.2)]"
+            style={{ animation: 'fadeIn 0.3s ease-in-out' }}
+            role="alert"
+          >
+            <div className="flex items-start gap-2 text-left">
+              <AlertCircle className="w-5 h-5 text-danger shrink-0 mt-[2px]" />
+              <p className="text-white text-[14px] leading-[20px] font-normal md:text-[16px] md:leading-[28px]">
+                {postSubmitError}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate('/mypage')}
+              className="px-6 py-3 bg-primary text-white rounded-2xl font-bold hover:bg-[#005bb5] transition-colors text-[14px] leading-[20px] md:text-[16px] md:leading-[28px]"
+            >
+              마이페이지에서 면접 기록 확인하기
+            </button>
+          </div>
+        ) : isInterviewFinished ? (
           isTypewriterComplete && (
             <div className="shrink-0 flex justify-center mt-4">
               <button
