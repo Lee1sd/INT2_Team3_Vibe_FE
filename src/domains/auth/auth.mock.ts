@@ -1,7 +1,7 @@
 // 백엔드 /api/auth/*, /api/users/me 가 준비되기 전까지 화면 흐름을 검증하기 위한 목업 구현.
 // 실제 구현은 auth.api.ts, 어느 쪽을 쓸지는 auth.service.ts에서 결정한다.
 import { setAccessToken } from '../../api/client';
-import { clearReturnUrl } from './return-url';
+import { clearReturnUrl, markIntentionalSignOut } from './return-url';
 import { User } from './auth.types';
 
 /** RequireAuth가 getAccessToken()으로 가드하므로 mock도 가짜 토큰을 맞춘다. */
@@ -92,6 +92,7 @@ export const authMock = {
   logout: async (): Promise<void> => {
     return new Promise((resolve) => {
       memoryHasResume = false;
+      markIntentionalSignOut();
       setAccessToken(null);
       clearReturnUrl();
       try {
