@@ -14,6 +14,11 @@ import { progressApi } from '../domains/progress/progress.api';
 import { badgeNameForStage } from '../domains/progress/badge-names';
 import { UserBadge } from '../domains/progress/progress.types';
 
+/** 면접 집중 키워드 전체 목록. MVP는 이 중 AVAILABLE_KEYWORDS만 선택 가능하다. */
+const KEYWORD_OPTIONS = ['데이터전처리', 'DB', '부하', '보안', '시스템설계', '클라우드'] as const;
+/** MVP에서 실제로 질문 생성을 지원하는 키워드(DB, 보안). */
+const AVAILABLE_KEYWORDS = new Set<string>(['DB', '보안']);
+
 /** 보유 뱃지 중 Stage가 가장 높은 뱃지를 메인 화면에 표시할 현재 뱃지로 선택한다. */
 function findCurrentBadge(badges: UserBadge[]): UserBadge | null {
   return badges.reduce<UserBadge | null>(
@@ -380,20 +385,36 @@ export default function InterviewerList() {
                           <div className="mb-6">
                             <p className="text-[14px] leading-[20px] font-bold text-blue-grey-75 mb-3">면접 집중 키워드 (1개 선택)</p>
                             <div className="flex flex-wrap gap-2">
-                              {['데이터전처리', 'DB', '부하', '보안', '시스템설계', '클라우드'].map(kw => (
-                                <button
-                                  key={kw}
-                                  onClick={() => setSelectedKeyword(kw)}
-                                  className={twMerge(
-                                    "px-3 py-1.5 rounded-lg text-[14px] leading-[20px] font-normal transition-all border",
-                                    selectedKeyword === kw
-                                      ? "bg-primary text-white border-primary shadow-[0_0_10px_rgba(0,120,255,0.3)]"
-                                      : "bg-blue-grey-800 text-blue-grey-75 border-blue-grey-700 hover:bg-blue-grey-700"
-                                  )}
-                                >
-                                  {kw}
-                                </button>
-                              ))}
+                              {KEYWORD_OPTIONS.map(kw => {
+                                const isAvailable = AVAILABLE_KEYWORDS.has(kw);
+                                const isSelected = selectedKeyword === kw;
+                                return (
+                                  <button
+                                    key={kw}
+                                    type="button"
+                                    disabled={!isAvailable}
+                                    onClick={() => {
+                                      if (!isAvailable) return;
+                                      setSelectedKeyword(kw);
+                                    }}
+                                    aria-disabled={!isAvailable}
+                                    title={isAvailable ? undefined : '준비 중인 키워드입니다'}
+                                    className={twMerge(
+                                      "px-3 py-1.5 rounded-lg text-[14px] leading-[20px] font-normal transition-all border",
+                                      !isAvailable &&
+                                        "bg-blue-grey-800 text-blue-grey-500 border-blue-grey-700 opacity-40 cursor-not-allowed",
+                                      isAvailable &&
+                                        !isSelected &&
+                                        "bg-primary/15 text-primary border-primary/50 hover:bg-primary/25",
+                                      isAvailable &&
+                                        isSelected &&
+                                        "bg-primary text-white border-primary shadow-[0_0_10px_rgba(0,120,255,0.3)]",
+                                    )}
+                                  >
+                                    {kw}
+                                  </button>
+                                );
+                              })}
                             </div>
                           </div>
                           <button 
