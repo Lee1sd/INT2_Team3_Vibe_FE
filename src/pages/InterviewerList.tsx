@@ -14,6 +14,11 @@ import { progressApi } from '../domains/progress/progress.api';
 import { badgeNameForStage } from '../domains/progress/badge-names';
 import { UserBadge } from '../domains/progress/progress.types';
 
+/** 면접 집중 키워드 전체 목록. MVP는 이 중 AVAILABLE_KEYWORDS만 선택 가능하다. */
+const KEYWORD_OPTIONS = ['데이터전처리', 'DB', '부하', '보안', '시스템설계', '클라우드'] as const;
+/** MVP에서 실제로 질문 생성을 지원하는 키워드(DB, 보안). */
+const AVAILABLE_KEYWORDS = new Set<string>(['DB', '보안']);
+
 /** 보유 뱃지 중 Stage가 가장 높은 뱃지를 메인 화면에 표시할 현재 뱃지로 선택한다. */
 function findCurrentBadge(badges: UserBadge[]): UserBadge | null {
   return badges.reduce<UserBadge | null>(
@@ -51,7 +56,8 @@ export default function InterviewerList() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSoftRefreshing, setIsSoftRefreshing] = useState(false);
   const [isUploaded, setIsUploaded] = useState(false);
-  const [selectedKeyword, setSelectedKeyword] = useState<string>('');
+  /** 면접관(레벨)별로 선택한 키워드. 카드마다 선택이 독립이어야 한다. */
+  const [selectedKeywords, setSelectedKeywords] = useState<Record<string, string>>({});
   /** 면접관 목록 등 핵심 데이터 실패 시 전체 에러. */
   const [loadError, setLoadError] = useState<string | null>(null);
   /** Progress/유저·뱃지 실패는 화면을 막지 않고 안내만 한다. */
@@ -380,24 +386,41 @@ export default function InterviewerList() {
                           <div className="mb-6">
                             <p className="text-[14px] leading-[20px] font-bold text-blue-grey-75 mb-3">면접 집중 키워드 (1개 선택)</p>
                             <div className="flex flex-wrap gap-2">
-                              {['데이터전처리', 'DB', '부하', '보안', '시스템설계', '클라우드'].map(kw => (
-                                <button
-                                  key={kw}
-                                  onClick={() => setSelectedKeyword(kw)}
-                                  className={twMerge(
-                                    "px-3 py-1.5 rounded-lg text-[14px] leading-[20px] font-normal transition-all border",
-                                    selectedKeyword === kw
-                                      ? "bg-primary text-white border-primary shadow-[0_0_10px_rgba(0,120,255,0.3)]"
-                                      : "bg-blue-grey-800 text-blue-grey-75 border-blue-grey-700 hover:bg-blue-grey-700"
-                                  )}
-                                >
-                                  {kw}
-                                </button>
-                              ))}
+                              {KEYWORD_OPTIONS.map(kw => {
+                                const isAvailable = AVAILABLE_KEYWORDS.has(kw);
+                                const selectedKeyword = selectedKeywords[iv.id] ?? '';
+                                const isSelected = selectedKeyword === kw;
+                                return (
+                                  <button
+                                    key={kw}
+                                    type="button"
+                                    disabled={!isAvailable}
+                                    onClick={() => {
+                                      if (!isAvailable) return;
+                                      setSelectedKeywords(prev => ({ ...prev, [iv.id]: kw }));
+                                    }}
+                                    aria-disabled={!isAvailable}
+                                    title={isAvailable ? undefined : '준비 중인 키워드입니다'}
+                                    className={twMerge(
+                                      "px-3 py-1.5 rounded-lg text-[14px] leading-[20px] font-normal transition-all border",
+                                      !isAvailable &&
+                                        "bg-blue-grey-800 text-blue-grey-75 border-blue-grey-700 cursor-not-allowed",
+                                      isAvailable &&
+                                        !isSelected &&
+                                        "bg-primary/15 text-primary border-primary/50 hover:bg-primary/25",
+                                      isAvailable &&
+                                        isSelected &&
+                                        "bg-primary text-white border-primary shadow-[0_0_10px_rgba(0,120,255,0.3)]",
+                                    )}
+                                  >
+                                    {kw}
+                                  </button>
+                                );
+                              })}
                             </div>
                           </div>
                           <button 
-                            disabled={!selectedKeyword}
+                            disabled={!(selectedKeywords[iv.id] ?? '')}
                             onClick={() => {
                               // 실제 면접 API에는 파싱 완료된 이력서 ID가 필수이므로 업로드 전 진입을 차단한다.
                               if (!isUploaded) {
@@ -405,7 +428,7 @@ export default function InterviewerList() {
                                 return;
                               }
                               navigate(`/interview/${iv.id}`, {
-                                state: { keyword: selectedKeyword, interviewer: iv },
+                                state: { keyword: selectedKeywords[iv.id], interviewer: iv },
                               });
                             }}
                             className="w-full py-3 bg-primary text-white rounded-2xl font-bold text-[16px] leading-[24px] flex items-center justify-center gap-2 hover:bg-[#005bb5] transition-colors shadow-sm disabled:opacity-32 disabled:cursor-not-allowed"
