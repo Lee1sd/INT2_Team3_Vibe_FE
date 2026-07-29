@@ -9,6 +9,10 @@ coverage/
 .idea/
 *.iml
 .codex/
+.claude/
+.omc/
+# 개인 작업 습관·로컬 도구 메모. 팀 공용 규칙은 CLAUDE.md와 .github/ 템플릿이 SSOT다.
+AGENTS.md
 .venv-nukki/
 scripts/__pycache__/
 public/interviewers/_check_*
