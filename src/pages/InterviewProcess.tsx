@@ -88,7 +88,7 @@ function interviewerFromRouteState(state: unknown, interviewerId: string | undef
 export default function InterviewProcess() {
   const { interviewerId } = useParams();
 
-  // Lv.4 챌린지는 기존 3문항+꼬리1 흐름과 분리된 전용 화면으로 보낸다.
+  // Lv.4 챌린지는 기존 4문항+꼬리1 흐름과 분리된 전용 화면으로 보낸다.
   if (isLevel4ChallengeInterviewerId(interviewerId)) {
     return <ChallengeInterviewProcess />;
   }
