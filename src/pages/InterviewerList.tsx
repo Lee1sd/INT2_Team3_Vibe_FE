@@ -13,6 +13,11 @@ import { progressService } from '../domains/progress/progress.service';
 import { progressApi } from '../domains/progress/progress.api';
 import { badgeNameForStage } from '../domains/progress/badge-names';
 import { UserBadge } from '../domains/progress/progress.types';
+import {
+  getInterviewerKeyword,
+  InterviewerKeywordSelections,
+  selectInterviewerKeyword,
+} from '../domains/interview/interviewer-keyword-selection';
 
 /** 보유 뱃지 중 Stage가 가장 높은 뱃지를 메인 화면에 표시할 현재 뱃지로 선택한다. */
 function findCurrentBadge(badges: UserBadge[]): UserBadge | null {
@@ -51,7 +56,8 @@ export default function InterviewerList() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSoftRefreshing, setIsSoftRefreshing] = useState(false);
   const [isUploaded, setIsUploaded] = useState(false);
-  const [selectedKeyword, setSelectedKeyword] = useState<string>('');
+  /** 같은 키워드가 다른 레벨 카드까지 활성화되지 않도록 면접관별 선택을 분리한다. */
+  const [selectedKeywords, setSelectedKeywords] = useState<InterviewerKeywordSelections>({});
   /** 면접관 목록 등 핵심 데이터 실패 시 전체 에러. */
   const [loadError, setLoadError] = useState<string | null>(null);
   /** Progress/유저·뱃지 실패는 화면을 막지 않고 안내만 한다. */
@@ -308,6 +314,7 @@ export default function InterviewerList() {
             <div className="space-y-16">
               {interviewers.map((iv, index) => {
                 const isLeft = index % 2 === 0;
+                const selectedKeyword = getInterviewerKeyword(selectedKeywords, iv.id);
                 
                 return (
                   <div key={iv.id} className={twMerge("flex flex-col md:flex-row items-center gap-8", !isLeft && "md:flex-row-reverse")}>
@@ -383,7 +390,11 @@ export default function InterviewerList() {
                               {['데이터전처리', 'DB', '부하', '보안', '시스템설계', '클라우드'].map(kw => (
                                 <button
                                   key={kw}
-                                  onClick={() => setSelectedKeyword(kw)}
+                                  onClick={() =>
+                                    setSelectedKeywords((current) =>
+                                      selectInterviewerKeyword(current, iv.id, kw),
+                                    )
+                                  }
                                   className={twMerge(
                                     "px-3 py-1.5 rounded-lg text-[14px] leading-[20px] font-normal transition-all border",
                                     selectedKeyword === kw
