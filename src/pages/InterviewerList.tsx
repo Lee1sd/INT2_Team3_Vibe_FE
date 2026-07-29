@@ -56,7 +56,8 @@ export default function InterviewerList() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSoftRefreshing, setIsSoftRefreshing] = useState(false);
   const [isUploaded, setIsUploaded] = useState(false);
-  const [selectedKeyword, setSelectedKeyword] = useState<string>('');
+  /** 면접관(레벨)별로 선택한 키워드. 카드마다 선택이 독립이어야 한다. */
+  const [selectedKeywords, setSelectedKeywords] = useState<Record<string, string>>({});
   /** 면접관 목록 등 핵심 데이터 실패 시 전체 에러. */
   const [loadError, setLoadError] = useState<string | null>(null);
   /** Progress/유저·뱃지 실패는 화면을 막지 않고 안내만 한다. */
@@ -387,6 +388,7 @@ export default function InterviewerList() {
                             <div className="flex flex-wrap gap-2">
                               {KEYWORD_OPTIONS.map(kw => {
                                 const isAvailable = AVAILABLE_KEYWORDS.has(kw);
+                                const selectedKeyword = selectedKeywords[iv.id] ?? '';
                                 const isSelected = selectedKeyword === kw;
                                 return (
                                   <button
@@ -395,14 +397,14 @@ export default function InterviewerList() {
                                     disabled={!isAvailable}
                                     onClick={() => {
                                       if (!isAvailable) return;
-                                      setSelectedKeyword(kw);
+                                      setSelectedKeywords(prev => ({ ...prev, [iv.id]: kw }));
                                     }}
                                     aria-disabled={!isAvailable}
                                     title={isAvailable ? undefined : '준비 중인 키워드입니다'}
                                     className={twMerge(
                                       "px-3 py-1.5 rounded-lg text-[14px] leading-[20px] font-normal transition-all border",
                                       !isAvailable &&
-                                        "bg-blue-grey-800 text-blue-grey-500 border-blue-grey-700 opacity-40 cursor-not-allowed",
+                                        "bg-blue-grey-800 text-blue-grey-75 border-blue-grey-700 cursor-not-allowed",
                                       isAvailable &&
                                         !isSelected &&
                                         "bg-primary/15 text-primary border-primary/50 hover:bg-primary/25",
@@ -418,7 +420,7 @@ export default function InterviewerList() {
                             </div>
                           </div>
                           <button 
-                            disabled={!selectedKeyword}
+                            disabled={!(selectedKeywords[iv.id] ?? '')}
                             onClick={() => {
                               // 실제 면접 API에는 파싱 완료된 이력서 ID가 필수이므로 업로드 전 진입을 차단한다.
                               if (!isUploaded) {
@@ -426,7 +428,7 @@ export default function InterviewerList() {
                                 return;
                               }
                               navigate(`/interview/${iv.id}`, {
-                                state: { keyword: selectedKeyword, interviewer: iv },
+                                state: { keyword: selectedKeywords[iv.id], interviewer: iv },
                               });
                             }}
                             className="w-full py-3 bg-primary text-white rounded-2xl font-bold text-[16px] leading-[24px] flex items-center justify-center gap-2 hover:bg-[#005bb5] transition-colors shadow-sm disabled:opacity-32 disabled:cursor-not-allowed"
