@@ -2,11 +2,22 @@ import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { getAccessToken } from '../api/client';
 import { authService } from '../domains/auth/auth.service';
-import { consumeReturnUrl, isSafeReturnUrl } from '../domains/auth/return-url';
+import {
+  clearReturnUrl,
+  completeAuthExit,
+  consumeReturnUrl,
+  isAuthExitInProgress,
+  isSafeReturnUrl,
+} from '../domains/auth/return-url';
 import { Mail } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 
 const LOGIN_BRAND_ICON_SRC = '/brand/fvg.png';
+
+interface LoginLocationState {
+  returnUrl?: string;
+  resetReturnUrl?: boolean;
+}
 
 export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
@@ -15,10 +26,16 @@ export default function Login() {
   // AuthBootstrap이 refresh로 세션을 복구한 뒤면 로그인 화면을 건너뛴다.
   const hasAccessToken = Boolean(getAccessToken());
 
+  // 명시적 로그아웃은 보호 라우트가 뒤늦게 저장한 경로까지 지워 다음 로그인을 메인으로 보낸다.
   // consumeReturnUrl은 sessionStorage를 바꾸므로 렌더가 아니라 effect에서 소비한다.
   useEffect(() => {
+    const state = location.state as LoginLocationState | null;
+    if (isAuthExitInProgress() || state?.resetReturnUrl) {
+      clearReturnUrl();
+      return;
+    }
     if (!hasAccessToken) return;
-    const fromState = (location.state as { returnUrl?: string } | null)?.returnUrl;
+    const fromState = state?.returnUrl;
     navigate(consumeReturnUrl(isSafeReturnUrl(fromState) ? fromState : '/dungeon'), {
       replace: true,
     });
@@ -27,6 +44,8 @@ export default function Login() {
   const handleLogin = async (_provider: string) => {
     setIsLoading(true);
     try {
+      // 로그아웃 이후 재로그인은 저장된 보호 페이지가 아니라 기본 메인 경로에서 시작한다.
+      completeAuthExit();
       await authService.login();
       navigate(consumeReturnUrl('/dungeon'), { replace: true });
     } catch (error) {

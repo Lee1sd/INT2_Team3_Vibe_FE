@@ -8,6 +8,7 @@ import { twMerge } from 'tailwind-merge';
 import { authService, validateProfilePhotoFile } from '../domains/auth/auth.service';
 import { PROFILE_PHOTO_ACCEPT } from '../domains/auth/auth.types';
 import { PROFILE_UPDATED_EVENT } from '../domains/auth/profile-events';
+import { beginAuthExit } from '../domains/auth/return-url';
 import { User } from '../types';
 import { InfoTooltip } from '../components/InfoTooltip';
 import { ChatLog, HistoryDrawer, InterviewHistoryItem } from '../components/HistoryDrawer';
@@ -618,9 +619,17 @@ export default function MyPage() {
     }
   };
 
+  /** 로그아웃 중 보호 라우트가 마이페이지를 복귀 경로로 다시 저장하지 않도록 명시적으로 초기화한다. */
   const handleLogout = async () => {
-    await authService.logout();
-    navigate('/');
+    beginAuthExit();
+    try {
+      await authService.logout();
+    } finally {
+      navigate('/', {
+        replace: true,
+        state: { resetReturnUrl: true },
+      });
+    }
   };
 
   const handleWithdraw = async () => {
