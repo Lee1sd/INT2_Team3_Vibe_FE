@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { getFollowUpQuestionId } from './followup-question';
 
-test('본문항 4개면 꼬리질문 questionId는 5다 (#146/#93)', () => {
+test('본문항 4개면 꼬리질문 questionId는 5다 (BE 저장소 INT2_Team3_Vibe_BE의 #146 / FE #93)', () => {
   assert.equal(getFollowUpQuestionId(4), '5');
 });
 

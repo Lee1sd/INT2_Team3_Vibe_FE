@@ -5,7 +5,8 @@ const RESULT_STORAGE_PREFIX = 'career-dungeon:interview-result:';
 
 /**
  * 최종 판정 evaluations의 최소 개수 — 본문항 1 + 꼬리질문 1.
- * 정확한 개수는 세션마다 다르므로(문항 수 변경 #146), 개수를 알 수 있는 호출 측만
+ * 정확한 개수는 세션마다 다르므로(문항 수 변경 — BE 저장소 INT2_Team3_Vibe_BE의 #146),
+ * 개수를 알 수 있는 호출 측만
  * expectedEvaluationCount로 정확히 검사하고 그 외에는 이 하한만 본다.
  */
 const MIN_FINAL_EVALUATION_COUNT = 2;
@@ -14,7 +15,8 @@ const MIN_FINAL_EVALUATION_COUNT = 2;
  * 최종 판정 응답의 evaluations 개수를 본문항 수에서 유도한다. (#95)
  *
  * 최종 판정에는 본문항 N개와 꼬리질문 1개의 평가가 모두 담기므로 N+1이다.
- * 개수를 하드코딩하면 문항 수 변경(#146: 3→4문항) 때마다 게이트가 깨진다 —
+ * 개수를 하드코딩하면 문항 수 변경(BE 저장소 INT2_Team3_Vibe_BE의 #146: 3→4문항)
+ * 때마다 게이트가 깨진다 —
  * getFollowUpQuestionId와 같은 이유로 동적 계산한다.
  */
 export function getFinalEvaluationCount(mainQuestionCount: number): number {
