@@ -9,8 +9,16 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080
 /** 앱 부트가 hang 나지 않도록 refresh 요청 상한(ms). */
 const REFRESH_TIMEOUT_MS = 5000;
 
-/** 일반 API가 BE 지연/스레드 고갈에 영원히 묶이지 않도록 하는 상한(ms). */
-const REQUEST_TIMEOUT_MS = 15000;
+/**
+ * 일반 API가 BE 지연/스레드 고갈에 영원히 묶이지 않도록 하는 상한(ms).
+ *
+ * real 모드 답변 제출은 LLM 2회 호출을 기다린다. BE의 Claude 호출 상한이
+ * connect 5s + read 30s이고 스키마 이탈 시 1회 재요청하므로(BE 저장소
+ * INT2_Team3_Vibe_BE의 LlmInvocationService `@Retryable(maxAttempts = 2)`),
+ * LLM 1회 최악은 70.5s, 2회면 약 141s다. 기존 15s는 정상 처리 중인 요청을
+ * 끊어 재제출 → 409로 이어졌다. 141s를 덮는 값으로 잡는다. (#100)
+ */
+const REQUEST_TIMEOUT_MS = 150000;
 
 /** `profile-events.ts`의 AUTH_TOKEN_CHANGED_EVENT와 동일 문자열 — api 계층 순환 import 방지. */
 const AUTH_TOKEN_CHANGED_EVENT = 'career-dungeon:auth-token-changed';
