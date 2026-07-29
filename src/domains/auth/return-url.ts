@@ -12,6 +12,26 @@ export function isSafeReturnUrl(value: string | null | undefined): value is stri
   return true;
 }
 
+/**
+ * 사용자가 스스로 나간 경우(로그아웃/탈퇴) 표시.
+ * 세션 만료(#89)는 복귀 경로를 남겨야 하지만 로그아웃은 남기면 안 되므로,
+ * 토큰이 사라진 이유를 가드가 구분할 수 있어야 한다.
+ * 다음 로그인 성공 시 RequireAuth가 해제한다.
+ */
+let intentionalSignOut = false;
+
+export function markIntentionalSignOut(): void {
+  intentionalSignOut = true;
+}
+
+export function clearIntentionalSignOut(): void {
+  intentionalSignOut = false;
+}
+
+export function isIntentionalSignOut(): boolean {
+  return intentionalSignOut;
+}
+
 export function saveReturnUrl(path: string): void {
   if (!isSafeReturnUrl(path) || path === '/') return;
   try {

@@ -9,7 +9,7 @@ import {
   PROFILE_PHOTO_MIME_TYPES,
   User,
 } from './auth.types';
-import { clearReturnUrl } from './return-url';
+import { clearReturnUrl, markIntentionalSignOut } from './return-url';
 
 interface AuthService {
   /** 앱 시작/새로고침 시 refresh 쿠키로 accessToken을 복구한다. */
@@ -89,6 +89,9 @@ const realAuthService: AuthService = {
     try {
       await authApi.logout();
     } finally {
+      // setAccessToken이 auth-token-changed를 동기 dispatch하므로, 가드가 복귀 경로를
+      // 다시 저장하지 않도록 표시를 먼저 세운다.
+      markIntentionalSignOut();
       setAccessToken(null);
       clearReturnUrl();
     }
@@ -97,6 +100,7 @@ const realAuthService: AuthService = {
     try {
       await authApi.withdraw();
     } finally {
+      markIntentionalSignOut();
       setAccessToken(null);
       clearReturnUrl();
     }

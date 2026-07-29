@@ -12,6 +12,20 @@ const REFRESH_TIMEOUT_MS = 5000;
 /** 일반 API가 BE 지연/스레드 고갈에 영원히 묶이지 않도록 하는 상한(ms). */
 const REQUEST_TIMEOUT_MS = 15000;
 
+/**
+ * LLM 응답을 기다리는 요청에만 쓰는 상한(ms). (#100)
+ *
+ * BE의 Claude 호출 상한이 connect 5s + read 30s이고 스키마 이탈 시 1회
+ * 재요청하므로(BE 저장소 INT2_Team3_Vibe_BE의 LlmInvocationService
+ * `@Retryable(maxAttempts = 2)`), LLM 1회 최악은 70.5s다. 답변 제출이
+ * 기다리는 2회면 약 141s이고, 이를 덮는 값으로 잡았다.
+ *
+ * 일반 조회 API에는 쓰지 않는다 — 즉시 끝나야 할 요청까지 이 값을 쓰면
+ * 네트워크 장애가 드러나기까지 155초가 걸린다. 적용 지점은
+ * `interview.api.ts`의 createSession/submitAnswers 두 곳뿐이다.
+ */
+export const LLM_REQUEST_TIMEOUT_MS = 155000;
+
 /** `profile-events.ts`의 AUTH_TOKEN_CHANGED_EVENT와 동일 문자열 — api 계층 순환 import 방지. */
 const AUTH_TOKEN_CHANGED_EVENT = 'career-dungeon:auth-token-changed';
 
@@ -142,43 +156,53 @@ export async function restoreSession(signal?: AbortSignal): Promise<boolean> {
   return tryRefreshAccessToken(signal);
 }
 
+/**
+ * fetch 옵션에 요청 단위 타임아웃을 얹은 형태.
+ * `timeoutMs`는 fetch로 넘기지 않고 여기서 소비한다.
+ */
+export interface RequestOptions extends RequestInit {
+  /** 이 요청에만 적용할 타임아웃(ms). 생략하면 REQUEST_TIMEOUT_MS. */
+  timeoutMs?: number;
+}
+
 async function request<T>(
   path: string,
-  options: RequestInit = {},
+  options: RequestOptions = {},
   retried = false
 ): Promise<T> {
-  const isFormData = options.body instanceof FormData;
+  const { timeoutMs = REQUEST_TIMEOUT_MS, ...fetchOptions } = options;
+  const isFormData = fetchOptions.body instanceof FormData;
   const controller = new AbortController();
   let timedOut = false;
   const timeoutId = setTimeout(() => {
     timedOut = true;
     controller.abort();
-  }, REQUEST_TIMEOUT_MS);
+  }, timeoutMs);
 
   const onExternalAbort = () => controller.abort();
-  if (options.signal) {
-    if (options.signal.aborted) {
+  if (fetchOptions.signal) {
+    if (fetchOptions.signal.aborted) {
       controller.abort();
     } else {
-      options.signal.addEventListener('abort', onExternalAbort, { once: true });
+      fetchOptions.signal.addEventListener('abort', onExternalAbort, { once: true });
     }
   }
 
   const cleanup = () => {
     clearTimeout(timeoutId);
-    options.signal?.removeEventListener('abort', onExternalAbort);
+    fetchOptions.signal?.removeEventListener('abort', onExternalAbort);
   };
 
   try {
     const res = await fetch(`${API_BASE_URL}${path}`, {
-      ...options,
+      ...fetchOptions,
       signal: controller.signal,
       // Refresh Token은 HttpOnly 쿠키로 발급되므로(AU-002), 모든 요청에 쿠키를 함께 보낸다.
       credentials: 'include',
       headers: {
-        ...(options.body && !isFormData ? { 'Content-Type': 'application/json' } : {}),
+        ...(fetchOptions.body && !isFormData ? { 'Content-Type': 'application/json' } : {}),
         ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-        ...options.headers,
+        ...fetchOptions.headers,
       },
     });
 
@@ -218,7 +242,17 @@ async function request<T>(
     if (!text) {
       return undefined as T;
     }
-    return JSON.parse(text) as T;
+    try {
+      return JSON.parse(text) as T;
+    } catch {
+      // 2xx인데 본문이 JSON이 아닌 경우(프록시/게이트웨이 HTML, 잘린 응답)다.
+      // 날 SyntaxError로 올리면 호출 측이 요청 실패와 구분할 수 없으므로 ApiError로 감싼다. (#95)
+      throw new ApiError({
+        code: 'INVALID_JSON_RESPONSE',
+        message: `서버 응답을 해석할 수 없습니다. (${path})`,
+        status: res.status,
+      });
+    }
   } catch (error) {
     if (timedOut && isAbortError(error)) {
       throw new ApiError({
@@ -234,11 +268,20 @@ async function request<T>(
 }
 
 export const apiClient = {
-  get: <T>(path: string, options: RequestInit = {}) => request<T>(path, options),
-  post: <T>(path: string, body?: unknown) =>
-    request<T>(path, { method: 'POST', body: body !== undefined ? JSON.stringify(body) : undefined }),
-  patch: <T>(path: string, body?: unknown) =>
-    request<T>(path, { method: 'PATCH', body: body !== undefined ? JSON.stringify(body) : undefined }),
-  delete: <T>(path: string) => request<T>(path, { method: 'DELETE' }),
-  postForm: <T>(path: string, formData: FormData) => request<T>(path, { method: 'POST', body: formData }),
+  get: <T>(path: string, options: RequestOptions = {}) => request<T>(path, options),
+  post: <T>(path: string, body?: unknown, options: RequestOptions = {}) =>
+    request<T>(path, {
+      ...options,
+      method: 'POST',
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    }),
+  patch: <T>(path: string, body?: unknown, options: RequestOptions = {}) =>
+    request<T>(path, {
+      ...options,
+      method: 'PATCH',
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    }),
+  delete: <T>(path: string, options: RequestOptions = {}) => request<T>(path, { ...options, method: 'DELETE' }),
+  postForm: <T>(path: string, formData: FormData, options: RequestOptions = {}) =>
+    request<T>(path, { ...options, method: 'POST', body: formData }),
 };
