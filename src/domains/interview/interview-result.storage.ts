@@ -56,9 +56,10 @@ export function isFinalInterviewResult(
   // totalScore>=80 고정 대조는 Lv.1 합격을 후처리 실패로 만든다.
   if (typeof result.passed !== 'boolean') return false;
   if (typeof result.overallFeedback !== 'string' || !result.overallFeedback.trim()) return false;
+  // 상한을 두면 레벨이 늘어날 때 합격 응답을 다시 후처리 실패로 만든다 — 하한만 검사한다.
   if (
     result.interviewLevel !== undefined
-    && (!Number.isInteger(result.interviewLevel) || result.interviewLevel < 1 || result.interviewLevel > 3)
+    && (!Number.isInteger(result.interviewLevel) || result.interviewLevel < 1)
   ) return false;
 
   const evaluationsValid = result.evaluations.every((evaluation) => (

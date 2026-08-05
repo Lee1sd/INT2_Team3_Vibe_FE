@@ -115,6 +115,20 @@ test('레벨별 합격선을 BE StageGaugePolicy와 맞춘다', () => {
   assert.equal(passingScoreForLevel(undefined), 80);
 });
 
+test('아직 없는 상위 레벨도 결과로 받아들인다', () => {
+  // 레벨 상한을 검사하면 레벨이 늘어날 때 합격 응답이 다시 후처리 실패가 된다.
+  const higherLevel = toFinalInterviewResult(endResponseWith(5, 90), 5, 5);
+
+  assert.equal(isFinalInterviewResult(higherLevel, 5), true);
+  assert.equal(higherLevel.interviewLevel, 5);
+  assert.equal(passingScoreForLevel(5), 80);
+});
+
+test('레벨이 정수가 아니면 거부한다', () => {
+  const invalid = { ...finalResultWith(5, 90), interviewLevel: 0 };
+  assert.equal(isFinalInterviewResult(invalid, 5), false);
+});
+
 test('계약 위반은 제출 실패와 구분되는 후처리 에러로 던진다', () => {
   assert.throws(
     () => toFinalInterviewResult(endResponseWith(4), getFinalEvaluationCount(4)),
