@@ -84,14 +84,23 @@ test('questionId가 중복이면 거부한다', () => {
   assert.equal(isFinalInterviewResult(duplicated, 5), false);
 });
 
-test('Lv.1 합격선(60점) 통과 응답을 거부하지 않는다 (ADR-023 회귀)', () => {
-  // BE는 Lv.1에서 totalScore=65, passed=true 를 줄 수 있다.
+test('Lv.1 합격선 하한(60점) 응답을 결과로 변환·저장할 수 있다 (ADR-023 회귀)', () => {
+  // BE는 Lv.1에서 totalScore=60, passed=true 를 줄 수 있다.
   // FE가 80점 고정으로 대조하면 결과 화면 준비 실패(#95)가 난다.
-  const lv1Pass = {
-    ...finalResultWith(5, 65),
+  const response = {
+    ...endResponseWith(5, 60),
     passed: true,
   };
+  const lv1Pass = toFinalInterviewResult(response, 5, 1);
+
   assert.equal(isFinalInterviewResult(lv1Pass, 5), true);
+  assert.equal(lv1Pass.totalScore, 60);
+  assert.equal(lv1Pass.passed, true);
+  assert.equal(lv1Pass.interviewLevel, 1);
+
+  store.clear();
+  saveFinalInterviewResult('lv1-boundary', lv1Pass);
+  assert.deepEqual(loadFinalInterviewResult('lv1-boundary'), lv1Pass);
 });
 
 test('passed가 boolean이 아니면 거부한다', () => {
@@ -104,6 +113,20 @@ test('레벨별 합격선을 BE StageGaugePolicy와 맞춘다', () => {
   assert.equal(passingScoreForLevel(2), 80);
   assert.equal(passingScoreForLevel(3), 80);
   assert.equal(passingScoreForLevel(undefined), 80);
+});
+
+test('아직 없는 상위 레벨도 결과로 받아들인다', () => {
+  // 레벨 상한을 검사하면 레벨이 늘어날 때 합격 응답이 다시 후처리 실패가 된다.
+  const higherLevel = toFinalInterviewResult(endResponseWith(5, 90), 5, 5);
+
+  assert.equal(isFinalInterviewResult(higherLevel, 5), true);
+  assert.equal(higherLevel.interviewLevel, 5);
+  assert.equal(passingScoreForLevel(5), 80);
+});
+
+test('레벨이 정수가 아니면 거부한다', () => {
+  const invalid = { ...finalResultWith(5, 90), interviewLevel: 0 };
+  assert.equal(isFinalInterviewResult(invalid, 5), false);
 });
 
 test('계약 위반은 제출 실패와 구분되는 후처리 에러로 던진다', () => {

@@ -37,6 +37,8 @@ export interface FinalInterviewResult {
   totalScore: number;
   passed: boolean;
   overallFeedback: string;
+  /** 결과 화면의 레벨별 합격선 표시용. 이전 저장 데이터와 호환되도록 선택 필드로 둔다. */
+  interviewLevel?: number;
 }
 
 export interface NextTurn {

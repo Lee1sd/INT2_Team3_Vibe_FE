@@ -126,6 +126,13 @@ function StandardInterviewProcess() {
         avatar: getInterviewerAvatarByLevel(1),
       }
   );
+  /**
+   * 결과 화면 합격선 표시에 쓰는 확인된 면접 레벨.
+   * interviewer.level은 화면 표시용 기본값 1을 쓰므로, 확인 전에는 저장하지 않는다.
+   */
+  const [confirmedLevel, setConfirmedLevel] = useState<number | undefined>(
+    () => interviewerFromRouteState(location.state, interviewerId)?.level
+  );
   /** 세션 스테이지에 그리는 전신 스프라이트(질문마다 셔플 큐 순서로 갱신). */
   const [stageSprite, setStageSprite] = useState(
     () => interviewerFromRouteState(location.state, interviewerId)?.avatar || getInterviewerAvatarByLevel(1)
@@ -165,6 +172,7 @@ function StandardInterviewProcess() {
       setInitializationError(null);
       setSessionId('');
       setOpeningGreeting('');
+      setConfirmedLevel(interviewerFromRouteState(location.state, interviewerId)?.level);
 
       try {
         // 라우트 id는 BE 숫자 id(String)다 — 구 mock키(iv1) 하드코딩 맵을 쓰지 않는다.
@@ -178,6 +186,7 @@ function StandardInterviewProcess() {
               level: matched.level,
               avatar: getInterviewerAvatarByLevel(matched.level),
             });
+            setConfirmedLevel(matched.level);
           }
         } catch (e) {
           console.error(e);
@@ -404,6 +413,7 @@ function StandardInterviewProcess() {
           const completedResult = toFinalInterviewResult(
             res,
             mainQuestionCount > 0 ? getFinalEvaluationCount(mainQuestionCount) : undefined,
+            confirmedLevel,
           );
           saveFinalInterviewResult(activeSessionId, completedResult);
           setFinalResult(completedResult);
