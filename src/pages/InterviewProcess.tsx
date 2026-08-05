@@ -404,6 +404,7 @@ function StandardInterviewProcess() {
           const completedResult = toFinalInterviewResult(
             res,
             mainQuestionCount > 0 ? getFinalEvaluationCount(mainQuestionCount) : undefined,
+            interviewer.level,
           );
           saveFinalInterviewResult(activeSessionId, completedResult);
           setFinalResult(completedResult);

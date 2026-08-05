@@ -56,6 +56,10 @@ export function isFinalInterviewResult(
   // totalScore>=80 고정 대조는 Lv.1 합격을 후처리 실패로 만든다.
   if (typeof result.passed !== 'boolean') return false;
   if (typeof result.overallFeedback !== 'string' || !result.overallFeedback.trim()) return false;
+  if (
+    result.interviewLevel !== undefined
+    && (!Number.isInteger(result.interviewLevel) || result.interviewLevel < 1 || result.interviewLevel > 3)
+  ) return false;
 
   const evaluationsValid = result.evaluations.every((evaluation) => (
     evaluation
@@ -73,12 +77,14 @@ export function isFinalInterviewResult(
 export function toFinalInterviewResult(
   response: InterviewResponse,
   expectedEvaluationCount?: number,
+  interviewLevel?: number,
 ): FinalInterviewResult {
   const candidate: FinalInterviewResult = {
     evaluations: response.evaluations ?? [],
     totalScore: response.totalScore ?? Number.NaN,
     passed: response.passed,
     overallFeedback: response.overallFeedback ?? '',
+    ...(interviewLevel === undefined ? {} : { interviewLevel }),
   };
 
   if (!isFinalInterviewResult(candidate, expectedEvaluationCount)) {

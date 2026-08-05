@@ -5,6 +5,7 @@ import { engineService } from '../domains/interview/interview.service';
 import {
   isFinalInterviewResult,
   loadFinalInterviewResult,
+  passingScoreForLevel,
 } from '../domains/interview/interview-result.storage';
 import {
   isChallengeFinalResult,
@@ -155,6 +156,10 @@ export default function Result() {
   }
 
   const isChallenge = Boolean(challengeResult);
+  const passingScore = isChallenge
+    ? 80
+    : passingScoreForLevel(judgmentResult.interviewLevel);
+  const passingScorePosition = `${passingScore}%`;
 
   return (
     <>
@@ -207,10 +212,16 @@ export default function Result() {
                   className="h-full bg-gradient-to-r from-primary to-info rounded-lg transition-all duration-1000 relative z-10"
                   style={{ width: `${Math.min(displayedScore, 100)}%` }}
                 />
-                <div className="absolute top-0 bottom-0 left-[80%] w-0.5 bg-blue-grey-300 z-20" />
+                <div
+                  className="absolute top-0 bottom-0 w-0.5 bg-blue-grey-300 z-20"
+                  style={{ left: passingScorePosition }}
+                />
               </div>
-              <div className="absolute -top-6 left-[80%] -translate-x-1/2 text-[12px] font-bold text-blue-grey-400 whitespace-nowrap">
-                {isChallenge ? '합격선 (80)' : '레벨업 기준 (80점)'}
+              <div
+                className="absolute -top-6 -translate-x-1/2 text-[12px] font-bold text-blue-grey-400 whitespace-nowrap"
+                style={{ left: passingScorePosition }}
+              >
+                {isChallenge ? `합격선 (${passingScore})` : `레벨업 기준 (${passingScore}점)`}
               </div>
             </div>
 
