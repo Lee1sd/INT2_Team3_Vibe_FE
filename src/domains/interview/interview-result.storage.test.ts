@@ -26,6 +26,7 @@ const {
   getFinalEvaluationCount,
   isFinalInterviewResult,
   loadFinalInterviewResult,
+  passingScoreForLevel,
   saveFinalInterviewResult,
   toFinalInterviewResult,
 } = await import('./interview-result.storage');
@@ -83,9 +84,26 @@ test('questionId가 중복이면 거부한다', () => {
   assert.equal(isFinalInterviewResult(duplicated, 5), false);
 });
 
-test('passed와 totalScore가 어긋나면 거부한다', () => {
-  const mismatched = { ...finalResultWith(5, 90), passed: false };
-  assert.equal(isFinalInterviewResult(mismatched, 5), false);
+test('Lv.1 합격선(60점) 통과 응답을 거부하지 않는다 (ADR-023 회귀)', () => {
+  // BE는 Lv.1에서 totalScore=65, passed=true 를 줄 수 있다.
+  // FE가 80점 고정으로 대조하면 결과 화면 준비 실패(#95)가 난다.
+  const lv1Pass = {
+    ...finalResultWith(5, 65),
+    passed: true,
+  };
+  assert.equal(isFinalInterviewResult(lv1Pass, 5), true);
+});
+
+test('passed가 boolean이 아니면 거부한다', () => {
+  const invalid = { ...finalResultWith(5, 90), passed: 'yes' as unknown as boolean };
+  assert.equal(isFinalInterviewResult(invalid, 5), false);
+});
+
+test('레벨별 합격선을 BE StageGaugePolicy와 맞춘다', () => {
+  assert.equal(passingScoreForLevel(1), 60);
+  assert.equal(passingScoreForLevel(2), 80);
+  assert.equal(passingScoreForLevel(3), 80);
+  assert.equal(passingScoreForLevel(undefined), 80);
 });
 
 test('계약 위반은 제출 실패와 구분되는 후처리 에러로 던진다', () => {

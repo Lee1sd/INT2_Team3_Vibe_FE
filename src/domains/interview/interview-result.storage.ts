@@ -12,6 +12,15 @@ const RESULT_STORAGE_PREFIX = 'career-dungeon:interview-result:';
 const MIN_FINAL_EVALUATION_COUNT = 2;
 
 /**
+ * BE StageGaugePolicy와 동일한 레벨별 합격선.
+ * Lv.1=60, Lv.2·3=80 (ADR-023). FE가 80으로 고정하면 Lv.1 합격(60~79)이
+ * 계약 위반으로 거부되어 결과 화면이 깨진다.
+ */
+export function passingScoreForLevel(level: number | undefined | null): number {
+  return level === 1 ? 60 : 80;
+}
+
+/**
  * 최종 판정 응답의 evaluations 개수를 본문항 수에서 유도한다. (#95)
  *
  * 최종 판정에는 본문항 N개와 꼬리질문 1개의 평가가 모두 담기므로 N+1이다.
@@ -43,7 +52,9 @@ export function isFinalInterviewResult(
   if (!Array.isArray(result.evaluations)) return false;
   if (!hasExpectedEvaluationCount(result.evaluations.length, expectedEvaluationCount)) return false;
   if (!Number.isInteger(result.totalScore) || result.totalScore! < 0 || result.totalScore! > 100) return false;
-  if (typeof result.passed !== 'boolean' || result.passed !== (result.totalScore! >= 80)) return false;
+  // 합격선은 레벨마다 다르다(Lv.1=60). BE가 이미 passed를 판정하므로 FE는 boolean만 검증한다.
+  // totalScore>=80 고정 대조는 Lv.1 합격을 후처리 실패로 만든다.
+  if (typeof result.passed !== 'boolean') return false;
   if (typeof result.overallFeedback !== 'string' || !result.overallFeedback.trim()) return false;
 
   const evaluationsValid = result.evaluations.every((evaluation) => (
