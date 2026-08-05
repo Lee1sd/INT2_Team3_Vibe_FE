@@ -17,6 +17,7 @@ import { BADGE_STAGE_NAMES } from '../domains/progress/badge-names';
 import { UserBadge } from '../domains/progress/progress.types';
 import { engineService } from '../domains/interview/interview.service';
 import { InterviewDetailApiResponse, InterviewHistoryApiResponse, InterviewHistoryLevelApiItem, InterviewHistorySessionApiItem } from '../domains/interview/interview.api';
+import { passingScoreForLevel } from '../domains/interview/interview-result.storage';
 
 const BADGE_META = [
   { icon: '🐣', description: '면접의 첫 걸음을 내딛다' },
@@ -313,8 +314,6 @@ const TABS = [
 
 type TabId = typeof TABS[number]['id'];
 
-const PASSING_SCORE = 80;
-
 function formatHistoryDate(createdAt: string): string {
   const date = new Date(createdAt);
   if (Number.isNaN(date.getTime())) return createdAt;
@@ -341,7 +340,7 @@ function toHistoryItem(
     date: formatHistoryDate(session.createdAt),
     interviewerName: getHistoryGroupName(level),
     score: session.totalScore,
-    passed: session.totalScore >= PASSING_SCORE,
+    passed: session.totalScore >= passingScoreForLevel(level.level),
     logs: [],
   };
 }
